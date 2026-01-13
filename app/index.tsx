@@ -4,7 +4,7 @@ import * as Linking from "expo-linking";
 import { Redirect, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import Logo from "../components/Logo";
 import { supabase } from "../lib/supabase";
 
@@ -15,6 +15,7 @@ export default function Home() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [hasSession, setHasSession] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function Home() {
     checkSession();
   }, []);
 
-  const handlePostGoogleSignIn = useCallback(async (user: any) => {
+  const handlePostOAuthSignIn = useCallback(async (user: any) => {
     try {
       // Check if user is deactivated
       const { data: statusData, error: statusError } = await supabase.functions.invoke("check-user-status", {
@@ -135,14 +136,14 @@ export default function Home() {
           }
 
           if (session?.user) {
-            await handlePostGoogleSignIn(session.user);
+            await handlePostOAuthSignIn(session.user);
           }
         } else {
           // If no tokens in URL, check if Supabase already set the session
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
           
           if (!sessionError && session?.user) {
-            await handlePostGoogleSignIn(session.user);
+            await handlePostOAuthSignIn(session.user);
           }
         }
       } catch (error) {
@@ -164,7 +165,7 @@ export default function Home() {
     return () => {
       subscription.remove();
     };
-  }, [handlePostGoogleSignIn]);
+  }, [handlePostOAuthSignIn]);
 
   const continueWithEmail = () => {
     // Navigate to email input screen
@@ -233,19 +234,19 @@ export default function Home() {
               throw sessionError;
             }
 
-            if (session?.user) {
-              await handlePostGoogleSignIn(session.user);
-            }
-          } else {
-            // If no tokens in URL, try to get session from Supabase
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            
-            if (!sessionError && session?.user) {
-              await handlePostGoogleSignIn(session.user);
-            } else {
-              throw new Error("Failed to get authentication tokens");
-            }
+          if (session?.user) {
+            await handlePostOAuthSignIn(session.user);
           }
+        } else {
+          // If no tokens in URL, try to get session from Supabase
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (!sessionError && session?.user) {
+            await handlePostOAuthSignIn(session.user);
+          } else {
+            throw new Error("Failed to get authentication tokens");
+          }
+        }
         } else if (result.type === "cancel") {
           setGoogleLoading(false);
         } else {
@@ -265,6 +266,104 @@ export default function Home() {
         Alert.alert("Error", errorMessage);
       }
       setGoogleLoading(false);
+    }
+  };
+
+  const continueWithApple = async () => {
+    // Apple Sign-In is only available on iOS
+    if (Platform.OS !== "ios") {
+      Alert.alert("Not Available", "Sign in with Apple is only available on iOS devices.");
+      return;
+    }
+
+    try {
+      setAppleLoading(true);
+
+      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+      if (!supabaseUrl) {
+        throw new Error("Supabase URL not configured");
+      }
+
+      // Use OAuth flow (same as Google) to avoid bundle identifier issues
+      const redirectUrl = "habibiswipe://auth/callback";
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "apple",
+        options: {
+          redirectTo: redirectUrl,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.url) {
+        // Open the OAuth URL in browser
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          redirectUrl
+        );
+
+        if (result.type === "success" && result.url) {
+          // Supabase redirects with hash fragments, not query params
+          const url = new URL(result.url);
+          
+          // Check hash fragment first (Supabase uses this)
+          const hash = url.hash.substring(1);
+          const hashParams = new URLSearchParams(hash);
+          let accessToken = hashParams.get("access_token");
+          let refreshToken = hashParams.get("refresh_token");
+
+          // Fallback to query params if hash doesn't have tokens
+          if (!accessToken || !refreshToken) {
+            accessToken = url.searchParams.get("access_token");
+            refreshToken = url.searchParams.get("refresh_token");
+          }
+
+          if (accessToken && refreshToken) {
+            // Set the session
+            const { data: { session }, error: sessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+
+            if (sessionError) {
+              throw sessionError;
+            }
+
+            if (session?.user) {
+              await handlePostOAuthSignIn(session.user);
+            }
+          } else {
+            // If no tokens in URL, try to get session from Supabase
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            
+            if (!sessionError && session?.user) {
+              await handlePostOAuthSignIn(session.user);
+            } else {
+              throw new Error("Failed to get authentication tokens");
+            }
+          }
+        } else if (result.type === "cancel") {
+          setAppleLoading(false);
+        } else {
+          setAppleLoading(false);
+        }
+      }
+    } catch (error: any) {
+      console.error("Apple sign-in error:", error);
+      const errorMessage = error.message || "Failed to sign in with Apple";
+      
+      if (errorMessage.includes("redirect_uri_mismatch")) {
+        Alert.alert(
+          "Configuration Error",
+          `Please add this URL to Supabase Dashboard > Authentication > URL Configuration > Redirect URLs:\n\nhabibiswipe://auth/callback`
+        );
+      } else {
+        Alert.alert("Error", errorMessage);
+      }
+      setAppleLoading(false);
     }
   };
 
@@ -329,9 +428,9 @@ export default function Home() {
         <View style={styles.buttonsContainer}>
           {/* Email Button */}
           <Pressable
-            style={[styles.button, googleLoading && styles.buttonDisabled]}
+            style={[styles.button, (googleLoading || appleLoading) && styles.buttonDisabled]}
             onPress={continueWithEmail}
-            disabled={googleLoading}
+            disabled={googleLoading || appleLoading}
           >
             <Ionicons name="mail" size={20} color="#FFFFFF" style={styles.buttonIcon} />
             <Text style={styles.buttonText}>
@@ -341,9 +440,9 @@ export default function Home() {
 
           {/* Google Sign-In Button */}
           <Pressable
-            style={[styles.googleButton, googleLoading && styles.buttonDisabled]}
+            style={[styles.googleButton, (googleLoading || appleLoading) && styles.buttonDisabled]}
             onPress={continueWithGoogle}
-            disabled={googleLoading}
+            disabled={googleLoading || appleLoading}
           >
             {googleLoading ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
@@ -360,6 +459,26 @@ export default function Home() {
               </>
             )}
           </Pressable>
+
+          {/* Apple Sign-In Button (iOS only) */}
+          {Platform.OS === "ios" && (
+            <Pressable
+              style={[styles.appleButton, (googleLoading || appleLoading) && styles.buttonDisabled]}
+              onPress={continueWithApple}
+              disabled={googleLoading || appleLoading}
+            >
+              {appleLoading ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="logo-apple" size={20} color="#FFFFFF" style={styles.appleIcon} />
+                  <Text style={styles.appleButtonText}>
+                    Continue with Apple
+                  </Text>
+                </>
+              )}
+            </Pressable>
+          )}
         </View>
       </View>
     </View>
@@ -513,6 +632,26 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   googleButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  appleButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderRadius: 16,
+    paddingVertical: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    marginBottom: 16,
+  },
+  appleIcon: {
+    marginRight: 8,
+  },
+  appleButtonText: {
     fontSize: 16,
     fontWeight: "600",
     color: "#FFFFFF",

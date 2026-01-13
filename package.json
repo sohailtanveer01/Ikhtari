@@ -23,6 +23,7 @@
     "axios": "^1.13.2",
     "eas-cli": "^16.28.0",
     "expo": "~54.0.25",
+    "expo-apple-authentication": "~8.0.8",
     "expo-av": "~16.0.8",
     "expo-blur": "~15.0.7",
     "expo-constants": "~18.0.10",

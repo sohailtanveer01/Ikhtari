@@ -1,9 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Notifications from "expo-notifications";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useFocusEffect, useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../global.css";
@@ -28,10 +28,19 @@ const qc = new QueryClient({
 export default function RootLayout() {
   const router = useRouter();
 
+  // Lock screen orientation to portrait whenever app is focused
+  useFocusEffect(
+    useCallback(() => {
+      // Lock to portrait mode on every screen focus
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    }, [])
+  );
+
   useEffect(() => {
     // Register push token after app mounts AND after login.
     // (This can run before auth is ready, so also listen for auth changes.)
     registerAndSyncPushToken();
+    // Also lock orientation on initial mount
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
 
     const { data: authSub } = supabase.auth.onAuthStateChange((_event, session) => {

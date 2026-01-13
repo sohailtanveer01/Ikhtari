@@ -3,6 +3,7 @@ export default {
       name: "Habibi Swipe",
       slug: "habibi-swipe",
       scheme: "habibiswipe",
+      orientation: "portrait", // Lock app to portrait mode only
       icon: "./assets/images/icon.png",
       // Custom notification icon (Android only - iOS uses app icon automatically)
       // IMPORTANT: Android notification icons MUST be monochrome (white on transparent)
@@ -23,6 +24,7 @@ export default {
             iosUrlScheme: "com.googleusercontent.apps.32648878488-c1epo6b84ibikaknfnu800f103p3j3cu.apps.googleusercontent.com",
           },
         ],
+        "expo-apple-authentication",
       ],
       ios: {
         bundleIdentifier: "com.habibiswipe.app",
@@ -38,10 +40,19 @@ export default {
           NSMicrophoneUsageDescription:
             "Habibi Swipe needs access to your microphone to send voice messages.",
           "ITSAppUsesNonExemptEncryption": false,
+          // Lock iOS to portrait mode only
+          UISupportedInterfaceOrientations: [
+            "UIInterfaceOrientationPortrait"
+          ],
+          // iPad can support portrait and upside down, but not landscape
+          "UISupportedInterfaceOrientations~ipad": [
+            "UIInterfaceOrientationPortrait"
+          ],
         },
       },
       android: {
         package: "com.habibiswipe.app",
+        screenOrientation: "portrait", // Lock Android to portrait mode only
         permissions: [
           "READ_EXTERNAL_STORAGE",
           "WRITE_EXTERNAL_STORAGE",

@@ -4,7 +4,6 @@ import { Audio } from "expo-av";
 import { Image as ExpoImage } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import * as ScreenCapture from "expo-screen-capture";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -411,7 +410,7 @@ async function getChatMediaUrl(mediaUrl: string): Promise<string> {
 
 export default function ChatScreen() {
   // Prevent screenshots to keep chats safe
-  ScreenCapture.usePreventScreenCapture();
+  // ScreenCapture.usePreventScreenCapture();
 
   const { chatId } = useLocalSearchParams();
   const router = useRouter();

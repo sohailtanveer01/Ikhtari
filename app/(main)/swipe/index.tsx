@@ -2,7 +2,6 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import * as ScreenCapture from "expo-screen-capture";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -59,7 +58,7 @@ const TRANSITION_SPRING = {
 };
 
 export default function SwipeScreen() {
-  ScreenCapture.usePreventScreenCapture();
+  // ScreenCapture.usePreventScreenCapture();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { userId, source } = useLocalSearchParams<{
