@@ -31,6 +31,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { supabase } from "../../../lib/supabase";
 import { isUserActive } from "../../../lib/useActiveStatus";
+import { MarriageFoundationsBadge } from "../../../components/MarriageFoundationsBadge";
+import { useCertification } from "../../../lib/hooks/useCertification";
 
 // Clean photo URLs
 function cleanPhotoUrl(url: string | null | undefined): string | null {
@@ -147,8 +149,8 @@ function MessageItem({
               resizeMode="cover"
             />
           ) : (
-            <View className="w-8 h-8 rounded-full bg-white/10 items-center justify-center">
-              <Text className="text-white/60 text-xs">👤</Text>
+            <View className="w-8 h-8 rounded-full bg-[#F5F0E8] items-center justify-center">
+              <Text className="text-[#9E8E7E] text-xs">👤</Text>
             </View>
           )}
         </View>
@@ -159,11 +161,11 @@ function MessageItem({
         {item.reply_to && (
           <View
             className={`mb-1 px-3 py-1.5 rounded-lg border-l-2 ${isMe
-              ? "bg-white/10 border-[#B8860B]"
-              : "bg-white/5 border-white/30"
+              ? "bg-[#FDF3DC] border-[#B8860B]"
+              : "bg-[#F5F0E8] border-[#EDE5D5]"
               }`}
           >
-            <Text className="text-white/60 text-xs mb-0.5">
+            <Text className="text-[#9E8E7E] text-xs mb-0.5">
               {item.reply_to.sender_id === currentUser?.id
                 ? "You"
                 : otherUser?.first_name || "User"}
@@ -185,14 +187,14 @@ function MessageItem({
                 onPress={() => onScrollToMessage(item.reply_to.id)}
                 className="flex-row items-center"
               >
-                <View className="w-8 h-8 rounded-full bg-white/20 items-center justify-center mr-2">
-                  <Ionicons name="mic" size={14} color="#FFFFFF" />
+                <View className="w-8 h-8 rounded-full bg-[#EDE5D5] items-center justify-center mr-2">
+                  <Ionicons name="mic" size={14} color="#9E8E7E" />
                 </View>
-                <Text className="text-white/50 text-xs italic">Voice note</Text>
+                <Text className="text-[#9E8E7E] text-xs italic">Voice note</Text>
               </Pressable>
             ) : (
               <Pressable onPress={() => onScrollToMessage(item.reply_to.id)}>
-                <Text className="text-white/50 text-xs" numberOfLines={1}>
+                <Text className="text-[#9E8E7E] text-xs" numberOfLines={1}>
                   {item.reply_to.content || "Message"}
                 </Text>
               </Pressable>
@@ -212,7 +214,7 @@ function MessageItem({
               style={animatedStyle}
               className={`rounded-2xl ${isMe
                 ? "bg-[#B8860B] rounded-br-sm"
-                : "bg-white/10 rounded-bl-sm"
+                : "bg-[#F5F0E8] rounded-bl-sm"
                 }`}
             >
               {item.image_url && (
@@ -256,18 +258,18 @@ function MessageItem({
                   <View className="flex-row items-center">
                     <Pressable
                       onPress={() => onToggleVoice(item)}
-                      className={`w-10 h-10 rounded-full items-center justify-center ${isMe ? "bg-[#B8860B]" : "bg-white/15"
+                      className={`w-10 h-10 rounded-full items-center justify-center border ${isMe ? "bg-[#B8860B] border-transparent" : "bg-[#F5F0E8] border-[#EDE5D5]"
                         }`}
                     >
                       <Ionicons
                         name={isVoicePlaying ? "pause" : "play"}
                         size={18}
-                        color={isMe ? "#000000" : "#FFFFFF"}
+                        color={isMe ? "#000000" : "#6B5D4F"}
                       />
                     </Pressable>
 
                     <View className="flex-1 ml-3">
-                      <View className="h-1.5 rounded-full bg-white/20 overflow-hidden">
+                      <View className={`h-1.5 rounded-full overflow-hidden ${isMe ? "bg-white/20" : "bg-[#EDE5D5]"}`}>
                         <View
                           style={{
                             width: `${Math.min(
@@ -279,7 +281,7 @@ function MessageItem({
                           }}
                         />
                       </View>
-                      <Text className="text-white/60 text-xs mt-1">
+                      <Text className={`text-xs mt-1 ${isMe ? "text-white/60" : "text-[#9E8E7E]"}`}>
                         {voiceDurationLabel}
                       </Text>
                     </View>
@@ -289,8 +291,7 @@ function MessageItem({
 
               {item.content && item.content.trim() && (
                 <Text
-                  className={`text-base px-4 py-2.5 ${isDeleted ? "text-white/50 italic" : "text-white"
-                    }`}
+                  className={`text-base px-4 py-2.5 ${isDeleted ? (isMe ? "text-white/50" : "text-[#9E8E7E]") + " italic" : isMe ? "text-white" : "text-[#1C1208]"}`}
                 >
                   {item.content}
                 </Text>
@@ -486,6 +487,7 @@ export default function ChatScreen() {
   });
 
   const otherUser = chatData?.otherUser || null;
+  const { data: otherUserCertification } = useCertification(otherUser?.id);
   
   // Get current user ID directly from auth to ensure accuracy
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -508,11 +510,16 @@ export default function ChatScreen() {
   const iAmBlocked = chatData?.iAmBlocked || false;
   const isUnmatched = chatData?.isUnmatched || false;
   const rematchRequest = chatData?.rematchRequest || null;
+  const hasChaperone = chatData?.has_chaperone || false;
   const isCompliment = chatData?.isCompliment || false;
   const complimentId = chatData?.complimentId || null;
   const complimentStatus = chatData?.complimentStatus || null;
   const isComplimentSender = chatData?.isComplimentSender || false;
   const isComplimentRecipient = chatData?.isComplimentRecipient || false;
+  const interestQA = chatData?.interestQA || null;
+
+  // Q&A card collapse state — default expanded when no messages, collapsed when messages exist
+  const [isQAExpanded, setIsQAExpanded] = useState<boolean | null>(null);
 
   // Track OTHER USER's active status with real-time updates
   const [otherUserActive, setOtherUserActive] = useState<boolean>(false);
@@ -1327,7 +1334,7 @@ export default function ChatScreen() {
   // Show loading state
   if (isLoading) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
         <ActivityIndicator size="large" color="#B8860B" />
       </View>
     );
@@ -1336,7 +1343,7 @@ export default function ChatScreen() {
   // Show error state
   if (error) {
     return (
-      <View className="flex-1 bg-black items-center justify-center px-4">
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center px-4">
         <Text className="text-red-500 text-center mb-4">
           Error loading chat: {error.message}
         </Text>
@@ -1354,7 +1361,7 @@ export default function ChatScreen() {
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-black"
+      className="flex-1 bg-[#FDFAF5]"
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
       onTouchStart={() => {
@@ -1362,7 +1369,7 @@ export default function ChatScreen() {
       }}
     >
       {/* Header */}
-      <View className="bg-black px-4 pt-12 pb-4 flex-row items-start border-b border-white/10">
+      <View className="bg-[#FDFAF5] px-4 pt-12 pb-4 flex-row items-start border-b border-[#EDE5D5]">
         <Pressable
           onPress={() => {
             // Invalidate chat list cache to refresh unread counts
@@ -1373,7 +1380,7 @@ export default function ChatScreen() {
           }}
           className="mr-3 mt-1"
         >
-          <Text className="text-white text-2xl font-semibold">←</Text>
+          <Text className="text-[#1C1208] text-2xl font-semibold">←</Text>
         </Pressable>
 
         <Pressable
@@ -1402,22 +1409,29 @@ export default function ChatScreen() {
                 resizeMode="cover"
               />
             ) : (
-              <View className="w-14 h-14 rounded-full bg-white/10 items-center justify-center">
-                <Text className="text-white/60 text-xl">👤</Text>
+              <View className="w-14 h-14 rounded-full bg-[#F5F0E8] items-center justify-center">
+                <Text className="text-[#9E8E7E] text-xl">👤</Text>
               </View>
             )}
             {/* Active indicator - only show if not blocked */}
             {otherUserActive && !isBlocked && (
-              <View className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-black" />
+              <View className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
             )}
           </View>
           <View className="flex-1">
-            <Text className="text-white text-lg font-semibold">{fullName}</Text>
+            <View className="flex-row items-center">
+              <Text className="text-[#1C1208] text-lg font-semibold">{fullName}</Text>
+              {otherUserCertification?.is_certified && otherUserCertification?.show_badge && (
+                <View className="ml-2">
+                  <MarriageFoundationsBadge size="small" showText={false} />
+                </View>
+              )}
+            </View>
             {otherUserActive && !isOtherUserTyping && !isBlocked && (
               <Text className="text-green-500 text-xs mt-0.5">Active now</Text>
             )}
             {isBlocked && (
-              <Text className="text-white/60 text-xs mt-0.5">
+              <Text className="text-[#9E8E7E] text-xs mt-0.5">
                 Tap name for info
               </Text>
             )}
@@ -1429,9 +1443,17 @@ export default function ChatScreen() {
           onPress={() => setShowOptionsModal(true)}
           className="ml-2 mt-1 p-2"
         >
-          <Ionicons name="ellipsis-vertical" size={24} color="#FFFFFF" />
+          <Ionicons name="ellipsis-vertical" size={24} color="#1C1208" />
         </Pressable>
       </View>
+      {/* Wali / Chaperone presence banner */}
+      {hasChaperone && (
+        <View className="bg-[#B8860B]/20 px-3 py-1.5 flex-row items-center gap-1.5 mx-4 mb-2 rounded-xl" style={{ marginTop: 8 }}>
+          <Ionicons name="shield-checkmark" size={14} color="#B8860B" />
+          <Text className="text-[#B8860B] text-xs font-medium">A Wali is present in this conversation</Text>
+        </View>
+      )}
+
       {/* Compliment Message Display - shown like a normal message (left if received, right if sent) */}
       {/* Show for both pending and accepted compliments (accepted means match was created) */}
       {isCompliment &&
@@ -1450,8 +1472,8 @@ export default function ChatScreen() {
                       resizeMode="cover"
                     />
                   ) : (
-                    <View className="w-8 h-8 rounded-full bg-white/10 items-center justify-center">
-                      <Text className="text-white/60 text-xs">👤</Text>
+                    <View className="w-8 h-8 rounded-full bg-[#F5F0E8] items-center justify-center">
+                      <Text className="text-[#9E8E7E] text-xs">👤</Text>
                     </View>
                   )}
                 </View>
@@ -1461,15 +1483,15 @@ export default function ChatScreen() {
               <View className={`max-w-[75%] ${isComplimentSender ? "items-end" : "items-start"}`}>
                 <View className={`${isComplimentSender 
                   ? "bg-[#B8860B] rounded-2xl rounded-br-sm" 
-                  : "bg-white/10 rounded-2xl rounded-bl-sm border border-[#B8860B]/20"
+                  : "bg-[#F5F0E8] rounded-2xl rounded-bl-sm border border-[#B8860B]/20"
                 } px-4 py-3`}>
-                  <Text className="text-white text-base leading-6">
+                  <Text className={`text-base leading-6 ${isComplimentSender ? "text-white" : "text-[#1C1208]"}`}>
                     {chatData.complimentMessage}
                   </Text>
                 </View>
 
                 {/* Timestamp */}
-                <Text className={`text-white/40 text-xs mt-1 ${isComplimentSender ? "mr-1" : "ml-1"}`}>
+                <Text className={`text-xs mt-1 ${isComplimentSender ? "text-white/40 mr-1" : "text-[#9E8E7E] ml-1"}`}>
                   {new Date(
                     chatData.complimentCreatedAt || Date.now()
                   ).toLocaleDateString([], {
@@ -1487,13 +1509,13 @@ export default function ChatScreen() {
       {/* Messages */}
       {isBlocked ? (
         <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-white/60 text-center text-base mb-2">
+          <Text className="text-[#9E8E7E] text-center text-base mb-2">
             {iAmBlocked
               ? "This user has blocked you. You cannot see their profile or messages."
               : "You have blocked this user. Messages are hidden but preserved for safety."}
           </Text>
           {iAmBlocked && (
-            <Text className="text-white/40 text-center text-sm mt-2">
+            <Text className="text-[#C9BFB5] text-center text-sm mt-2">
               Chat history is preserved for abuse reporting purposes.
             </Text>
           )}
@@ -1523,11 +1545,107 @@ export default function ChatScreen() {
           windowSize={10}
           // Optimize scroll events
           onScrollToIndexFailed={() => { }}
+          ListHeaderComponent={
+            interestQA ? (
+              <View className="bg-[#B8860B]/10 rounded-2xl border border-[#B8860B]/30 mx-0 mb-4 p-4">
+                <Pressable
+                  onPress={() =>
+                    setIsQAExpanded((prev) =>
+                      prev === null ? !(messages.length > 0) : !prev
+                    )
+                  }
+                  className="flex-row items-center justify-between"
+                >
+                  <View className="flex-row items-center">
+                    <Ionicons name="sparkles" size={18} color="#B8860B" />
+                    <Text className="text-[#B8860B] text-base font-bold ml-2">
+                      Conversation Starters
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name={
+                      (isQAExpanded === null ? messages.length === 0 : isQAExpanded)
+                        ? "chevron-up"
+                        : "chevron-down"
+                    }
+                    size={20}
+                    color="#B8860B"
+                  />
+                </Pressable>
+
+                {(isQAExpanded === null ? messages.length === 0 : isQAExpanded) && (
+                  <View className="mt-4">
+                    {/* Sender's Answers */}
+                    {interestQA.senderAnswers?.length > 0 && (
+                      <View className="mb-3">
+                        <Text className="text-[#B8860B] text-sm font-semibold mb-2">
+                          {interestQA.senderName}'s Answers
+                        </Text>
+                        {interestQA.senderAnswers.map(
+                          (qa: any, index: number) => (
+                            <View
+                              key={`sender-${index}`}
+                              className={`${
+                                index < interestQA.senderAnswers.length - 1
+                                  ? "mb-3 pb-3 border-b border-[#EDE5D5]"
+                                  : ""
+                              }`}
+                            >
+                              <Text className="text-[#9E8E7E] text-sm mb-1">
+                                {qa.question}
+                              </Text>
+                              <Text className="text-[#1C1208] text-base">
+                                {qa.answer}
+                              </Text>
+                            </View>
+                          )
+                        )}
+                      </View>
+                    )}
+
+                    {/* Recipient's Answers */}
+                    {interestQA.recipientAnswers?.length > 0 && (
+                      <View
+                        className={
+                          interestQA.senderAnswers?.length > 0
+                            ? "mt-2 pt-3 border-t border-[#B8860B]/20"
+                            : ""
+                        }
+                      >
+                        <Text className="text-[#B8860B] text-sm font-semibold mb-2">
+                          {interestQA.recipientName}'s Answers
+                        </Text>
+                        {interestQA.recipientAnswers.map(
+                          (qa: any, index: number) => (
+                            <View
+                              key={`recipient-${index}`}
+                              className={`${
+                                index < interestQA.recipientAnswers.length - 1
+                                  ? "mb-3 pb-3 border-b border-[#EDE5D5]"
+                                  : ""
+                              }`}
+                            >
+                              <Text className="text-[#9E8E7E] text-sm mb-1">
+                                {qa.question}
+                              </Text>
+                              <Text className="text-[#1C1208] text-base">
+                                {qa.answer}
+                              </Text>
+                            </View>
+                          )
+                        )}
+                      </View>
+                    )}
+                  </View>
+                )}
+              </View>
+            ) : null
+          }
           renderItem={({ item }) => {
             if (item.type === "timestamp") {
               return (
                 <View className="items-center my-4">
-                  <Text className="text-white/50 text-xs">
+                  <Text className="text-[#9E8E7E] text-xs">
                     {item.date.toLocaleDateString([], {
                       month: "short",
                       day: "numeric",
@@ -1581,8 +1699,8 @@ export default function ChatScreen() {
           ListEmptyComponent={
             !isCompliment ? (
               <View className="items-center justify-center py-20">
-                <View className="bg-white/10 px-4 py-3 rounded-2xl mb-4">
-                  <Text className="text-white/70 text-sm text-center">
+                <View className="bg-[#F5F0E8] px-4 py-3 rounded-2xl mb-4">
+                  <Text className="text-[#6B5D4F] text-sm text-center">
                     Start the chat with {fullName}
                   </Text>
                 </View>
@@ -1600,14 +1718,14 @@ export default function ChatScreen() {
                       resizeMode="cover"
                     />
                   ) : (
-                    <View className="w-8 h-8 rounded-full bg-white/10 items-center justify-center">
-                      <Text className="text-white/60 text-xs">👤</Text>
+                    <View className="w-8 h-8 rounded-full bg-[#F5F0E8] items-center justify-center">
+                      <Text className="text-[#9E8E7E] text-xs">👤</Text>
                     </View>
                   )}
                 </View>
                 <View className="max-w-[75%] items-start">
-                  <View className="bg-white/10 rounded-2xl rounded-bl-sm px-4 py-2.5">
-                    <Text className="text-white/70 text-sm italic">
+                  <View className="bg-[#F5F0E8] rounded-2xl rounded-bl-sm px-4 py-2.5">
+                    <Text className="text-[#9E8E7E] text-sm italic">
                       typing...
                     </Text>
                   </View>
@@ -1620,11 +1738,11 @@ export default function ChatScreen() {
 
       {/* Rematch Request UI - Show for unmatched scenarios (1 & 2) */}
       {isUnmatched && !isBlocked && (
-        <View className="px-4 py-4 bg-black border-t border-white/10">
+        <View className="px-4 py-4 bg-[#FDFAF5] border-t border-[#EDE5D5]">
           {rematchRequest?.isRequestRecipient ? (
             // User is recipient - show accept/reject buttons
             <View>
-              <Text className="text-white text-center text-base mb-4">
+              <Text className="text-[#1C1208] text-center text-base mb-4">
                 {fullName} has requested to rematch
               </Text>
               <View className="flex-row gap-3">
@@ -1662,9 +1780,9 @@ export default function ChatScreen() {
                       );
                     }
                   }}
-                  className="flex-1 bg-white/10 px-6 py-4 rounded-2xl items-center border border-white/20"
+                  className="flex-1 bg-[#F5F0E8] px-6 py-4 rounded-2xl items-center border border-[#EDE5D5]"
                 >
-                  <Text className="text-white text-base font-semibold">
+                  <Text className="text-[#1C1208] text-base font-semibold">
                     Reject
                   </Text>
                 </Pressable>
@@ -1707,7 +1825,7 @@ export default function ChatScreen() {
                   }}
                   className="flex-1 bg-[#B8860B] px-6 py-4 rounded-2xl items-center"
                 >
-                  <Text className="text-white text-base font-semibold">
+                  <Text className="text-[#1C1208] text-base font-semibold">
                     Accept Rematch
                   </Text>
                 </Pressable>
@@ -1716,10 +1834,10 @@ export default function ChatScreen() {
           ) : rematchRequest?.isRequestRequester ? (
             // User is requester - show waiting message
             <View className="items-center">
-              <Text className="text-white/70 text-center text-base mb-2">
+              <Text className="text-[#6B5D4F] text-center text-base mb-2">
                 Rematch request sent
               </Text>
-              <Text className="text-white/50 text-center text-sm">
+              <Text className="text-[#9E8E7E] text-center text-sm">
                 Waiting for {fullName} to respond...
               </Text>
             </View>
@@ -1729,17 +1847,17 @@ export default function ChatScreen() {
               <Text className="text-red-400 text-center text-base mb-2 font-semibold">
                 Your rematch request has been rejected
               </Text>
-              <Text className="text-white/60 text-center text-sm">
+              <Text className="text-[#9E8E7E] text-center text-sm">
                 You can&apos;t contact them anymore
               </Text>
             </View>
           ) : rematchRequest?.hasAlreadyRequested ? (
             // User has already requested (but not rejected yet) - show message
             <View className="items-center">
-              <Text className="text-white/70 text-center text-base mb-2">
+              <Text className="text-[#6B5D4F] text-center text-base mb-2">
                 Rematch request unavailable
               </Text>
-              <Text className="text-white/50 text-center text-sm">
+              <Text className="text-[#9E8E7E] text-center text-sm">
                 You have already requested a rematch.
               </Text>
             </View>
@@ -1796,7 +1914,7 @@ export default function ChatScreen() {
               }}
               className="bg-[#B8860B] px-6 py-4 rounded-2xl items-center"
             >
-              <Text className="text-white text-base font-semibold">
+              <Text className="text-[#1C1208] text-base font-semibold">
                 Request Rematch?
               </Text>
             </Pressable>
@@ -1808,12 +1926,12 @@ export default function ChatScreen() {
       {isCompliment &&
         isComplimentRecipient &&
         complimentStatus === "pending" && (
-          <View className="px-4 py-4 bg-white/5 border-t border-[#B8860B]/30">
+          <View className="px-4 py-4 bg-white border-t border-[#EDE5D5]">
             <View className="items-center mb-4">
-              <Text className="text-white text-lg font-bold mb-1">
+              <Text className="text-[#1C1208] text-lg font-bold mb-1">
                 {fullName} sent you a compliment! 💬
               </Text>
-              <Text className="text-white/70 text-sm text-center">
+              <Text className="text-[#6B5D4F] text-sm text-center">
                 View their profile and decide if you&apos;d like to match
               </Text>
             </View>
@@ -1862,9 +1980,9 @@ export default function ChatScreen() {
                     ]
                   );
                 }}
-                className="flex-1 bg-white/10 px-6 py-4 rounded-2xl items-center border border-white/20"
+                className="flex-1 bg-[#F5F0E8] px-6 py-4 rounded-2xl items-center border border-[#EDE5D5]"
               >
-                <Text className="text-white text-base font-semibold">
+                <Text className="text-[#1C1208] text-base font-semibold">
                   Decline
                 </Text>
               </Pressable>
@@ -1920,7 +2038,7 @@ export default function ChatScreen() {
                 }}
                 className="flex-1 bg-[#B8860B] px-6 py-4 rounded-2xl items-center"
               >
-                <Text className="text-white text-base font-semibold">
+                <Text className="text-[#1C1208] text-base font-semibold">
                   Accept & Match
                 </Text>
               </Pressable>
@@ -1930,22 +2048,22 @@ export default function ChatScreen() {
 
       {/* Compliment Sender Status - Only show if pending or declined, not if accepted (match created) */}
       {isCompliment && isComplimentSender && complimentStatus !== "accepted" && (
-        <View className="px-4 py-4 bg-white/5 border-t border-[#B8860B]/30">
+        <View className="px-4 py-4 bg-white border-t border-[#EDE5D5]">
           {complimentStatus === "pending" ? (
             <View className="items-center">
-              <Text className="text-white/80 text-center text-base mb-2">
+              <Text className="text-[#6B5D4F] text-center text-base mb-2">
                 Compliment sent! 💬
               </Text>
-              <Text className="text-white/60 text-center text-sm">
+              <Text className="text-[#9E8E7E] text-center text-sm">
                 Waiting for {fullName} to respond...
               </Text>
             </View>
           ) : complimentStatus === "declined" ? (
             <View className="items-center">
-              <Text className="text-white/70 text-center text-base mb-2">
+              <Text className="text-[#6B5D4F] text-center text-base mb-2">
                 Compliment declined
               </Text>
-              <Text className="text-white/50 text-center text-sm">
+              <Text className="text-[#9E8E7E] text-center text-sm">
                 {fullName} declined your compliment
               </Text>
             </View>
@@ -1955,7 +2073,7 @@ export default function ChatScreen() {
 
       {/* Reply Preview */}
       {replyingTo && (
-        <View className="px-4 py-2 bg-black border-t border-white/10">
+        <View className="px-4 py-2 bg-[#FDFAF5] border-t border-[#EDE5D5]">
           <View className="flex-row items-center justify-between">
             <View className="flex-1 mr-2">
               <View className="flex-row items-center mb-1">
@@ -1969,13 +2087,13 @@ export default function ChatScreen() {
               </View>
               <View className="pl-5 border-l-2 border-[#B8860B]/50">
                 {replyingTo.image_url ? (
-                  <Text className="text-white/60 text-xs italic">📷 Photo</Text>
+                  <Text className="text-[#9E8E7E] text-xs italic">📷 Photo</Text>
                 ) : replyingTo.voice_url ? (
-                  <Text className="text-white/60 text-xs italic">
+                  <Text className="text-[#9E8E7E] text-xs italic">
                     🎤 Voice note
                   </Text>
                 ) : (
-                  <Text className="text-white/60 text-xs" numberOfLines={1}>
+                  <Text className="text-[#9E8E7E] text-xs" numberOfLines={1}>
                     {replyingTo.content || "Message"}
                   </Text>
                 )}
@@ -1983,9 +2101,9 @@ export default function ChatScreen() {
             </View>
             <Pressable
               onPress={() => setReplyingTo(null)}
-              className="w-6 h-6 rounded-full bg-white/10 items-center justify-center"
+              className="w-6 h-6 rounded-full bg-[#F5F0E8] items-center justify-center"
             >
-              <Ionicons name="close" size={16} color="#FFFFFF" />
+              <Ionicons name="close" size={16} color="#9E8E7E" />
             </Pressable>
           </View>
         </View>
@@ -1993,7 +2111,7 @@ export default function ChatScreen() {
 
       {/* Image Preview */}
       {selectedImage && (
-        <View className="px-4 py-2 bg-black border-t border-white/10">
+        <View className="px-4 py-2 bg-[#FDFAF5] border-t border-[#EDE5D5]">
           <View className="relative">
             <ExpoImage
               source={{ uri: selectedImage }}
@@ -2004,7 +2122,7 @@ export default function ChatScreen() {
               className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 items-center justify-center"
               onPress={() => setSelectedImage(null)}
             >
-              <Ionicons name="close" size={16} color="#FFFFFF" />
+              <Ionicons name="close" size={16} color="#9E8E7E" />
             </Pressable>
           </View>
         </View>
@@ -2012,17 +2130,17 @@ export default function ChatScreen() {
 
       {/* Voice Note Preview */}
       {pendingVoice && (
-        <View className="px-4 py-2 bg-black border-t border-white/10">
+        <View className="px-4 py-2 bg-[#FDFAF5] border-t border-[#EDE5D5]">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
-              <View className="w-10 h-10 rounded-full bg-white/10 items-center justify-center border border-[#B8860B]/30">
+              <View className="w-10 h-10 rounded-full bg-[#F5F0E8] items-center justify-center border border-[#B8860B]/30">
                 <Ionicons name="mic" size={18} color="#B8860B" />
               </View>
               <View className="ml-3">
-                <Text className="text-white text-sm font-semibold">
+                <Text className="text-[#1C1208] text-sm font-semibold">
                   Voice note ready
                 </Text>
-                <Text className="text-white/60 text-xs">
+                <Text className="text-[#9E8E7E] text-xs">
                   {formatTime(pendingVoice.durationMs)}
                 </Text>
               </View>
@@ -2044,7 +2162,7 @@ export default function ChatScreen() {
                 {uploadingMedia ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text className="text-white text-sm font-semibold">Send</Text>
+                  <Text className="text-[#1C1208] text-sm font-semibold">Send</Text>
                 )}
               </Pressable>
             </View>
@@ -2056,7 +2174,7 @@ export default function ChatScreen() {
       {/* Show input if compliment is accepted (match created) */}
       {!isBlocked && !isUnmatched && (!isCompliment || complimentStatus === "accepted") && (
         <View
-          className="bg-black px-4 py-3"
+          className="bg-[#FDFAF5] px-4 py-3"
           style={{ paddingBottom: Platform.OS === "ios" ? 20 : 10 }}
         >
           {/* Strict halal warning (only visible to sender) */}
@@ -2069,7 +2187,7 @@ export default function ChatScreen() {
           <View className="flex-row items-center gap-3">
             {/* Add/Attachment Button */}
             <Pressable
-              className="w-10 h-10 rounded-full bg-white/10 items-center justify-center border border-[#B8860B]/30"
+              className="w-10 h-10 rounded-full bg-[#F5F0E8] items-center justify-center border border-[#B8860B]/30"
               onPress={pickImage}
               disabled={uploadingMedia || isRecording || !!pendingVoice}
             >
@@ -2090,7 +2208,7 @@ export default function ChatScreen() {
                 <View
                   className={`w-10 h-10 rounded-full items-center justify-center border ${isRecording
                     ? "bg-red-500/20 border-red-500/50"
-                    : "bg-white/10 border-[#B8860B]/30"
+                    : "bg-[#F5F0E8] border-[#B8860B]/30"
                     }`}
                 >
                   <Ionicons
@@ -2104,9 +2222,9 @@ export default function ChatScreen() {
 
             {/* Message Input Field */}
             <TextInput
-              className="flex-1 bg-white/10 text-white px-4 py-3 rounded-2xl border border-[#B8860B]/30"
+              className="flex-1 bg-white text-[#1C1208] px-4 py-3 rounded-2xl border border-[#EDE5D5]"
               placeholder={isRecording ? "Recording..." : "Type a message..."}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor="#9E8E7E"
               value={text}
               onChangeText={handleTextChange}
               multiline
@@ -2149,11 +2267,11 @@ export default function ChatScreen() {
             <View className="mt-2 flex-row items-center justify-between">
               <View className="flex-row items-center">
                 <View className="w-2 h-2 rounded-full bg-red-500" />
-                <Text className="text-white/70 text-xs ml-2">
+                <Text className="text-[#6B5D4F] text-xs ml-2">
                   {`Recording • ${recordSeconds}s`}
                 </Text>
               </View>
-              <Text className="text-white/40 text-xs">Tap mic to stop</Text>
+              <Text className="text-[#C9BFB5] text-xs">Tap mic to stop</Text>
             </View>
           )}
         </View>
@@ -2170,7 +2288,7 @@ export default function ChatScreen() {
           {/* Close Button */}
           <Pressable
             onPress={() => setFullScreenImage(null)}
-            className="absolute top-12 right-4 z-10 w-10 h-10 rounded-full bg-black/50 items-center justify-center"
+            className="absolute top-12 right-4 z-10 w-10 h-10 rounded-full bg-black/60 items-center justify-center"
           >
             <Ionicons name="close" size={24} color="#FFFFFF" />
           </Pressable>
@@ -2208,10 +2326,10 @@ export default function ChatScreen() {
           onPress={() => setShowOptionsModal(false)}
         >
           <Pressable
-            className="bg-black rounded-2xl p-6 w-[85%] border border-white/10"
+            className="bg-white rounded-2xl p-6 w-[85%] border border-[#EDE5D5]"
             onPress={(e) => e.stopPropagation()}
           >
-            <Text className="text-white text-xl font-semibold mb-6 text-center">
+            <Text className="text-[#1C1208] text-xl font-semibold mb-6 text-center">
               Chat Options
             </Text>
 
@@ -2261,10 +2379,10 @@ export default function ChatScreen() {
                   ]
                 );
               }}
-              className="py-4 border-b border-white/10"
+              className="py-4 border-b border-[#EDE5D5]"
             >
-              <Text className="text-white text-base">Unmatch</Text>
-              <Text className="text-white/60 text-sm mt-1">
+              <Text className="text-[#1C1208] text-base">Unmatch</Text>
+              <Text className="text-[#9E8E7E] text-sm mt-1">
                 Remove this match and chat history
               </Text>
             </Pressable>
@@ -2287,7 +2405,7 @@ export default function ChatScreen() {
               className="py-4"
             >
               <Text className="text-red-500 text-base">Report & Block</Text>
-              <Text className="text-white/60 text-sm mt-1">
+              <Text className="text-[#9E8E7E] text-sm mt-1">
                 Report this user and block them
               </Text>
             </Pressable>
@@ -2295,9 +2413,9 @@ export default function ChatScreen() {
             {/* Cancel Button */}
             <Pressable
               onPress={() => setShowOptionsModal(false)}
-              className="mt-4 pt-4 border-t border-white/10"
+              className="mt-4 pt-4 border-t border-[#EDE5D5]"
             >
-              <Text className="text-white/70 text-center text-base">
+              <Text className="text-[#6B5D4F] text-center text-base">
                 Cancel
               </Text>
             </Pressable>

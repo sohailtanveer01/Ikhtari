@@ -156,7 +156,7 @@ export default function ProfilePreviewScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: '#FDFAF5', alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color="#B8860B" />
       </View>
     );
@@ -164,8 +164,8 @@ export default function ProfilePreviewScreen() {
 
   if (!profile) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: '#FFFFFF' }}>No profile found</Text>
+      <View style={{ flex: 1, backgroundColor: '#FDFAF5', alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: '#1C1208' }}>No profile found</Text>
       </View>
     );
   }
@@ -216,7 +216,7 @@ export default function ProfilePreviewScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#000000' }}>
+    <View style={{ flex: 1, backgroundColor: '#FDFAF5' }}>
       {/* Back Button - Fixed at top */}
       <View style={styles.topBar}>
         <Pressable

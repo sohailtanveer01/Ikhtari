@@ -47,24 +47,24 @@ export default function VerifyEmail() {
 
   if (verified) {
     return (
-      <View className="flex-1 bg-black px-6 justify-center items-center">
+      <View className="flex-1 bg-[#FDFAF5] px-6 justify-center items-center">
         <Text className="text-[#B8860B] text-2xl font-bold mb-4">Email Verified!</Text>
-        <Text className="text-white/70">Redirecting...</Text>
+        <Text className="text-[#6B5D4F]">Redirecting...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-black px-6 justify-center">
-      <Text className="text-white text-3xl font-bold mb-2">Verify Your Email</Text>
-      <Text className="text-white/70 mb-6">
+    <View className="flex-1 bg-[#FDFAF5] px-6 justify-center">
+      <Text className="text-[#1C1208] text-3xl font-bold mb-2">Verify Your Email</Text>
+      <Text className="text-[#6B5D4F] mb-6">
         We've sent a verification link to your email. Please check your inbox and click the link to verify your account.
       </Text>
 
       {checking && (
         <View className="items-center mb-6">
           <ActivityIndicator size="large" color="#B8860B" />
-          <Text className="text-white/70 mt-4">Checking verification status...</Text>
+          <Text className="text-[#6B5D4F] mt-4">Checking verification status...</Text>
         </View>
       )}
 
@@ -72,14 +72,14 @@ export default function VerifyEmail() {
         className="bg-[#B8860B] p-4 rounded-2xl items-center mb-4"
         onPress={checkVerification}
       >
-        <Text className="text-white font-semibold">I've Verified My Email</Text>
+        <Text className="text-[#1C1208] font-semibold">I've Verified My Email</Text>
       </Pressable>
 
       <Pressable
-        className="bg-white/10 p-4 rounded-2xl items-center"
+        className="bg-[#F5F0E8] p-4 rounded-2xl items-center"
         onPress={resendEmail}
       >
-        <Text className="text-white/80">Resend Verification Email</Text>
+        <Text className="text-[#6B5D4F]">Resend Verification Email</Text>
       </Pressable>
     </View>
   );

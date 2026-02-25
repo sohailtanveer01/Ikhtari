@@ -262,7 +262,7 @@ export default function ChatListScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
         <ActivityIndicator size="large" color="#B8860B" />
       </View>
     );
@@ -270,7 +270,7 @@ export default function ChatListScreen() {
 
   if (error) {
     return (
-      <View className="flex-1 bg-black items-center justify-center px-4">
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center px-4">
         <Text className="text-red-500 text-center mb-4">
           Error loading chats: {error.message}
         </Text>
@@ -285,12 +285,12 @@ export default function ChatListScreen() {
   }
 
   return (
-    <View className="flex-1 bg-black pt-12">
+    <View className="flex-1 bg-[#FDFAF5] pt-12">
       <View className="px-4 mb-4 flex-row items-center justify-between">
-        <Text className="text-white text-2xl font-bold">Chats</Text>
+        <Text className="text-[#1C1208] text-2xl font-bold">Chats</Text>
         <Pressable
           onPress={() => router.push("/(main)/chat/unmatches")}
-          className="px-4 py-2 bg-white/10 rounded-full border border-[#B8860B]/30 relative"
+          className="px-4 py-2 bg-[#FDF3DC] rounded-full border border-[#B8860B]/30 relative"
         >
           <Text className="text-[#B8860B] text-sm font-semibold">Unmatches</Text>
           {unmatchesNotificationCount > 0 && (
@@ -308,8 +308,8 @@ export default function ChatListScreen() {
             <View className="mb-6">
               <Logo variant="colored" width={120} height={120} style="" />
             </View>
-            <Text className="text-white/60 text-base">No matches yet</Text>
-            <Text className="text-white/50 text-sm mt-2 mb-6">Start swiping to find your Habibi! 💕</Text>
+            <Text className="text-[#6B5D4F] text-base">No matches yet</Text>
+            <Text className="text-[#9E8E7E] text-sm mt-2 mb-6">Start discovering to find your match! 💕</Text>
             <Pressable
               className="bg-[#B8860B] px-4 py-4 rounded-2xl items-center justify-center"
               onPress={() => router.push("/(main)/swipe")}
@@ -471,7 +471,7 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
   // Render the chat item content
   const chatItemContent = (
     <Pressable
-      className="bg-white/10 p-4 rounded-2xl mb-3 flex-row items-center border border-white/10"
+      className="bg-white p-4 rounded-2xl mb-3 flex-row items-center border border-[#EDE5D5]"
       onPress={() => router.push(`/(main)/chat/${item.id}`)}
     >
       <View className="relative mr-4">
@@ -482,18 +482,18 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
             resizeMode="cover"
           />
         ) : (
-          <View className="w-16 h-16 rounded-full bg-white/10 items-center justify-center border-2 border-[#B8860B]">
-            <Text className="text-white/60 text-2xl">👤</Text>
+          <View className="w-16 h-16 rounded-full bg-[#F5F0E8] items-center justify-center border-2 border-[#B8860B]">
+            <Text className="text-[#9E8E7E] text-2xl">👤</Text>
           </View>
         )}
         {isOtherUserActive && (
-          <View className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-black" />
+          <View className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
         )}
       </View>
       <View className="flex-1">
         <View className="flex-row items-center gap-2">
           <Text
-            className={`text-lg ${hasUnread ? 'font-bold' : 'font-semibold'} text-white`}
+            className={`text-lg ${hasUnread ? 'font-bold' : 'font-semibold'} text-[#1C1208]`}
             numberOfLines={1}
           >
             {fullName}
@@ -513,7 +513,7 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
         </View>
         {item.isCompliment ? (
           <Text
-            className={`text-sm mt-1 ${hasUnread ? 'text-white font-medium' : 'text-white/60'}`}
+            className={`text-sm mt-1 ${hasUnread ? 'text-[#1C1208] font-medium' : 'text-[#6B5D4F]'}`}
             numberOfLines={1}
           >
             {item.isComplimentSender
@@ -536,7 +536,7 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
           </Text>
         ) : item.lastMessage ? (
           <Text
-            className={`text-sm mt-1 ${hasUnread ? 'text-white font-medium' : 'text-white/60'}`}
+            className={`text-sm mt-1 ${hasUnread ? 'text-[#1C1208] font-medium' : 'text-[#6B5D4F]'}`}
             numberOfLines={1}
           >
             {item.lastMessage.image_url
@@ -555,7 +555,7 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
       </View>
       <View className="items-end">
         {item.lastMessage && (
-          <Text className="text-white/50 text-xs mb-1">
+          <Text className="text-[#9E8E7E] text-xs mb-1">
             {new Date(item.lastMessage.created_at).toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit'

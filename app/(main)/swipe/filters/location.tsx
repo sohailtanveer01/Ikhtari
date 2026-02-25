@@ -243,24 +243,24 @@ export default function LocationFilterScreen() {
 
   if (loading && !userLocation) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
-        <ActivityIndicator size="large" color="#fff" />
-        <Text className="text-white/70 mt-4">Loading preferences...</Text>
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
+        <ActivityIndicator size="large" color="#1C1208" />
+        <Text className="text-[#9E8E7E] mt-4">Loading preferences...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-[#FDFAF5]">
       {/* Header */}
-      <View className="pt-14 px-6 pb-6 flex-row items-center justify-between border-b border-white/10">
+      <View className="pt-14 px-6 pb-6 flex-row items-center justify-between border-b border-[#EDE5D5]">
         <Pressable 
           onPress={() => router.push("/(main)/swipe/filters/")}
           className="px-2 py-1"
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={24} color="#1C1208" />
         </Pressable>
-        <Text className="text-white text-2xl font-bold">Location</Text>
+        <Text className="text-[#1C1208] text-2xl font-bold">Location</Text>
         <Pressable 
           onPress={async () => {
             setFilterType(null);
@@ -296,7 +296,7 @@ export default function LocationFilterScreen() {
           }}
           className="px-2 py-1"
         >
-          <Text className="text-white/70 text-base font-medium">Clear</Text>
+          <Text className="text-[#6B5D4F] text-base font-medium">Clear</Text>
         </Pressable>
       </View>
 
@@ -307,11 +307,11 @@ export default function LocationFilterScreen() {
       >
         {/* Filter Type Selection */}
         <View className="mb-8">
-          <Text className="text-white text-2xl font-bold mb-6">Choose Your Filter</Text>
+          <Text className="text-[#1C1208] text-2xl font-bold mb-6">Choose Your Filter</Text>
           <View className="flex-row gap-3">
             <Pressable
               className={`flex-1 p-4 rounded-2xl ${
-                filterType === "distance" ? "bg-[#B8860B]" : "bg-white/10"
+                filterType === "distance" ? "bg-[#B8860B]" : "bg-[#F5F0E8]"
               }`}
               onPress={() => {
                 setFilterType("distance");
@@ -326,7 +326,7 @@ export default function LocationFilterScreen() {
             >
               <Text
                 className={`text-center font-semibold text-sm ${
-                  filterType === "distance" ? "text-white" : "text-white/70"
+                  filterType === "distance" ? "text-[#1C1208]" : "text-[#9E8E7E]"
                 }`}
               >
                 Select by Distance
@@ -334,7 +334,7 @@ export default function LocationFilterScreen() {
             </Pressable>
             <Pressable
               className={`flex-1 p-4 rounded-2xl ${
-                filterType === "country" ? "bg-[#B8860B]" : "bg-white/10"
+                filterType === "country" ? "bg-[#B8860B]" : "bg-[#F5F0E8]"
               }`}
               onPress={() => {
                 setFilterType("country");
@@ -345,7 +345,7 @@ export default function LocationFilterScreen() {
             >
               <Text
                 className={`text-center font-semibold text-sm ${
-                  filterType === "country" ? "text-white" : "text-white/70"
+                  filterType === "country" ? "text-[#1C1208]" : "text-[#9E8E7E]"
                 }`}
               >
                 Select by Country
@@ -360,17 +360,17 @@ export default function LocationFilterScreen() {
             {!userLocation ? (
               <View className="mb-6">
                 <Pressable
-                  className="bg-white/10 p-5 rounded-2xl items-center border border-white/20"
+                  className="bg-[#F5F0E8] p-5 rounded-2xl items-center border border-[#EDE5D5]"
                   onPress={getCurrentLocation}
                   disabled={loading}
                   style={styles.getLocationButton}
                 >
                   {loading ? (
-                    <ActivityIndicator color="#fff" />
+                    <ActivityIndicator color="#1C1208" />
                   ) : (
                     <>
-                      <Text className="text-white font-bold text-base mb-1">📍</Text>
-                      <Text className="text-white font-semibold text-base">Get My Location</Text>
+                      <Text className="text-[#1C1208] font-bold text-base mb-1">📍</Text>
+                      <Text className="text-[#1C1208] font-semibold text-base">Get My Location</Text>
                     </>
                   )}
                 </Pressable>
@@ -378,7 +378,7 @@ export default function LocationFilterScreen() {
             ) : (
               <>
                 <View className="mb-4">
-                  <Text className="text-white text-lg font-bold mb-1">
+                  <Text className="text-[#1C1208] text-lg font-bold mb-1">
                     Search Radius
                   </Text>
                   <Text className="text-[#D4AF37] text-2xl font-bold">
@@ -449,8 +449,8 @@ export default function LocationFilterScreen() {
                     thumbTintColor="#B8860B"
                   />
                   <View className="flex-row justify-between mt-3">
-                    <Text className="text-white/60 text-xs font-medium">1 mile</Text>
-                    <Text className="text-white/60 text-xs font-medium">{MAX_RADIUS_MILES} miles</Text>
+                    <Text className="text-[#9E8E7E] text-xs font-medium">1 mile</Text>
+                    <Text className="text-[#9E8E7E] text-xs font-medium">{MAX_RADIUS_MILES} miles</Text>
                   </View>
                 </View>
               </>
@@ -461,10 +461,10 @@ export default function LocationFilterScreen() {
         {/* Country Filter */}
         {filterType === "country" && (
           <View className="mb-8">
-            <Text className="text-white text-lg font-bold mb-4">Select Country</Text>
+            <Text className="text-[#1C1208] text-lg font-bold mb-4">Select Country</Text>
             <ScrollView
               style={styles.countryList}
-              className="bg-white/5 rounded-2xl"
+              className="bg-white rounded-2xl"
               contentContainerStyle={{ padding: 12 }}
               showsVerticalScrollIndicator={true}
             >
@@ -472,14 +472,14 @@ export default function LocationFilterScreen() {
                 <Pressable
                   key={country}
                   className={`p-4 rounded-xl mb-2 ${
-                    selectedCountry === country ? "bg-[#B8860B]" : "bg-white/5"
+                    selectedCountry === country ? "bg-[#B8860B]" : "bg-white"
                   }`}
                   onPress={() => setSelectedCountry(country)}
                   style={selectedCountry === country ? styles.selectedCountryItem : styles.countryItem}
                 >
                   <Text
                     className={`text-base ${
-                      selectedCountry === country ? "text-white font-bold" : "text-white/80 font-medium"
+                      selectedCountry === country ? "text-[#1C1208] font-bold" : "text-[#6B5D4F] font-medium"
                     }`}
                   >
                     {country}
@@ -489,8 +489,8 @@ export default function LocationFilterScreen() {
             </ScrollView>
             {selectedCountry && (
               <View className="mt-4 bg-[#B8860B]/20 border border-[#B8860B]/30 p-4 rounded-xl">
-                <Text className="text-white/70 text-sm font-medium mb-1">Selected Country</Text>
-                <Text className="text-white font-bold text-lg">{selectedCountry}</Text>
+                <Text className="text-[#6B5D4F] text-sm font-medium mb-1">Selected Country</Text>
+                <Text className="text-[#1C1208] font-bold text-lg">{selectedCountry}</Text>
               </View>
             )}
           </View>
@@ -504,9 +504,9 @@ export default function LocationFilterScreen() {
           style={styles.saveButton}
         >
           {saving ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color="#1C1208" />
           ) : (
-            <Text className="text-white font-bold text-lg">Save</Text>
+            <Text className="text-[#1C1208] font-bold text-lg">Save</Text>
           )}
         </Pressable>
       </ScrollView>
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
   },
   inactiveFilterButton: {
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "#EDE5D5",
   },
   getLocationButton: {
     shadowColor: "#000",
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: 8,
     borderWidth: 2,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "#EDE5D5",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
   },
   countryItem: {
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "#EDE5D5",
   },
   selectedCountryItem: {
     shadowColor: "#B8860B",

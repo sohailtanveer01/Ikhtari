@@ -61,36 +61,36 @@ export default function NotificationsScreen() {
 
     if (loading) {
         return (
-            <View className="flex-1 bg-black items-center justify-center">
+            <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
                 <ActivityIndicator size="large" color="#B8860B" />
             </View>
         );
     }
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#000000", paddingTop: insets.top }}>
+        <View style={{ flex: 1, backgroundColor: "#FDFAF5", paddingTop: insets.top }}>
             {/* Header */}
             <View className="flex-row items-center px-6 py-4">
                 <Pressable
                     onPress={() => router.back()}
-                    className="w-10 h-10 rounded-full bg-white/10 items-center justify-center"
+                    className="w-10 h-10 rounded-full bg-[#F5F0E8] items-center justify-center"
                 >
-                    <Ionicons name="arrow-back" size={24} color="#fff" />
+                    <Ionicons name="arrow-back" size={24} color="#1C1208" />
                 </Pressable>
-                <Text className="text-white text-xl font-bold ml-4">Notifications</Text>
+                <Text className="text-[#1C1208] text-xl font-bold ml-4">Notifications</Text>
             </View>
 
             <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
                 {/* Master Toggle */}
                 <Text className="text-gray-400 text-sm font-medium mb-3 mt-4">PUSH NOTIFICATIONS</Text>
 
-                <View className="flex-row items-center justify-between py-4 px-4 bg-white/5 rounded-2xl mb-3">
+                <View className="flex-row items-center justify-between py-4 px-4 bg-white rounded-2xl mb-3 border border-[#EDE5D5]">
                     <View className="flex-row items-center flex-1">
                         <View className="w-10 h-10 rounded-full items-center justify-center bg-[#B8860B]/20">
                             <Ionicons name="notifications" size={20} color="#B8860B" />
                         </View>
                         <View className="ml-3 flex-1">
-                            <Text className="text-base font-medium text-white">Enable Notifications</Text>
+                            <Text className="text-base font-medium text-[#1C1208]">Enable Notifications</Text>
                             <Text className="text-gray-400 text-sm mt-0.5">
                                 Receive push notifications for likes, matches, and messages
                             </Text>
@@ -106,7 +106,7 @@ export default function NotificationsScreen() {
                 </View>
 
                 {/* Info Section */}
-                <View className="mt-8 p-4 bg-white/5 rounded-2xl border border-white/10">
+                <View className="mt-8 p-4 bg-[#F5F0E8] rounded-2xl border border-[#EDE5D5]">
                     <View className="flex-row items-start">
                         <Ionicons name="information-circle" size={20} color="#B8860B" />
                         <Text className="text-gray-400 text-sm ml-2 flex-1 leading-5">

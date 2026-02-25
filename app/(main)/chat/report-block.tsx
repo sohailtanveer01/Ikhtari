@@ -292,7 +292,7 @@ export default function ReportBlockScreen() {
               <Ionicons name="checkmark-circle" size={64} color="#B8860B" />
             </View>
             <Text style={styles.confirmationTitle}>
-              {wasJustBlock ? "User Blocked" : "Thanks for helping keep Habibi Swipe safe 🤍"}
+              {wasJustBlock ? "User Blocked" : "Thanks for helping keep Ikhtari safe 🤍"}
             </Text>
             <Text style={styles.confirmationSubtitle}>
               {wasJustBlock 
@@ -331,7 +331,7 @@ export default function ReportBlockScreen() {
       <View style={styles.header}>
         {step !== 4 ? (
           <Pressable onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={24} color="#1C1208" />
           </Pressable>
         ) : (
           <View style={styles.backButton} />
@@ -357,7 +357,7 @@ export default function ReportBlockScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#FDFAF5",
   },
   header: {
     flexDirection: "row",
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.1)",
+    borderBottomColor: "#EDE5D5",
   },
   backButton: {
     width: 40,
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#1C1208",
   },
   scrollContent: {
     flex: 1,
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#1C1208",
     marginBottom: 8,
   },
   stepSubtitle: {
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   sectionHeading: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#1C1208",
     marginTop: 8,
     marginBottom: 16,
   },
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   justBlockButtonText: {
-    color: "#FFFFFF",
+    color: "#1C1208",
     fontSize: 16,
     fontWeight: "600",
   },
@@ -450,10 +450,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     padding: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "#EDE5D5",
     marginBottom: 12,
   },
   reasonItemSelected: {
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   },
   reasonText: {
     fontSize: 16,
-    color: "#FFFFFF",
+    color: "#1C1208",
     flex: 1,
   },
   reasonTextSelected: {
@@ -470,12 +470,12 @@ const styles = StyleSheet.create({
     color: "#B8860B",
   },
   detailsInput: {
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "#EDE5D5",
     borderRadius: 12,
     padding: 16,
-    color: "#FFFFFF",
+    color: "#1C1208",
     fontSize: 16,
     minHeight: 120,
     marginBottom: 8,
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   nextButtonText: {
-    color: "#FFFFFF",
+    color: "#1C1208",
     fontSize: 16,
     fontWeight: "600",
   },
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
   },
   reviewValue: {
     fontSize: 16,
-    color: "#FFFFFF",
+    color: "#1C1208",
     fontWeight: "500",
   },
   warningText: {
@@ -529,12 +529,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#F5F0E8",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderColor: "#EDE5D5",
   },
   cancelButtonText: {
-    color: "#FFFFFF",
+    color: "#1C1208",
     fontSize: 16,
     fontWeight: "600",
   },
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   submitButtonText: {
-    color: "#FFFFFF",
+    color: "#1C1208",
     fontSize: 16,
     fontWeight: "600",
   },
@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
   confirmationTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#1C1208",
     textAlign: "center",
     marginBottom: 12,
   },
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   doneButtonText: {
-    color: "#FFFFFF",
+    color: "#1C1208",
     fontSize: 16,
     fontWeight: "600",
   },

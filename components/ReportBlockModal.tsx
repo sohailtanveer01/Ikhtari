@@ -250,7 +250,7 @@ export default function ReportBlockModal({
                   <Ionicons name="checkmark-circle" size={64} color="#B8860B" />
                 </View>
                 <Text style={styles.confirmationTitle}>
-                  Thanks for helping keep Habibi Swipe safe 🤍
+                  Thanks for helping keep Ikhtari safe 🤍
                 </Text>
                 <Text style={styles.confirmationSubtitle}>
                   Your report has been submitted and the user has been blocked.

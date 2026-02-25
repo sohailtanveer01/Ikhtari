@@ -182,7 +182,7 @@ export default function Home() {
       }
 
       // Use a simple deep link format that Supabase can handle
-      const redirectUrl = "habibiswipe://auth/callback";
+      const redirectUrl = "ikhtari://auth/callback";
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -260,7 +260,7 @@ export default function Home() {
       if (errorMessage.includes("redirect_uri_mismatch")) {
         Alert.alert(
           "Configuration Error",
-          `Please add this URL to Supabase Dashboard > Authentication > URL Configuration > Redirect URLs:\n\nhabibiswipe://auth/callback`
+          `Please add this URL to Supabase Dashboard > Authentication > URL Configuration > Redirect URLs:\n\nikhtari://auth/callback`
         );
       } else {
         Alert.alert("Error", errorMessage);
@@ -285,7 +285,7 @@ export default function Home() {
       }
 
       // Use OAuth flow (same as Google) to avoid bundle identifier issues
-      const redirectUrl = "habibiswipe://auth/callback";
+      const redirectUrl = "ikhtari://auth/callback";
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "apple",
@@ -358,7 +358,7 @@ export default function Home() {
       if (errorMessage.includes("redirect_uri_mismatch")) {
         Alert.alert(
           "Configuration Error",
-          `Please add this URL to Supabase Dashboard > Authentication > URL Configuration > Redirect URLs:\n\nhabibiswipe://auth/callback`
+          `Please add this URL to Supabase Dashboard > Authentication > URL Configuration > Redirect URLs:\n\nikhtari://auth/callback`
         );
       } else {
         Alert.alert("Error", errorMessage);
@@ -377,14 +377,14 @@ export default function Home() {
     <View style={styles.container}>
       {/* Gradient Backgrounds */}
       <LinearGradient
-        colors={["rgba(238,189,43,0.65)", "rgba(10,10,10,0)"]}
+        colors={["rgba(184,134,11,0.18)", "rgba(253,250,245,0)"]}
         style={[styles.gradientBase, styles.gradientTopLeft]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={["rgba(10,10,10,0)", "rgba(238,189,43,0.55)"]}
+        colors={["rgba(253,250,245,0)", "rgba(184,134,11,0.12)"]}
         style={[styles.gradientBase, styles.gradientBottomRight]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -445,7 +445,7 @@ export default function Home() {
             disabled={googleLoading || appleLoading}
           >
             {googleLoading ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
+              <ActivityIndicator color="#1C1208" size="small" />
             ) : (
               <>
                 <Image
@@ -468,10 +468,10 @@ export default function Home() {
               disabled={googleLoading || appleLoading}
             >
               {appleLoading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
+                <ActivityIndicator color="#1C1208" size="small" />
               ) : (
                 <>
-                  <Ionicons name="logo-apple" size={20} color="#FFFFFF" style={styles.appleIcon} />
+                  <Ionicons name="logo-apple" size={20} color="#1C1208" style={styles.appleIcon} />
                   <Text style={styles.appleButtonText}>
                     Continue with Apple
                   </Text>
@@ -488,7 +488,7 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#FDFAF5",
     position: "relative",
   },
   gradientBase: {
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
     color: "#B8860B",
   },
   taglineWhite: {
-    color: "#FFFFFF",
+    color: "#1C1208",
   },
   content: {
     flex: 1,
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 12,
-    color: "rgba(255, 255, 255, 0.8)",
+    color: "#6B5D4F",
     fontWeight: "500",
     textAlign: "center",
   },
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: 13,
-    color: "#9CA3AF",
+    color: "#9E8E7E",
     textAlign: "center",
     lineHeight: 18,
     marginBottom: 16,
@@ -606,18 +606,18 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#EDE5D5",
   },
   dividerText: {
     marginHorizontal: 16,
     fontSize: 14,
-    color: "#9CA3AF",
+    color: "#9E8E7E",
     fontWeight: "500",
   },
   googleButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#F5F0E8",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderColor: "#EDE5D5",
     borderRadius: 16,
     paddingVertical: 16,
     flexDirection: "row",
@@ -634,12 +634,12 @@ const styles = StyleSheet.create({
   googleButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: "#1C1208",
   },
   appleButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#F5F0E8",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderColor: "#EDE5D5",
     borderRadius: 16,
     paddingVertical: 16,
     flexDirection: "row",
@@ -654,6 +654,6 @@ const styles = StyleSheet.create({
   appleButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: "#1C1208",
   },
 });

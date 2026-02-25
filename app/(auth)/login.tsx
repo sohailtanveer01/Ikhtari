@@ -129,7 +129,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#FDFAF5",
     position: "relative",
   },
   gradientBase: {
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 36,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#1C1208",
     marginBottom: 8,
     textAlign: "center",
   },
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     fontSize: 16,
-    color: "#FFFFFF",
+    color: "#1C1208",
   },
   button: {
     backgroundColor: "#B8860B",
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: "#1C1208",
   },
   helperText: {
     fontSize: 13,

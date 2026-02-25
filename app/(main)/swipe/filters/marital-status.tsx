@@ -102,24 +102,24 @@ export default function MaritalStatusFilterScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
         <ActivityIndicator size="large" color="#B8860B" />
-        <Text className="text-white/70 mt-4">Loading preferences...</Text>
+        <Text className="text-[#9E8E7E] mt-4">Loading preferences...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-[#FDFAF5]">
       {/* Header */}
-      <View className="pt-14 px-6 pb-6 flex-row items-center justify-between border-b border-white/10">
+      <View className="pt-14 px-6 pb-6 flex-row items-center justify-between border-b border-[#EDE5D5]">
         <Pressable 
           onPress={() => router.push("/(main)/swipe/filters/")}
           className="px-2 py-1"
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={24} color="#1C1208" />
         </Pressable>
-        <Text className="text-white text-2xl font-bold">Marital Status</Text>
+        <Text className="text-[#1C1208] text-2xl font-bold">Marital Status</Text>
         <Pressable 
           onPress={async () => {
             setSelectedStatuses([]);
@@ -155,7 +155,7 @@ export default function MaritalStatusFilterScreen() {
           }}
           className="px-2 py-1"
         >
-          <Text className="text-white/70 text-base font-medium">Clear</Text>
+          <Text className="text-[#6B5D4F] text-base font-medium">Clear</Text>
         </Pressable>
       </View>
 
@@ -166,22 +166,22 @@ export default function MaritalStatusFilterScreen() {
       >
         {/* Info */}
         <View className="mb-6 bg-[#B8860B]/10 border border-[#B8860B]/20 rounded-xl p-4">
-          <Text className="text-white/70 text-sm">
+          <Text className="text-[#6B5D4F] text-sm">
             Select the marital statuses you're open to. Leave empty to show all.
           </Text>
         </View>
 
         {/* Marital Status Options */}
         <View className="mb-8">
-          <Text className="text-white text-lg font-bold mb-4">Marital Status</Text>
-          <View className="bg-white/5 rounded-2xl p-3">
+          <Text className="text-[#1C1208] text-lg font-bold mb-4">Marital Status</Text>
+          <View className="bg-white rounded-2xl p-3">
             {MARITAL_STATUS_OPTIONS.map((status) => {
               const isSelected = selectedStatuses.includes(status);
               return (
                 <Pressable
                   key={status}
                   className={`p-4 rounded-xl mb-2 ${
-                    isSelected ? "bg-[#B8860B]" : "bg-white/5"
+                    isSelected ? "bg-[#B8860B]" : "bg-white"
                   }`}
                   onPress={() => {
                     if (isSelected) {
@@ -195,13 +195,13 @@ export default function MaritalStatusFilterScreen() {
                   <View className="flex-row items-center justify-between">
                     <Text
                       className={`text-base ${
-                        isSelected ? "text-white font-bold" : "text-white/80 font-medium"
+                        isSelected ? "text-[#1C1208] font-bold" : "text-[#6B5D4F] font-medium"
                       }`}
                     >
                       {status}
                     </Text>
                     {isSelected && (
-                      <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" />
+                      <Ionicons name="checkmark-circle" size={24} color="#1C1208" />
                     )}
                   </View>
                 </Pressable>
@@ -211,7 +211,7 @@ export default function MaritalStatusFilterScreen() {
           
           {selectedStatuses.length > 0 && (
             <View className="mt-4 bg-[#B8860B]/20 border border-[#B8860B]/30 p-4 rounded-xl">
-              <Text className="text-white/70 text-sm font-medium mb-2">
+              <Text className="text-[#6B5D4F] text-sm font-medium mb-2">
                 Selected ({selectedStatuses.length})
               </Text>
               <View className="flex-row flex-wrap gap-2">
@@ -233,7 +233,7 @@ export default function MaritalStatusFilterScreen() {
           style={styles.saveButton}
         >
           {saving ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color="#1C1208" />
           ) : (
             <Text className="text-white font-bold text-lg">Save</Text>
           )}
@@ -246,7 +246,7 @@ export default function MaritalStatusFilterScreen() {
 const styles = StyleSheet.create({
   optionItem: {
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "#EDE5D5",
   },
   selectedItem: {
     shadowColor: "#B8860B",

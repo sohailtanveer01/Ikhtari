@@ -52,9 +52,15 @@ export default function RootLayout() {
       const data: any = response?.notification?.request?.content?.data;
       if (data?.type === "chat_message" && data?.chatId) {
         router.push(`/(main)/chat/${data.chatId}`);
-      } else if (data?.type === "new_like") {
-        // Navigate to likes screen when tapping on a like notification
+      } else if (data?.type === "new_like" || data?.type === "new_interest") {
+        // Navigate to interests/likes screen when tapping on an interest notification
         router.push("/(main)/likes");
+      } else if (data?.type === "interest_accepted" && data?.matchId) {
+        // Navigate to chat when interest is accepted
+        router.push(`/(main)/chat/${data.matchId}`);
+      } else if (data?.type === "answer_back" && data?.matchId) {
+        // Navigate to chat when someone answers back
+        router.push(`/(main)/chat/${data.matchId}`);
       }
     });
 
@@ -72,7 +78,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <QueryClientProvider client={qc}>
           <LikesNotificationProvider>
             <Stack

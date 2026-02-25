@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://habibiswipe.com",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtari.com",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
@@ -346,6 +346,27 @@ serve(async (req) => {
       };
     }
 
+    // Check if either user in this chat has an active chaperone
+    const serviceKeyForChaperone = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    let hasChaperone = false;
+    if (serviceKeyForChaperone && !isUnmatched) {
+      try {
+        const serviceClientChaperone = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          serviceKeyForChaperone,
+          { auth: { persistSession: false } }
+        );
+        const { count } = await serviceClientChaperone
+          .from("chaperone_links")
+          .select("*", { count: "exact", head: true })
+          .in("user_id", [user.id, otherUserId])
+          .eq("status", "active");
+        hasChaperone = (count ?? 0) > 0;
+      } catch (e) {
+        console.error("Error checking chaperone status:", e);
+      }
+    }
+
     // Check if this match was created from a compliment
     // Look for an accepted compliment between these two users
     let complimentInfo = null;
@@ -380,6 +401,83 @@ serve(async (req) => {
     }
 
 
+    // Fetch interest Q&A if this match came from an interest request
+    let interestQA = null;
+    if (!isUnmatched && match) {
+      const { data: interestRequest } = await supabaseClient
+        .from("interest_requests")
+        .select("id, sender_id, recipient_id, status")
+        .eq("match_id", matchId)
+        .limit(1)
+        .maybeSingle();
+
+      if (interestRequest) {
+        // Fetch all answers for this interest request
+        const { data: allAnswers } = await supabaseClient
+          .from("interest_answers")
+          .select("answerer_id, question_id, answer_text")
+          .eq("interest_request_id", interestRequest.id);
+
+        if (allAnswers && allAnswers.length > 0) {
+          // Get all question IDs
+          const questionIds = [...new Set(allAnswers.map((a: any) => a.question_id))];
+          const { data: questions } = await supabaseClient
+            .from("intent_questions")
+            .select("id, question_text, display_order")
+            .in("id", questionIds);
+
+          const questionMap = new Map();
+          if (questions) {
+            questions.forEach((q: any) => questionMap.set(q.id, q));
+          }
+
+          const senderId = interestRequest.sender_id;
+          const recipientId = interestRequest.recipient_id;
+
+          // Split answers by answerer
+          const senderAnswers = allAnswers
+            .filter((a: any) => a.answerer_id === senderId)
+            .map((a: any) => ({
+              question: questionMap.get(a.question_id)?.question_text || "",
+              answer: a.answer_text,
+              display_order: questionMap.get(a.question_id)?.display_order || 0,
+            }))
+            .sort((a: any, b: any) => a.display_order - b.display_order);
+
+          const recipientAnswers = allAnswers
+            .filter((a: any) => a.answerer_id === recipientId)
+            .map((a: any) => ({
+              question: questionMap.get(a.question_id)?.question_text || "",
+              answer: a.answer_text,
+              display_order: questionMap.get(a.question_id)?.display_order || 0,
+            }))
+            .sort((a: any, b: any) => a.display_order - b.display_order);
+
+          // Fix: use correct names relative to sender/recipient roles
+          const senderDisplayName = senderId === user.id
+            ? "You"
+            : senderId === otherUserId
+            ? (otherUser.first_name || otherUser.name || "User")
+            : "User";
+
+          const recipientDisplayName = recipientId === user.id
+            ? "You"
+            : recipientId === otherUserId
+            ? (otherUser.first_name || otherUser.name || "User")
+            : "User";
+
+          interestQA = {
+            senderName: senderDisplayName,
+            recipientName: recipientDisplayName,
+            senderId,
+            recipientId,
+            senderAnswers,
+            recipientAnswers,
+          };
+        }
+      }
+    }
+
     return new Response(
       JSON.stringify({
         match: match
@@ -394,6 +492,9 @@ serve(async (req) => {
         unreadCount: unreadCount || 0, // Return count before marking as read
         isUnmatched: isUnmatched,
         rematchRequest: rematchRequestInfo,
+        has_chaperone: hasChaperone,
+        // Include interest Q&A if available
+        ...(interestQA ? { interestQA } : {}),
         // Include compliment info if this match was created from a compliment
         ...(complimentInfo ? {
           isCompliment: true,

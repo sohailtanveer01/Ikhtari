@@ -142,7 +142,7 @@ export default function UserProfileScreen() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000000', justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: '#FDFAF5', justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#B8860B" />
       </View>
     );
@@ -150,8 +150,8 @@ export default function UserProfileScreen() {
 
   if (!profile) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000000', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Text style={{ color: '#FFFFFF', fontSize: 18, textAlign: 'center', marginBottom: 20 }}>
+      <View style={{ flex: 1, backgroundColor: '#FDFAF5', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ color: '#1C1208', fontSize: 18, textAlign: 'center', marginBottom: 20 }}>
           Profile not found
         </Text>
         <Pressable
@@ -229,7 +229,7 @@ export default function UserProfileScreen() {
   const hasBackgroundInfo = ethnicity || nationality || location;
 
   return (
-      <View style={{ flex: 1, backgroundColor: '#000000' }}>
+      <View style={{ flex: 1, backgroundColor: '#FDFAF5' }}>
       <ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}

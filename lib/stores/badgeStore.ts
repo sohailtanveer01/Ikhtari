@@ -4,54 +4,54 @@ import { supabase } from "../supabase";
 interface BadgeState {
   // Counts
   unreadMessages: number;
-  newLikes: number;
+  newInterests: number;
   pendingCompliments: number;
 
   // Actions
   setUnreadMessages: (count: number) => void;
-  setNewLikes: (count: number) => void;
+  setNewInterests: (count: number) => void;
   setPendingCompliments: (count: number) => void;
-  
+
   incrementUnread: (by?: number) => void;
   decrementUnread: (by?: number) => void;
-  incrementLikes: (by?: number) => void;
-  
+  incrementInterests: (by?: number) => void;
+
   resetUnread: () => void;
-  resetLikes: () => void;
+  resetInterests: () => void;
   resetAll: () => void;
 
   // Async actions
   loadAllCounts: () => Promise<void>;
   loadUnreadMessages: () => Promise<void>;
-  loadNewLikes: () => Promise<void>;
+  loadNewInterests: () => Promise<void>;
 }
 
 export const useBadgeStore = create<BadgeState>((set, get) => ({
   // Initial state
   unreadMessages: 0,
-  newLikes: 0,
+  newInterests: 0,
   pendingCompliments: 0,
 
   // Setters
   setUnreadMessages: (count) => set({ unreadMessages: count }),
-  setNewLikes: (count) => set({ newLikes: count }),
+  setNewInterests: (count) => set({ newInterests: count }),
   setPendingCompliments: (count) => set({ pendingCompliments: count }),
 
   // Increment/Decrement
   incrementUnread: (by = 1) => set((s) => ({ unreadMessages: s.unreadMessages + by })),
   decrementUnread: (by = 1) => set((s) => ({ unreadMessages: Math.max(0, s.unreadMessages - by) })),
-  incrementLikes: (by = 1) => set((s) => ({ newLikes: s.newLikes + by })),
+  incrementInterests: (by = 1) => set((s) => ({ newInterests: s.newInterests + by })),
 
   // Reset
   resetUnread: () => set({ unreadMessages: 0 }),
-  resetLikes: () => set({ newLikes: 0 }),
-  resetAll: () => set({ unreadMessages: 0, newLikes: 0, pendingCompliments: 0 }),
+  resetInterests: () => set({ newInterests: 0 }),
+  resetAll: () => set({ unreadMessages: 0, newInterests: 0, pendingCompliments: 0 }),
 
   // Async: Load all counts from database
   loadAllCounts: async () => {
     await Promise.all([
       get().loadUnreadMessages(),
-      get().loadNewLikes(),
+      get().loadNewInterests(),
     ]);
   },
 
@@ -97,29 +97,28 @@ export const useBadgeStore = create<BadgeState>((set, get) => ({
     }
   },
 
-  // Load new likes count
-  loadNewLikes: async () => {
+  // Load new interests count (pending interest requests received)
+  loadNewInterests: async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Count users who liked me that I haven't seen yet
       const { count } = await supabase
-        .from("swipes")
+        .from("interest_requests")
         .select("*", { count: "exact", head: true })
-        .eq("target_user", user.id)
-        .eq("action", "like")
-        .eq("seen_by_target", false);
+        .eq("recipient_id", user.id)
+        .eq("status", "pending");
 
-      set({ newLikes: count || 0 });
+      set({ newInterests: count || 0 });
     } catch (e) {
-      console.error("Error loading new likes:", e);
+      console.error("Error loading new interests:", e);
     }
   },
 }));
 
 // Selector hooks for optimized re-renders
 export const useUnreadMessages = () => useBadgeStore((state) => state.unreadMessages);
-export const useNewLikes = () => useBadgeStore((state) => state.newLikes);
+export const useNewInterests = () => useBadgeStore((state) => state.newInterests);
+// Keep backward-compatible alias
+export const useNewLikes = useNewInterests;
 export const useTotalBadgeCount = () => useBadgeStore((state) => state.unreadMessages + state.pendingCompliments);
-

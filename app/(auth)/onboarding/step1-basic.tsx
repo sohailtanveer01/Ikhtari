@@ -7,7 +7,42 @@ import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, 
 import { useOnboarding } from "../../../lib/onboardingStore";
 import { supabase } from "../../../lib/supabase";
 
-const TOTAL_STEPS = 8;
+const PROFESSION_OPTIONS = [
+  "Unemployed",
+  "Accountant",
+  "Architect",
+  "Artist",
+  "Business Analyst",
+  "Chef",
+  "Consultant",
+  "Dentist",
+  "Designer",
+  "Doctor",
+  "Engineer",
+  "Entrepreneur",
+  "Financial Advisor",
+  "Graphic Designer",
+  "HR Manager",
+  "IT Professional",
+  "Journalist",
+  "Lawyer",
+  "Marketing Manager",
+  "Nurse",
+  "Pharmacist",
+  "Photographer",
+  "Physician",
+  "Project Manager",
+  "Real Estate Agent",
+  "Sales Manager",
+  "Software Developer",
+  "Teacher",
+  "Therapist",
+  "Veterinarian",
+  "Writer",
+  "Other",
+];
+
+const TOTAL_STEPS = 5;
 const CURRENT_STEP = 1;
 
 export default function Step1Basic() {
@@ -35,6 +70,10 @@ export default function Step1Basic() {
   const [maritalStatus, setMaritalStatus] = useState(data.maritalStatus);
   const [hasChildren, setHasChildren] = useState<boolean | null>(data.hasChildren);
   const [showMaritalStatusDropdown, setShowMaritalStatusDropdown] = useState(false);
+  const [education, setEducation] = useState(data.education || "");
+  const [profession, setProfession] = useState(data.profession || "");
+  const [showProfessionDropdown, setShowProfessionDropdown] = useState(false);
+  const [professionSearch, setProfessionSearch] = useState("");
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   // Height input state
@@ -77,6 +116,10 @@ export default function Step1Basic() {
       hide.remove();
     };
   }, []);
+
+  const filteredProfessions = PROFESSION_OPTIONS.filter((p) =>
+    p.toLowerCase().includes(professionSearch.toLowerCase())
+  );
 
   const formatDateForDB = (date: Date): string => {
     const year = date.getFullYear();
@@ -196,18 +239,20 @@ export default function Step1Basic() {
       alert(validationError);
       return;
     }
-    
-    setData((d) => ({ 
-      ...d, 
-      firstName: firstName.trim(), 
+
+    setData((d) => ({
+      ...d,
+      firstName: firstName.trim(),
       lastName: lastName.trim(),
       gender,
       dob: formatDateForDB(dob),
       height: height.trim(),
       maritalStatus,
       hasChildren,
+      education: education.trim(),
+      profession: profession.trim(),
     }));
-    router.push("/onboarding/step2-Religiosity");
+    router.push("/onboarding/step5-photos");
   };
 
   return (
@@ -229,7 +274,7 @@ export default function Step1Basic() {
             }}
             className="w-10 h-10 rounded-full border border-[#B8860B] items-center justify-center"
           >
-            <Ionicons name="chevron-back" size={20} color="white" />
+            <Ionicons name="chevron-back" size={20} color="#1C1208" />
           </Pressable>
 
           {/* Step Indicators - Centered */}
@@ -268,10 +313,10 @@ export default function Step1Basic() {
         <View className="px-6 pt-2 pb-4">
           {/* Header Section */}
           <View className="mb-8">
-            <Text className="text-white text-4xl font-bold mb-3 leading-tight">
-              You are in Habibi !
+            <Text className="text-[#1C1208] text-4xl font-bold mb-3 leading-tight">
+              Welcome to Ikhtari!
             </Text>
-            <Text className="text-white/80 text-xl font-medium">
+            <Text className="text-[#6B5D4F] text-xl font-medium">
               Don&apos;t worry, your information is safe and secure.
             </Text>
           </View>
@@ -281,9 +326,9 @@ export default function Step1Basic() {
             <View className="flex-row gap-3">
               <View className="flex-1">
                 <TextInput
-                  className="bg-white/5 text-white p-4 rounded-2xl border border-[#eebd2b]/40"
+                  className="bg-[#F5F0E8] text-[#1C1208] p-4 rounded-2xl border border-[#eebd2b]/40"
                   placeholder="First Name"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#BDB0A4"
                   value={firstName}
                   onChangeText={(text) => {
                     // Limit to 50 characters and allow letters, spaces, hyphens, apostrophes
@@ -297,9 +342,9 @@ export default function Step1Basic() {
               </View>
               <View className="flex-1">
                 <TextInput
-                  className="bg-white/5 text-white p-4 rounded-2xl border border-[#eebd2b]/40"
+                  className="bg-[#F5F0E8] text-[#1C1208] p-4 rounded-2xl border border-[#eebd2b]/40"
                   placeholder="Last Name"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#BDB0A4"
                   value={lastName}
                   onChangeText={(text) => {
                     // Limit to 50 characters and allow letters, spaces, hyphens, apostrophes
@@ -316,7 +361,7 @@ export default function Step1Basic() {
 
           {/* Gender Section */}
           <View className="mb-6">
-            <Text className="text-white/70 text-sm font-medium mb-3 ml-1">
+            <Text className="text-[#6B5D4F] text-sm font-medium mb-3 ml-1">
               Gender
             </Text>
             <View className="flex-row gap-3">
@@ -328,13 +373,13 @@ export default function Step1Basic() {
                   key={option.value}
                   onPress={() => setGender(option.value)}
                   className={`flex-1 px-4 py-4 rounded-2xl border ${
-                    gender === option.value 
-                      ? "bg-[#B8860B] border-[#B8860B]" 
-                      : "bg-white/10 border-white/20"
+                    gender === option.value
+                      ? "bg-[#B8860B] border-[#B8860B]"
+                      : "bg-[#F5F0E8] border-[#EDE5D5]"
                   }`}
                 >
                   <Text className={`text-center font-semibold text-lg ${
-                    gender === option.value ? "text-white" : "text-white/90"
+                    gender === option.value ? "text-white" : "text-[#1C1208]"
                   }`}>
                     {option.label}
                   </Text>
@@ -345,23 +390,23 @@ export default function Step1Basic() {
 
           {/* Date of Birth Section */}
           <View className="mb-6">
-            <Text className="text-white/70 text-sm font-medium mb-3 ml-1">
+            <Text className="text-[#6B5D4F] text-sm font-medium mb-3 ml-1">
               Date of Birth
             </Text>
             <Pressable
               onPress={() => setShowDatePicker(true)}
-              className="bg-white/5 p-4 rounded-2xl border border-[#eebd2b]/30"
+              className="bg-[#F5F0E8] p-4 rounded-2xl border border-[#eebd2b]/30"
             >
-              <Text className="text-white text-lg">
+              <Text className="text-[#1C1208] text-lg">
                 {formatDateForDisplay(dob)}
               </Text>
             </Pressable>
             {showDatePicker && (
               <View className="mt-4">
                 {Platform.OS === "ios" ? (
-                  <View className="bg-white/5 rounded-2xl border border-[#eebd2b]/30 p-4">
+                  <View className="bg-[#F5F0E8] rounded-2xl border border-[#eebd2b]/30 p-4">
                     <View className="flex-row justify-between items-center mb-4">
-                      <Text className="text-white text-lg font-semibold">Select Date</Text>
+                      <Text className="text-[#1C1208] text-lg font-semibold">Select Date</Text>
                       <Pressable onPress={() => setShowDatePicker(false)}>
                         <Text className="text-[#B8860B] text-lg font-semibold">Done</Text>
                       </Pressable>
@@ -392,15 +437,15 @@ export default function Step1Basic() {
 
           {/* Height Field */}
           <View className="mb-6">
-            <Text className="text-white/70 text-sm font-medium mb-3 ml-1">
+            <Text className="text-[#6B5D4F] text-sm font-medium mb-3 ml-1">
               Height
             </Text>
             <View className="flex-row gap-3 items-end">
               <View className="flex-1">
                 <TextInput
-                  className="bg-white/5 text-white p-4 rounded-2xl border border-[#eebd2b]/40 text-center"
+                  className="bg-[#F5F0E8] text-[#1C1208] p-4 rounded-2xl border border-[#eebd2b]/40 text-center"
                   // placeholder="5"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#BDB0A4"
                   value={feet}
                   onChangeText={(text) => {
                     // Only allow digits, max 1 digit (4-7)
@@ -413,14 +458,14 @@ export default function Step1Basic() {
                   maxLength={1}
                   style={{ fontSize: 18, fontWeight: "600" }}
                 />
-                <Text className="text-white/70 text-center mt-2 text-sm">Feet</Text>
+                <Text className="text-[#6B5D4F] text-center mt-2 text-sm">Feet</Text>
               </View>
-              <Text className="text-white/70 text-3xl font-bold mb-2">&apos;</Text>
+              <Text className="text-[#6B5D4F] text-3xl font-bold mb-2">&apos;</Text>
               <View className="flex-1">
                 <TextInput
-                  className="bg-white/5 text-white p-4 rounded-2xl border border-[#eebd2b]/40 text-center"
+                  className="bg-[#F5F0E8] text-[#1C1208] p-4 rounded-2xl border border-[#eebd2b]/40 text-center"
                   // placeholder="10"
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#BDB0A4"
                   value={inches}
                   onChangeText={(text) => {
                     // Only allow digits, max 2 digits (0-11)
@@ -433,27 +478,27 @@ export default function Step1Basic() {
                   maxLength={2}
                   style={{ fontSize: 18, fontWeight: "600" }}
                 />
-                <Text className="text-white/70 text-center mt-2 text-sm">Inches</Text>
+                <Text className="text-[#6B5D4F] text-center mt-2 text-sm">Inches</Text>
               </View>
-              <Text className="text-white/70 text-3xl font-bold mb-2">&quot;</Text>
+              <Text className="text-[#6B5D4F] text-3xl font-bold mb-2">&quot;</Text>
             </View>
           </View>
 
           {/* Marital Status Section */}
           <View className="mb-6">
-            <Text className="text-white/70 text-sm font-medium mb-3 ml-1">
+            <Text className="text-[#6B5D4F] text-sm font-medium mb-3 ml-1">
               Marital Status
             </Text>
             <Pressable
               onPress={() => setShowMaritalStatusDropdown(!showMaritalStatusDropdown)}
-              className="bg-white/5 p-4 rounded-2xl border border-[#eebd2b]/30"
+              className="bg-[#F5F0E8] p-4 rounded-2xl border border-[#eebd2b]/30"
             >
-              <Text className="text-white text-lg">
+              <Text className="text-[#1C1208] text-lg">
                 {maritalStatus ? maritalStatus.charAt(0).toUpperCase() + maritalStatus.slice(1) : "Select marital status"}
               </Text>
             </Pressable>
             {showMaritalStatusDropdown && (
-              <View className="bg-white/5 rounded-2xl border border-[#eebd2b]/30 mt-2 overflow-hidden">
+              <View className="bg-[#F5F0E8] rounded-2xl border border-[#eebd2b]/30 mt-2 overflow-hidden">
                 {(gender === "male"
                   ? ["single", "divorced", "separated"]
                   : ["single", "divorced", "widowed", "separated"]
@@ -464,11 +509,11 @@ export default function Step1Basic() {
                       setMaritalStatus(status);
                       setShowMaritalStatusDropdown(false);
                     }}
-                    className={`p-4 border-b border-white/5 ${
+                    className={`p-4 border-b border-[#EDE5D5] ${
                       maritalStatus === status ? "bg-[#B8860B]/20" : ""
                     }`}
                   >
-                    <Text className="text-white text-lg capitalize">{status}</Text>
+                    <Text className="text-[#1C1208] text-lg capitalize">{status}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -477,7 +522,7 @@ export default function Step1Basic() {
 
           {/* Children Section */}
           <View className="mb-6">
-            <Text className="text-white/70 text-sm font-medium mb-3 ml-1">
+            <Text className="text-[#6B5D4F] text-sm font-medium mb-3 ml-1">
               Do you have children?
             </Text>
             <View className="flex-row gap-3">
@@ -489,19 +534,81 @@ export default function Step1Basic() {
                   key={option.label}
                   onPress={() => setHasChildren(option.value)}
                   className={`flex-1 px-4 py-4 rounded-2xl border ${
-                    hasChildren === option.value 
-                      ? "bg-[#B8860B] border-[#B8860B]" 
-                      : "bg-white/5 border-[#eebd2b]/20"
+                    hasChildren === option.value
+                      ? "bg-[#B8860B] border-[#B8860B]"
+                      : "bg-[#F5F0E8] border-[#eebd2b]/20"
                   }`}
                 >
                   <Text className={`text-center font-semibold text-lg ${
-                    hasChildren === option.value ? "text-white" : "text-white/90"
+                    hasChildren === option.value ? "text-white" : "text-[#1C1208]"
                   }`}>
                     {option.label}
                   </Text>
                 </Pressable>
               ))}
             </View>
+          </View>
+
+          {/* Education Input */}
+          <View className="mb-6">
+            <Text className="text-[#6B5D4F] text-sm font-medium mb-3 ml-1">
+              Education (optional)
+            </Text>
+            <TextInput
+              className="bg-[#F5F0E8] text-[#1C1208] p-4 rounded-2xl border border-[#eebd2b]/40"
+              placeholder="e.g., Bachelor's in Computer Science"
+              placeholderTextColor="#BDB0A4"
+              value={education}
+              onChangeText={(text) => setEducation(text.slice(0, 100))}
+              maxLength={100}
+              style={{ fontSize: 16 }}
+            />
+          </View>
+
+          {/* Profession Dropdown */}
+          <View className="mb-6">
+            <Text className="text-[#6B5D4F] text-sm font-medium mb-3 ml-1">
+              Profession (optional)
+            </Text>
+            <Pressable
+              onPress={() => setShowProfessionDropdown(!showProfessionDropdown)}
+              className="bg-[#F5F0E8] p-4 rounded-2xl border border-[#eebd2b]/30"
+            >
+              <Text className={`text-lg ${profession ? "text-[#1C1208]" : "text-[#BDB0A4]"}`}>
+                {profession || "Select profession"}
+              </Text>
+            </Pressable>
+            {showProfessionDropdown && (
+              <View className="bg-[#F5F0E8] rounded-2xl border border-[#eebd2b]/30 mt-2 overflow-hidden max-h-80">
+                <View className="p-3 border-b border-[#eebd2b]/20">
+                  <TextInput
+                    className="bg-white text-[#1C1208] p-3 rounded-xl border border-[#eebd2b]/30"
+                    placeholder="Search profession..."
+                    placeholderTextColor="#BDB0A4"
+                    value={professionSearch}
+                    onChangeText={setProfessionSearch}
+                    style={{ fontSize: 16 }}
+                  />
+                </View>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {filteredProfessions.map((option) => (
+                    <Pressable
+                      key={option}
+                      onPress={() => {
+                        setProfession(option);
+                        setShowProfessionDropdown(false);
+                        setProfessionSearch("");
+                      }}
+                      className={`p-4 border-b border-[#EDE5D5] ${
+                        profession === option ? "bg-[#B8860B]/20" : ""
+                      }`}
+                    >
+                      <Text className="text-[#1C1208] text-lg">{option}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>

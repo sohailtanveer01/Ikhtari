@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
+import CompatibilityCard from "./CompatibilityCard";
 import { getFlagByName } from "../lib/countries";
 import { supabase } from "../lib/supabase";
 
@@ -159,6 +160,17 @@ export default function LikesProfileView({ profile }: any) {
     );
   }
 
+  // Compatibility Card (self-manages visibility: only renders if both certified)
+  if (profile.id) {
+    dataSections.push(
+      <CompatibilityCard
+        key="compatibility"
+        profileId={profile.id}
+        profileName={profile.first_name || "them"}
+      />
+    );
+  }
+
   // Religious
   if (hasReligiousInfo) {
     dataSections.push(
@@ -309,7 +321,7 @@ const getStyles = () => {
       width,
       height,
       position: "relative",
-      backgroundColor: "#000000",
+      backgroundColor: "#FDFAF5",
     },
     scroll: {
       flex: 1,
@@ -332,11 +344,11 @@ const getStyles = () => {
       marginBottom: 16,
       borderRadius: 20,
       overflow: 'hidden',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 3,
+      shadowColor: '#B8860B',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 14,
+      elevation: 5,
     },
     secondaryImage: {
       width: '100%',
@@ -358,23 +370,23 @@ const getStyles = () => {
       color: '#FFFFFF',
     },
     sectionCard: {
-      backgroundColor: "rgba(255, 255, 255, 0.08)",
+      backgroundColor: "#FFFFFF",
       borderRadius: 24,
       padding: 20,
       marginHorizontal: 20,
       marginTop: 24,
       borderWidth: 1,
-      borderColor: "rgba(255, 255, 255, 0.12)",
-      shadowColor: "#000",
+      borderColor: "#EDE5D5",
+      shadowColor: "#B8860B",
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 12,
+      shadowOpacity: 0.18,
+      shadowRadius: 14,
       elevation: 5,
     },
     sectionTitle: {
       fontSize: 12,
       fontWeight: "800",
-      color: "rgba(255, 255, 255, 0.5)",
+      color: "#9E8E7E",
       marginBottom: 16,
       textTransform: "uppercase",
       letterSpacing: 2,
@@ -391,18 +403,18 @@ const getStyles = () => {
       paddingVertical: 10,
       borderRadius: 20,
       borderWidth: 1.5,
-      borderColor: "rgba(184, 134, 11, 0.5)",
-      backgroundColor: "rgba(184, 134, 11, 0.05)",
+      borderColor: "rgba(184, 134, 11, 0.4)",
+      backgroundColor: "rgba(184, 134, 11, 0.07)",
     },
     infoChipText: {
-      color: '#FFFFFF',
+      color: '#1C1208',
       fontSize: 14,
       fontWeight: '600',
     },
     bioText: {
       fontSize: 17,
       lineHeight: 26,
-      color: "rgba(255, 255, 255, 0.95)",
+      color: "#6B5D4F",
       fontWeight: "500",
     },
     promptsContainer: {
@@ -411,16 +423,16 @@ const getStyles = () => {
       gap: 16,
     },
     promptCard: {
-      backgroundColor: "rgba(184, 134, 11, 0.08)",
+      backgroundColor: "#FFFFFF",
       borderRadius: 24,
       padding: 24,
       borderWidth: 1,
-      borderColor: "rgba(184, 134, 11, 0.25)",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.4,
-      shadowRadius: 16,
-      elevation: 8,
+      borderColor: "#EDE5D5",
+      shadowColor: "#B8860B",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.18,
+      shadowRadius: 14,
+      elevation: 5,
     },
     promptQuestion: {
       fontSize: 13,
@@ -433,7 +445,7 @@ const getStyles = () => {
     promptAnswer: {
       fontSize: 22,
       lineHeight: 30,
-      color: "#FFFFFF",
+      color: "#1C1208",
       fontWeight: "800",
     },
     placeholder: {
@@ -442,7 +454,7 @@ const getStyles = () => {
     },
     placeholderText: {
       fontSize: 80,
-      color: '#FFFFFF',
+      color: '#9E8E7E',
     },
   });
 };

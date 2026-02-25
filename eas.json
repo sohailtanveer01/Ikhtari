@@ -17,7 +17,7 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_SUPABASE_URL": "https://api.habibiswipe.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://api.ikhtari.com",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoY3lhZXp6bGt0c2ZtbXJpZ21vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwMDI1NjgsImV4cCI6MjA3OTU3ODU2OH0.oz1syb57DbUTB6OL6wWTjZqXJD9s5FbjBBNAT0teeoQ"
       }
     }

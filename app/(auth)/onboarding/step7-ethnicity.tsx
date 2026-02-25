@@ -41,8 +41,8 @@ const ETHNICITY_OPTIONS = [
   "Prefer not to say",
 ];
 
-const TOTAL_STEPS = 8;
-const CURRENT_STEP = 7;
+const TOTAL_STEPS = 5;
+const CURRENT_STEP = 4;
 
 export default function Step7Ethnicity() {
   const router = useRouter();
@@ -82,7 +82,7 @@ export default function Step7Ethnicity() {
       ethnicity: ethnicity || d.ethnicity,
       nationality: nationality || d.nationality,
     }));
-    router.push("/onboarding/step8-background");
+    router.push("/onboarding/step5-intent-questions");
   };
 
   const next = () => {
@@ -95,7 +95,7 @@ export default function Step7Ethnicity() {
       ethnicity,
       nationality,
     }));
-    router.push("/onboarding/step8-background");
+    router.push("/onboarding/step5-intent-questions");
   };
 
   return (
@@ -111,7 +111,7 @@ export default function Step7Ethnicity() {
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full border border-[#B8860B] items-center justify-center"
           >
-            <Ionicons name="chevron-back" size={20} color="white" />
+            <Ionicons name="chevron-back" size={20} color="#1C1208" />
           </Pressable>
 
           <View className="flex-row items-center gap-2 flex-1 justify-center px-4">
@@ -147,17 +147,17 @@ export default function Step7Ethnicity() {
       <View className="px-6 pt-2 pb-10">
         {/* Header Section */}
         <View className="mb-10">
-          <Text className="text-white text-4xl font-bold mb-3 leading-tight">
+          <Text className="text-[#1C1208] text-4xl font-bold mb-3 leading-tight">
             Background
           </Text>
-          <Text className="text-white/80 text-xl font-medium">
+          <Text className="text-[#6B5D4F] text-xl font-medium">
             Tell us about your heritage
           </Text>
         </View>
 
         {/* Ethnicity Dropdown */}
         <View className="mb-8">
-          <Text className="text-white/70 text-sm font-medium mb-3 ml-1">
+          <Text className="text-[#6B5D4F] text-sm font-medium mb-3 ml-1">
             Ethnicity
           </Text>
           <Pressable
@@ -165,20 +165,20 @@ export default function Step7Ethnicity() {
               setShowEthnicityDropdown(!showEthnicityDropdown);
               setShowNationalityDropdown(false);
             }}
-            className="bg-white/5 p-4 rounded-2xl border border-[#eebd2b]/30"
+            className="bg-[#F5F0E8] p-4 rounded-2xl border border-[#eebd2b]/30"
           >
-            <Text className="text-white text-lg">
+            <Text className="text-[#1C1208] text-lg">
               {ethnicity || "Select ethnicity"}
             </Text>
           </Pressable>
           {showEthnicityDropdown && (
-            <View className="bg-white/5 rounded-2xl border border-[#eebd2b]/30 mt-2 overflow-hidden max-h-64">
+            <View className="bg-[#F5F0E8] rounded-2xl border border-[#eebd2b]/30 mt-2 overflow-hidden max-h-64">
               {/* Search Input */}
               <View className="p-3 border-b border-[#eebd2b]/20">
                 <TextInput
-                  className="bg-white/5 text-white p-3 rounded-xl border border-[#eebd2b]/30"
+                  className="bg-white text-[#1C1208] p-3 rounded-xl border border-[#eebd2b]/30"
                   placeholder="Search ethnicity..."
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#BDB0A4"
                   value={ethnicitySearch}
                   onChangeText={setEthnicitySearch}
                   autoFocus={false}
@@ -193,11 +193,11 @@ export default function Step7Ethnicity() {
                       setShowEthnicityDropdown(false);
                       setEthnicitySearch("");
                     }}
-                    className={`p-4 border-b border-white/5 ${
+                    className={`p-4 border-b border-[#EDE5D5] ${
                       ethnicity === option ? "bg-[#B8860B]/20" : ""
                     }`}
                   >
-                    <Text className="text-white text-lg">{option}</Text>
+                    <Text className="text-[#1C1208] text-lg">{option}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -207,7 +207,7 @@ export default function Step7Ethnicity() {
 
         {/* Nationality Dropdown */}
         <View className="mb-10">
-          <Text className="text-white/70 text-sm font-medium mb-3 ml-1">
+          <Text className="text-[#6B5D4F] text-sm font-medium mb-3 ml-1">
             Nationality
           </Text>
           <Pressable
@@ -215,20 +215,20 @@ export default function Step7Ethnicity() {
               setShowNationalityDropdown(!showNationalityDropdown);
               setShowEthnicityDropdown(false);
             }}
-            className="bg-white/5 p-4 rounded-2xl border border-[#eebd2b]/30"
+            className="bg-[#F5F0E8] p-4 rounded-2xl border border-[#eebd2b]/30"
           >
-            <Text className="text-white text-lg">
+            <Text className="text-[#1C1208] text-lg">
               {selectedCountry ? `${countryFlag(selectedCountry.code)} ${selectedCountry.name}` : (nationality || "Select nationality")}
             </Text>
           </Pressable>
           {showNationalityDropdown && (
-            <View className="bg-white/5 rounded-2xl border border-[#eebd2b]/30 mt-2 overflow-hidden max-h-80">
+            <View className="bg-[#F5F0E8] rounded-2xl border border-[#eebd2b]/30 mt-2 overflow-hidden max-h-80">
               {/* Search Input */}
               <View className="p-3 border-b border-[#eebd2b]/20">
                 <TextInput
-                  className="bg-white/5 text-white p-3 rounded-xl border border-[#eebd2b]/30"
+                  className="bg-white text-[#1C1208] p-3 rounded-xl border border-[#eebd2b]/30"
                   placeholder="Search nationality..."
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#BDB0A4"
                   value={nationalitySearch}
                   onChangeText={setNationalitySearch}
                   autoFocus={false}
@@ -243,11 +243,11 @@ export default function Step7Ethnicity() {
                       setShowNationalityDropdown(false);
                       setNationalitySearch("");
                     }}
-                    className={`p-4 border-b border-white/5 ${
+                    className={`p-4 border-b border-[#EDE5D5] ${
                       nationality === c.name ? "bg-[#B8860B]/20" : ""
                     }`}
                   >
-                    <Text className="text-white text-lg">{countryFlag(c.code)} {c.name}</Text>
+                    <Text className="text-[#1C1208] text-lg">{countryFlag(c.code)} {c.name}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -261,10 +261,10 @@ export default function Step7Ethnicity() {
       {!keyboardVisible && (
         <View className="px-6 pb-8 pt-4">
           <Pressable
-            className="bg-white/10 p-5 rounded-2xl items-center mb-3"
+            className="bg-[#F5F0E8] p-5 rounded-2xl items-center mb-3"
             onPress={skip}
           >
-            <Text className="text-white/80 text-lg font-semibold">Skip</Text>
+            <Text className="text-[#6B5D4F] text-lg font-semibold">Skip</Text>
           </Pressable>
           <Pressable
             className="bg-[#B8860B] p-5 rounded-2xl items-center shadow-lg"

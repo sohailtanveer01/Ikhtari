@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Habibi_Swipe",
-    "slug": "Habibi_Swipe",
+    "name": "Ikhtari",
+    "slug": "Ikhtari",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "habibiswipe",
+    "scheme": "ikhtari",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

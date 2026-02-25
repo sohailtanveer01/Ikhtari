@@ -14,6 +14,8 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useUserStore } from "../../../lib/stores/userStore";
 import { supabase } from "../../../lib/supabase";
+import { MarriageFoundationsBadge } from "../../../components/MarriageFoundationsBadge";
+import { useCertification } from "../../../lib/hooks/useCertification";
 
 async function uploadPhoto(uri: string, userId: string) {
   const ext = uri.split(".").pop() || "jpg";
@@ -369,6 +371,7 @@ export default function ProfileScreen() {
   const [layoutVersion, setLayoutVersion] = useState(0); // Track layout changes to trigger re-renders
   const [reorderCount, setReorderCount] = useState(0); // Track reorders to force component remount
   const previousPhotosRef = useRef<string>(""); // Track previous photos array to detect reorders
+  const { data: certification } = useCertification();
 
   useEffect(() => {
     loadProfile();
@@ -710,7 +713,7 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
         <ActivityIndicator size="large" color="#B8860B" />
       </View>
     );
@@ -722,7 +725,7 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-black"
+      className="flex-1 bg-[#FDFAF5]"
       showsVerticalScrollIndicator={false}
       // Allows scrolling past the last item (and above the tab bar)
       contentContainerStyle={{ paddingBottom: insets.bottom + 60 }}
@@ -755,12 +758,12 @@ export default function ProfileScreen() {
                   placeholder={{ blurhash: "LKO2?U%2Tw=w]~RBVZRi};RPxuwH" }}
                 />
               ) : (
-                <View className="w-32 h-32 rounded-full bg-white/10 items-center justify-center">
+                <View className="w-32 h-32 rounded-full bg-[#F5F0E8] items-center justify-center">
                   <Ionicons name="person" size={48} color="#9CA3AF" />
                 </View>
               )}
               {/* Completion Percentage Badge */}
-              <View className="absolute -bottom-2 bg-[#B8860B] px-3 py-1 rounded-full border-2 border-black">
+              <View className="absolute -bottom-2 bg-[#B8860B] px-3 py-1 rounded-full border-2 border-[#FDFAF5]">
                 <Text className="text-white text-xs font-bold">
                   {completionPercentage}%
                 </Text>
@@ -768,10 +771,17 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* Name */}
-          <Text className="text-white text-3xl font-bold mb-4">
-            {fullName}
-          </Text>
+          {/* Name with Badge */}
+          <View className="flex-row items-center justify-center mb-4">
+            <Text className="text-[#1C1208] text-3xl font-bold">
+              {fullName}
+            </Text>
+            {certification?.is_certified && certification?.show_badge && (
+              <View className="ml-3">
+                <MarriageFoundationsBadge size="small" showText={false} />
+              </View>
+            )}
+          </View>
 
           {/* Action Buttons */}
           <View className="flex-row gap-3 items-center justify-center">
@@ -818,6 +828,35 @@ export default function ProfileScreen() {
               </View>
             </Pressable>
           </View> */}
+        </View>
+
+        {/* Marriage Foundations Course Section */}
+        <View className="mb-6 px-0">
+          <Pressable
+            onPress={() => router.push("/(main)/profile/marriage-foundations")}
+            className="bg-white rounded-2xl p-4 border border-[#EDE5D5]"
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1">
+                <View className="flex-row items-center mb-2">
+                  <Ionicons name="school" size={24} color="#B8860B" />
+                  <Text className="text-[#1C1208] text-lg font-semibold ml-2">
+                    Marriage Foundations Course
+                  </Text>
+                </View>
+                <Text className="text-[#6B5D4F] text-sm mb-2">
+                  Learn Islamic marriage values and earn certification
+                </Text>
+                {certification && (
+                  <Text className="text-[#B8860B] text-xs">
+                    {certification.completion_percentage}% Complete
+                    {certification.is_certified && " • Certified"}
+                  </Text>
+                )}
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />
+            </View>
+          </Pressable>
         </View>
 
         {/* Photos Section */}

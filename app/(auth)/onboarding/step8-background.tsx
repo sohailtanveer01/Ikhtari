@@ -40,8 +40,8 @@ const PROFESSION_OPTIONS = [
   "Other",
 ];
 
-const TOTAL_STEPS = 8;
-const CURRENT_STEP = 8;
+const TOTAL_STEPS = 9;
+const CURRENT_STEP = 9;
 
 export default function Step8Background() {
   const router = useRouter();
@@ -129,7 +129,7 @@ export default function Step8Background() {
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full border border-[#B8860B] items-center justify-center"
           >
-            <Ionicons name="chevron-back" size={20} color="white" />
+            <Ionicons name="chevron-back" size={20} color="#1C1208" />
           </Pressable>
 
           <View className="flex-row items-center gap-2 flex-1 justify-center px-4">
@@ -165,24 +165,24 @@ export default function Step8Background() {
       <View className="px-6 pt-2 pb-10">
         {/* Header Section */}
         <View className="mb-10">
-          <Text className="text-white text-4xl font-bold mb-3 leading-tight">
+          <Text className="text-[#1C1208] text-4xl font-bold mb-3 leading-tight">
             One Last Thing...
           </Text>
-         
-          <Text className="text-white/60 text-sm">
+
+          <Text className="text-[#6B5D4F] text-sm">
             Share your education, profession, and a bit about yourself
           </Text>
         </View>
 
         {/* Education Input */}
         <View className="mb-8">
-          <Text className="text-white/70 text-sm font-medium mb-3 ml-1">
+          <Text className="text-[#6B5D4F] text-sm font-medium mb-3 ml-1">
             Education
           </Text>
           <TextInput
-            className="bg-white/5 text-white p-4 rounded-2xl border border-[#eebd2b]/40 text-lg"
+            className="bg-[#F5F0E8] text-[#1C1208] p-4 rounded-2xl border border-[#eebd2b]/40 text-lg"
             placeholder="e.g., Bachelor's in Computer Science"
-            placeholderTextColor="#999"
+            placeholderTextColor="#BDB0A4"
             value={education}
             onChangeText={(text) => {
               // Limit to 100 characters
@@ -192,7 +192,7 @@ export default function Step8Background() {
             maxLength={100}
           />
           {education.length > 0 && (
-            <Text className="text-white/50 text-xs mt-2 ml-1">
+            <Text className="text-[#9E8E7E] text-xs mt-2 ml-1">
               {education.length}/100 characters
             </Text>
           )}
@@ -200,27 +200,27 @@ export default function Step8Background() {
 
         {/* Profession Dropdown */}
         <View className="mb-8">
-          <Text className="text-white/70 text-sm font-medium mb-3 ml-1">
+          <Text className="text-[#6B5D4F] text-sm font-medium mb-3 ml-1">
             Profession
           </Text>
           <Pressable
             onPress={() => {
               setShowProfessionDropdown(!showProfessionDropdown);
             }}
-            className="bg-white/5 p-4 rounded-2xl border border-[#eebd2b]/30"
+            className="bg-[#F5F0E8] p-4 rounded-2xl border border-[#eebd2b]/30"
           >
-            <Text className="text-white text-lg">
+            <Text className="text-[#1C1208] text-lg">
               {profession || "Select profession"}
             </Text>
           </Pressable>
           {showProfessionDropdown && (
-            <View className="bg-white/5 rounded-2xl border border-[#eebd2b]/30 mt-2 overflow-hidden max-h-80">
+            <View className="bg-[#F5F0E8] rounded-2xl border border-[#eebd2b]/30 mt-2 overflow-hidden max-h-80">
               {/* Search Input */}
               <View className="p-3 border-b border-[#eebd2b]/20">
                 <TextInput
-                  className="bg-white/5 text-white p-3 rounded-xl border border-[#eebd2b]/30"
+                  className="bg-white text-[#1C1208] p-3 rounded-xl border border-[#eebd2b]/30"
                   placeholder="Search profession..."
-                  placeholderTextColor="#999"
+                  placeholderTextColor="#BDB0A4"
                   value={professionSearch}
                   onChangeText={setProfessionSearch}
                   autoFocus={false}
@@ -235,11 +235,11 @@ export default function Step8Background() {
                       setShowProfessionDropdown(false);
                       setProfessionSearch("");
                     }}
-                    className={`p-4 border-b border-white/5 ${
+                    className={`p-4 border-b border-[#EDE5D5] ${
                       profession === option ? "bg-[#B8860B]/20" : ""
                     }`}
                   >
-                    <Text className="text-white text-lg">{option}</Text>
+                    <Text className="text-[#1C1208] text-lg">{option}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -249,13 +249,13 @@ export default function Step8Background() {
 
         {/* Bio Input */}
         <View className="mb-10">
-          <Text className="text-white/70 text-sm font-medium mb-3 ml-1">
+          <Text className="text-[#6B5D4F] text-sm font-medium mb-3 ml-1">
             Bio
           </Text>
           <TextInput
-            className="bg-white/5 text-white p-4 rounded-2xl border border-[#eebd2b]/40 text-lg"
+            className="bg-[#F5F0E8] text-[#1C1208] p-4 rounded-2xl border border-[#eebd2b]/40 text-lg"
             placeholder="Tell us about yourself..."
-            placeholderTextColor="#999"
+            placeholderTextColor="#BDB0A4"
             value={bio}
             onChangeText={(text) => {
               // Limit to 1000 characters
@@ -267,7 +267,7 @@ export default function Step8Background() {
             maxLength={1000}
             style={{ minHeight: 120 }}
           />
-          <Text className="text-white/50 text-xs mt-2 ml-1">
+          <Text className="text-[#9E8E7E] text-xs mt-2 ml-1">
             {bio.length}/1000 characters
           </Text>
         </View>
@@ -278,10 +278,10 @@ export default function Step8Background() {
       {!keyboardVisible && (
         <View className="px-6 pb-8 pt-4">
           <Pressable
-            className="bg-white/10 p-5 rounded-2xl items-center mb-3"
+            className="bg-[#F5F0E8] p-5 rounded-2xl items-center mb-3"
             onPress={skip}
           >
-            <Text className="text-white/80 text-lg font-semibold">Skip</Text>
+            <Text className="text-[#6B5D4F] text-lg font-semibold">Skip</Text>
           </Pressable>
           <Pressable
             className="bg-[#B8860B] p-5 rounded-2xl items-center shadow-lg"

@@ -94,24 +94,24 @@ export default function HeightFilterScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
-        <ActivityIndicator size="large" color="#fff" />
-        <Text className="text-white/70 mt-4">Loading preferences...</Text>
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
+        <ActivityIndicator size="large" color="#1C1208" />
+        <Text className="text-[#9E8E7E] mt-4">Loading preferences...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-[#FDFAF5]">
       {/* Header */}
-      <View className="pt-14 px-6 pb-6 flex-row items-center justify-between border-b border-white/10">
+      <View className="pt-14 px-6 pb-6 flex-row items-center justify-between border-b border-[#EDE5D5]">
         <Pressable 
           onPress={() => router.push("/(main)/swipe/filters/")}
           className="px-2 py-1"
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={24} color="#1C1208" />
         </Pressable>
-        <Text className="text-white text-2xl font-bold">Height</Text>
+        <Text className="text-[#1C1208] text-2xl font-bold">Height</Text>
         <Pressable 
           onPress={async () => {
             setHeightMinCm(null);
@@ -144,7 +144,7 @@ export default function HeightFilterScreen() {
           }}
           className="px-2 py-1"
         >
-          <Text className="text-white/70 text-base font-medium">Clear</Text>
+          <Text className="text-[#6B5D4F] text-base font-medium">Clear</Text>
         </Pressable>
       </View>
 
@@ -155,10 +155,10 @@ export default function HeightFilterScreen() {
       >
         {/* Height Filter */}
         <View className="mb-8">
-          <Text className="text-white text-lg font-bold mb-4">Minimum Height</Text>
-          <View className="bg-white/5 rounded-2xl p-5 border border-white/10">
+          <Text className="text-[#1C1208] text-lg font-bold mb-4">Minimum Height</Text>
+          <View className="bg-white rounded-2xl p-5 border border-[#EDE5D5]">
             <View>
-              <Text className="text-white/70 text-sm mb-2">Minimum Height (cm)</Text>
+              <Text className="text-[#6B5D4F] text-sm mb-2">Minimum Height (cm)</Text>
               <View className="flex-row items-center gap-4">
                 <Slider
                   style={{ flex: 1, height: 40 }}
@@ -171,13 +171,13 @@ export default function HeightFilterScreen() {
                   maximumTrackTintColor="#ffffff33"
                   thumbTintColor="#B8860B"
                 />
-                <Text className="text-white font-bold text-lg w-16 text-right">
+                <Text className="text-[#1C1208] font-bold text-lg w-16 text-right">
                   {heightMinCm || MIN_HEIGHT_CM} cm
                 </Text>
               </View>
             </View>
             <Pressable
-              className="mt-4 bg-white/10 p-3 rounded-xl"
+              className="mt-4 bg-[#F5F0E8] p-3 rounded-xl"
               onPress={async () => {
                 setHeightMinCm(null);
                 // Save cleared values
@@ -208,7 +208,7 @@ export default function HeightFilterScreen() {
                 }
               }}
             >
-              <Text className="text-white/70 text-center font-medium">Clear</Text>
+              <Text className="text-[#6B5D4F] text-center font-medium">Clear</Text>
             </Pressable>
           </View>
         </View>
@@ -221,7 +221,7 @@ export default function HeightFilterScreen() {
           style={styles.saveButton}
         >
           {saving ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color="#1C1208" />
           ) : (
             <Text className="text-white font-bold text-lg">Save</Text>
           )}

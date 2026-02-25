@@ -188,7 +188,7 @@ export default function DraggablePhoto({
             onPress={onPress}
             onLongPress={onLongPress}
             disabled={Boolean(uploading || isDragging || (photo && photo.trim() !== ""))}
-            className="aspect-square rounded-2xl border-2 border-dashed border-white/30 bg-white/5 items-center justify-center overflow-hidden"
+            className="aspect-square rounded-2xl border-2 border-dashed border-[#EDE5D5] bg-[#F5F0E8] items-center justify-center overflow-hidden"
           >
             {photo && photo.trim() !== "" ? (
               <View className="w-full h-full relative">

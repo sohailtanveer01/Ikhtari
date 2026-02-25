@@ -3,6 +3,16 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { supabase } from "../../../lib/supabase";
+import { useCertification } from "../../../lib/hooks/useCertification";
+
+interface ChaperoneStatus {
+  my_chaperone: {
+    status: "pending" | "active" | "revoked";
+    invite_email: string;
+    chaperone_profile?: { first_name: string | null; last_name: string | null; name: string | null };
+  } | null;
+  wardships: { id: string; status: string }[];
+}
 
 interface SettingsItemProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -17,17 +27,17 @@ function SettingsItem({ icon, title, subtitle, onPress, showChevron = true, dang
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center py-4 px-4 bg-white/5 rounded-2xl mb-3"
+      className="flex-row items-center py-4 px-4 bg-white rounded-2xl mb-3 border border-[#EDE5D5]"
     >
       <View className={`w-10 h-10 rounded-full items-center justify-center ${danger ? 'bg-red-500/20' : 'bg-[#B8860B]/20'}`}>
         <Ionicons name={icon} size={20} color={danger ? "#EF4444" : "#B8860B"} />
       </View>
       <View className="flex-1 ml-3">
-        <Text className={`text-base font-medium ${danger ? 'text-red-500' : 'text-white'}`}>
+        <Text className={`text-base font-medium ${danger ? 'text-red-500' : 'text-[#1C1208]'}`}>
           {title}
         </Text>
         {subtitle && (
-          <Text className="text-gray-400 text-sm mt-0.5">{subtitle}</Text>
+          <Text className="text-[#9E8E7E] text-sm mt-0.5">{subtitle}</Text>
         )}
       </View>
       {showChevron && (
@@ -43,10 +53,52 @@ export default function SettingsScreen() {
   const [blurPhotos, setBlurPhotos] = useState(false);
   const [accountActive, setAccountActive] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [chaperoneStatus, setChaperoneStatus] = useState<ChaperoneStatus | null>(null);
+  const { data: certification } = useCertification();
 
   useEffect(() => {
     fetchSettings();
+    fetchChaperoneStatus();
   }, []);
+
+  const fetchChaperoneStatus = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data } = await supabase.functions.invoke("get-chaperone-status", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (data && !data.error) {
+        setChaperoneStatus(data);
+      }
+    } catch (error) {
+      console.error("Error fetching chaperone status:", error);
+    }
+  };
+
+  const getChaperoneSubtitle = (): string => {
+    if (!chaperoneStatus) return "No Wali linked";
+    const { my_chaperone, wardships } = chaperoneStatus;
+    const activeWardships = wardships?.filter((w) => w.status === "active") || [];
+
+    if (my_chaperone?.status === "active") {
+      const profile = my_chaperone.chaperone_profile;
+      const name = profile?.first_name
+        ? `${profile.first_name}${profile.last_name ? " " + profile.last_name : ""}`
+        : profile?.name || "Wali";
+      const wardStr = activeWardships.length > 0
+        ? ` · Wali for ${activeWardships.length}`
+        : "";
+      return `Active: ${name}${wardStr}`;
+    } else if (my_chaperone?.status === "pending") {
+      return "Pending invite";
+    } else if (activeWardships.length > 0) {
+      return `You are a Wali for ${activeWardships.length} ${activeWardships.length === 1 ? "person" : "people"}`;
+    }
+    return "No Wali linked";
+  };
 
   const fetchSettings = async () => {
     try {
@@ -207,21 +259,21 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-[#FDFAF5]">
       {/* Header */}
       <View className="flex-row items-center px-6 pt-16 pb-4">
         <Pressable
           onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-white/10 items-center justify-center"
+          className="w-10 h-10 rounded-full bg-[#F5F0E8] border border-[#EDE5D5] items-center justify-center"
         >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color="#1C1208" />
         </Pressable>
-        <Text className="text-white text-xl font-bold ml-4">Settings</Text>
+        <Text className="text-[#1C1208] text-xl font-bold ml-4">Settings</Text>
       </View>
 
       <ScrollView className="flex-1 px-6 pb-18" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
         {/* Account Section */}
-        <Text className="text-gray-400 text-sm font-medium mb-3 mt-4">ACCOUNT</Text>
+        <Text className="text-[#9E8E7E] text-sm font-medium mb-3 mt-4">ACCOUNT</Text>
 
         <SettingsItem
           icon="person-outline"
@@ -237,16 +289,23 @@ export default function SettingsScreen() {
           onPress={() => router.push("/(main)/profile/notifications")}
         />
 
+        <SettingsItem
+          icon="school-outline"
+          title="Marriage Foundations Course"
+          subtitle={certification?.is_certified ? "Certified" : `${certification?.completion_percentage || 0}% Complete`}
+          onPress={() => router.push("/(main)/profile/marriage-foundations")}
+        />
+
       
 
-        <View className="flex-row items-center justify-between py-4 px-4 bg-white/5 rounded-2xl mb-3">
+        <View className="flex-row items-center justify-between py-4 px-4 bg-white rounded-2xl mb-3 border border-[#EDE5D5]">
           <View className="flex-row items-center flex-1">
             <View className="w-10 h-10 rounded-full items-center justify-center bg-[#B8860B]/20">
               <Ionicons name="eye-off-outline" size={20} color="#B8860B" />
             </View>
             <View className="ml-3 flex-1">
-              <Text className="text-base font-medium text-white">Blur My Photos</Text>
-              <Text className="text-gray-400 text-sm mt-0.5">Your photos will be visible only to people you like</Text>
+              <Text className="text-base font-medium text-[#1C1208]">Blur My Photos</Text>
+              <Text className="text-[#9E8E7E] text-sm mt-0.5">Your photos will be visible only to people you like</Text>
             </View>
           </View>
           <Pressable
@@ -259,20 +318,30 @@ export default function SettingsScreen() {
 
 
 
+        {/* Privacy Section */}
+        <Text className="text-[#9E8E7E] text-sm font-medium mb-3 mt-6">PRIVACY</Text>
+
+        <SettingsItem
+          icon="shield-checkmark-outline"
+          title="Wali / Chaperone"
+          subtitle={getChaperoneSubtitle()}
+          onPress={() => router.push("/(main)/profile/wali-setup")}
+        />
+
         {/* Support Section */}
-        <Text className="text-gray-400 text-sm font-medium mb-3 mt-6">SUPPORT</Text>
+        <Text className="text-[#9E8E7E] text-sm font-medium mb-3 mt-6">SUPPORT</Text>
 
         <SettingsItem
           icon="help-circle-outline"
           title="Help & Support"
           subtitle="FAQ, contact us"
           onPress={async () => {
-            const url = "https://habibiswipe.com";
+            const url = "https://ikhtari.com";
             const canOpen = await Linking.canOpenURL(url);
             if (canOpen) {
               await Linking.openURL(url);
             } else {
-              Alert.alert("Error", "Unable to open website. Please visit https://habibiswipe.com");
+              Alert.alert("Error", "Unable to open website. Please visit https://ikhtari.com");
             }
           }}
         />
@@ -281,12 +350,12 @@ export default function SettingsScreen() {
           icon="document-text-outline"
           title="Terms of Service"
           onPress={async () => {
-            const url = "https://habibiswipe.com";
+            const url = "https://ikhtari.com";
             const canOpen = await Linking.canOpenURL(url);
             if (canOpen) {
               await Linking.openURL(url);
             } else {
-              Alert.alert("Error", "Unable to open Terms of Service. Please visit https://habibiswipe.com");
+              Alert.alert("Error", "Unable to open Terms of Service. Please visit https://ikhtari.com");
             }
           }}
         />
@@ -295,18 +364,18 @@ export default function SettingsScreen() {
           icon="shield-outline"
           title="Privacy Policy"
           onPress={async () => {
-            const url = "https://habibiswipe.com";
+            const url = "https://ikhtari.com";
             const canOpen = await Linking.canOpenURL(url);
             if (canOpen) {
               await Linking.openURL(url);
             } else {
-              Alert.alert("Error", "Unable to open Privacy Policy. Please visit https://habibiswipe.com");
+              Alert.alert("Error", "Unable to open Privacy Policy. Please visit https://ikhtari.com");
             }
           }}
         />
 
         {/* Danger Zone */}
-        <Text className="text-gray-400 text-sm font-medium mb-3 mt-6">DANGER ZONE</Text>
+        <Text className="text-[#9E8E7E] text-sm font-medium mb-3 mt-6">DANGER ZONE</Text>
 
         <SettingsItem
           icon="log-out-outline"
@@ -335,15 +404,15 @@ export default function SettingsScreen() {
 
         {/* App Version */}
         <View className="items-center py-8">
-          <Text className="text-gray-500 text-sm">Habibi Swipe v1.0.0</Text>
+          <Text className="text-[#BDB0A4] text-sm">Ikhtari v1.0.0</Text>
         </View>
       </ScrollView>
 
       {/* Loading Overlay */}
       {loggingOut && (
-        <View className="absolute inset-0 bg-black/50 items-center justify-center">
+        <View className="absolute inset-0 bg-[#FDFAF5]/80 items-center justify-center">
           <ActivityIndicator size="large" color="#B8860B" />
-          <Text className="text-white mt-4">Logging out...</Text>
+          <Text className="text-[#1C1208] mt-4">Logging out...</Text>
         </View>
       )}
     </View>

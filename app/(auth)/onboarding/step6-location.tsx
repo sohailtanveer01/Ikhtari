@@ -6,8 +6,8 @@ import { useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, Text, View } from "react-native";
 import { useOnboarding } from "../../../lib/onboardingStore";
 
-const TOTAL_STEPS = 8;
-const CURRENT_STEP = 6;
+const TOTAL_STEPS = 5;
+const CURRENT_STEP = 3;
 
 export default function Step6Location() {
   const router = useRouter();
@@ -69,7 +69,7 @@ export default function Step6Location() {
                 onPress={() => router.back()}
                 className="w-10 h-10 rounded-full border border-[#B8860B] items-center justify-center"
               >
-                <Ionicons name="chevron-back" size={20} color="white" />
+                <Ionicons name="chevron-back" size={20} color="#1C1208" />
               </Pressable>
 
               {/* Step Indicators - Centered */}
@@ -111,12 +111,12 @@ export default function Step6Location() {
             </View>
 
             {/* Heading */}
-            <Text className="text-white text-3xl font-bold mb-4 text-center">
+            <Text className="text-[#1C1208] text-3xl font-bold mb-4 text-center">
               Find Matches Nearby
             </Text>
 
             {/* Description */}
-            <Text className="text-white/70 text-base mb-10 text-center px-4">
+            <Text className="text-[#6B5D4F] text-base mb-10 text-center px-4">
               Enable your location to connect with people in your area and enhance your matching potential.
             </Text>
 
@@ -134,10 +134,10 @@ export default function Step6Location() {
 
               {!hasLocation && (
                 <Pressable
-                  className="bg-white/10 p-4 rounded-2xl items-center"
+                  className="bg-[#F5F0E8] p-4 rounded-2xl items-center"
                   onPress={() => router.push("/onboarding/step7-ethnicity")}
                 >
-                  <Text className="text-white/80">Skip for now</Text>
+                  <Text className="text-[#6B5D4F]">Skip for now</Text>
                 </Pressable>
               )}
             </View>

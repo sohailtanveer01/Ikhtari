@@ -110,7 +110,7 @@ export default function UnmatchesScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
         <ActivityIndicator size="large" color="#B8860B" />
       </View>
     );
@@ -118,7 +118,7 @@ export default function UnmatchesScreen() {
 
   if (error) {
     return (
-      <View className="flex-1 bg-black items-center justify-center px-4">
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center px-4">
         <Text className="text-red-500 text-center mb-4">
           Error loading unmatches: {error.message}
         </Text>
@@ -126,23 +126,23 @@ export default function UnmatchesScreen() {
           className="bg-[#B8860B] px-6 py-3 rounded-full"
           onPress={() => refetch()}
         >
-          <Text className="text-white font-semibold">Retry</Text>
+          <Text className="text-[#1C1208] font-semibold">Retry</Text>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-black pt-12">
+    <View className="flex-1 bg-[#FDFAF5] pt-12">
       {/* Header */}
       <View className="px-4 mb-4 flex-row items-center">
         <Pressable 
           onPress={() => router.back()} 
           className="mr-3"
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={24} color="#1C1208" />
         </Pressable>
-        <Text className="text-white text-2xl font-bold">Unmatches</Text>
+        <Text className="text-[#1C1208] text-2xl font-bold">Unmatches</Text>
       </View>
 
       <View className="flex-1 px-4">
@@ -151,8 +151,8 @@ export default function UnmatchesScreen() {
             <View className="mb-6">
               <Logo variant="colored" width={120} />
             </View>
-            <Text className="text-white/60 text-base">No unmatches yet</Text>
-            <Text className="text-white/50 text-sm mt-2">All your connections are active</Text>
+            <Text className="text-[#9E8E7E] text-base">No unmatches yet</Text>
+            <Text className="text-[#9E8E7E] text-sm mt-2">All your connections are active</Text>
           </View>
         ) : (
           <FlatList
@@ -180,7 +180,7 @@ export default function UnmatchesScreen() {
 
               return (
                 <Pressable
-                  className="bg-white/10 p-4 rounded-2xl mb-3 flex-row items-center border border-white/10"
+                  className="bg-white p-4 rounded-2xl mb-3 flex-row items-center border border-[#EDE5D5]"
                   onPress={() => {
                     if (item.matchId) {
                       router.push(`/(main)/chat/${item.matchId}`);
@@ -195,15 +195,15 @@ export default function UnmatchesScreen() {
                         resizeMode="cover"
                       />
                     ) : (
-                      <View className="w-16 h-16 rounded-full bg-white/10 items-center justify-center border-2 border-[#B8860B]">
-                        <Text className="text-white/60 text-2xl">👤</Text>
+                      <View className="w-16 h-16 rounded-full bg-[#F5F0E8] items-center justify-center border-2 border-[#B8860B]">
+                        <Text className="text-[#9E8E7E] text-2xl">👤</Text>
                       </View>
                     )}
                   </View>
                   <View className="flex-1">
                     <View className="flex-row items-center gap-2">
                       <Text 
-                        className="text-lg font-semibold text-white"
+                        className="text-lg font-semibold text-[#1C1208]"
                         numberOfLines={1}
                       >
                         {fullName}
@@ -223,7 +223,7 @@ export default function UnmatchesScreen() {
                         </View>
                       )}
                     </View>
-                    <Text className="text-white/60 text-sm mt-1">
+                    <Text className="text-[#9E8E7E] text-sm mt-1">
                       {isBlocked 
                         ? blockedByMe 
                           ? "You blocked this user"

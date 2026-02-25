@@ -86,7 +86,7 @@ export default function Reactivate() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#0A0A0A",
+        backgroundColor: "#FDFAF5",
     },
     gradientBase: {
         position: "absolute",
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 28,
         fontWeight: "bold",
-        color: "#FFFFFF",
+        color: "#1C1208",
         marginBottom: 12,
     },
     subtitle: {
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     buttonText: {
         fontSize: 18,
         fontWeight: "600",
-        color: "#FFFFFF",
+        color: "#1C1208",
     },
     backButton: {
         marginTop: 24,

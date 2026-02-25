@@ -181,7 +181,7 @@ export default function FiltersListScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={24} color="#1C1208" />
           </Pressable>
           <Text style={styles.headerTitle}>Filters</Text>
           <View style={{ width: 24 }} />
@@ -198,7 +198,7 @@ export default function FiltersListScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={24} color="#1C1208" />
         </Pressable>
         <Text style={styles.headerTitle}>Filters</Text>
         <Pressable
@@ -303,7 +303,7 @@ export default function FiltersListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000000",
+    backgroundColor: "#FDFAF5",
   },
   header: {
     paddingTop: 50,
@@ -313,20 +313,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.1)",
+    borderBottomColor: "#EDE5D5",
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#F5F0E8",
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: "#1C1208",
     flex: 1,
     textAlign: "center",
   },
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     minWidth: 80,
   },
   clearAllText: {
-    color: "#FFFFFF",
+    color: "#1C1208",
     fontSize: 12,
     fontWeight: "800",
     textTransform: "uppercase",
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   filterTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: "#1C1208",
     marginBottom: 4,
   },
   filterValue: {
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   loadingText: {
-    color: "#FFFFFF",
+    color: "#1C1208",
     fontSize: 16,
   },
 });

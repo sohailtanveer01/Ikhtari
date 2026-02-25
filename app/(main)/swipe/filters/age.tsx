@@ -130,21 +130,21 @@ export default function AgeFilterScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
-        <ActivityIndicator size="large" color="#fff" />
-        <Text className="text-white/70 mt-4">Loading preferences...</Text>
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
+        <ActivityIndicator size="large" color="#1C1208" />
+        <Text className="text-[#9E8E7E] mt-4">Loading preferences...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-[#FDFAF5]">
       {/* Header */}
-      <View className="pt-14 px-6 pb-6 flex-row items-center justify-between border-b border-white/10">
+      <View className="pt-14 px-6 pb-6 flex-row items-center justify-between border-b border-[#EDE5D5]">
         <Pressable onPress={() => router.push("/(main)/swipe/filters/")} className="px-2 py-1">
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={24} color="#1C1208" />
         </Pressable>
-        <Text className="text-white text-2xl font-bold">Age</Text>
+        <Text className="text-[#1C1208] text-2xl font-bold">Age</Text>
         <Pressable 
           onPress={async () => {
             setAgeMin(MIN_AGE);
@@ -178,7 +178,7 @@ export default function AgeFilterScreen() {
           }}
           className="px-2 py-1"
         >
-          <Text className="text-white/70 text-base font-medium">Clear</Text>
+          <Text className="text-[#6B5D4F] text-base font-medium">Clear</Text>
         </Pressable>
       </View>
 
@@ -192,14 +192,14 @@ export default function AgeFilterScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="mb-8">
-          <Text className="text-white text-lg font-bold mb-4">Age Range</Text>
+          <Text className="text-[#1C1208] text-lg font-bold mb-4">Age Range</Text>
 
-          <View className="bg-white/5 rounded-2xl p-5 border border-white/10">
+          <View className="bg-white rounded-2xl p-5 border border-[#EDE5D5]">
             {/* Value row */}
             <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-white font-bold text-lg">{ageMin}</Text>
-              <Text className="text-white/60 text-sm">to</Text>
-              <Text className="text-white font-bold text-lg">{ageMax}</Text>
+              <Text className="text-[#1C1208] font-bold text-lg">{ageMin}</Text>
+              <Text className="text-[#9E8E7E] text-sm">to</Text>
+              <Text className="text-[#1C1208] font-bold text-lg">{ageMax}</Text>
             </View>
 
             <RangeSlider
@@ -220,7 +220,7 @@ export default function AgeFilterScreen() {
             />
 
             <Pressable
-              className="mt-5 bg-white/10 p-3 rounded-xl"
+              className="mt-5 bg-[#F5F0E8] p-3 rounded-xl"
               onPress={async () => {
                 setAgeMin(MIN_AGE);
                 setAgeMax(MAX_AGE);
@@ -252,7 +252,7 @@ export default function AgeFilterScreen() {
                 }
               }}
             >
-              <Text className="text-white/70 text-center font-medium">
+              <Text className="text-[#6B5D4F] text-center font-medium">
                 Clear
               </Text>
             </Pressable>
@@ -266,9 +266,9 @@ export default function AgeFilterScreen() {
           style={styles.saveButton}
         >
           {saving ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color="#1C1208" />
           ) : (
-            <Text className="text-white font-bold text-lg">Save</Text>
+            <Text className="text-[#1C1208] font-bold text-lg">Save</Text>
           )}
         </Pressable>
       </ScrollView>

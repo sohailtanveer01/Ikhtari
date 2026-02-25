@@ -27,16 +27,16 @@ export default function Onboarding() {
   };
 
   return (
-    <View className="flex-1 bg-black px-6 pt-20">
+    <View className="flex-1 bg-[#FDFAF5] px-6 pt-20">
       {/* Logo at top */}
       <View className="items-center mb-6">
         <Logo variant="colored" width={120} />
       </View>
 
-      <Text className="text-white text-2xl font-bold mb-6">Create Profile</Text>
+      <Text className="text-[#1C1208] text-2xl font-bold mb-6">Create Profile</Text>
 
       <TextInput
-        className="bg-white/10 text-white p-4 rounded-2xl mb-4"
+        className="bg-white text-[#1C1208] p-4 rounded-2xl mb-4 border border-[#EDE5D5]"
         placeholder="Name"
         placeholderTextColor="#777"
         onChangeText={setName}
@@ -44,7 +44,7 @@ export default function Onboarding() {
       />
 
       <TextInput
-        className="bg-white/10 text-white p-4 rounded-2xl mb-4 h-28"
+        className="bg-white text-[#1C1208] p-4 rounded-2xl mb-4 h-28 border border-[#EDE5D5]"
         placeholder="Bio"
         placeholderTextColor="#777"
         onChangeText={setBio}
@@ -56,16 +56,16 @@ export default function Onboarding() {
         {["serious","marriage","casual"].map(i => (
           <Pressable
             key={i}
-            className={`px-4 py-2 rounded-full ${intent===i?"bg-[#B8860B]":"bg-white/10"}`}
+            className={`px-4 py-2 rounded-full ${intent===i?"bg-[#B8860B]":"bg-[#F5F0E8]"}`}
             onPress={()=>setIntent(i)}
           >
-            <Text className="text-white">{i}</Text>
+            <Text className="text-[#1C1208]">{i}</Text>
           </Pressable>
         ))}
       </View>
 
       <Pressable className="bg-[#B8860B] p-4 rounded-2xl items-center" onPress={save}>
-        <Text className="text-white font-semibold">Continue</Text>
+        <Text className="text-[#1C1208] font-semibold">Continue</Text>
       </Pressable>
     </View>
   );

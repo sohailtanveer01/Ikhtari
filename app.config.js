@@ -1,8 +1,8 @@
 export default {
     expo: {
-      name: "Habibi Swipe",
-      slug: "habibi-swipe",
-      scheme: "habibiswipe",
+      name: "Ikhtari",
+      slug: "ikhtari",
+      scheme: "ikhtari",
       orientation: "portrait", // Lock app to portrait mode only
       icon: "./assets/images/icon.png",
       // Custom notification icon (Android only - iOS uses app icon automatically)
@@ -27,18 +27,20 @@ export default {
         "expo-apple-authentication",
       ],
       ios: {
-        bundleIdentifier: "com.habibiswipe.app",
+        bundleIdentifier: "com.ikhtari.app",
         icon: "./assets/images/icon.png",
         usesIcloudStorage: true,
         // iOS automatically uses the app icon for push notifications
         // Ensure icon.png is 1024x1024 PNG (currently verified)
         infoPlist: {
           NSPhotoLibraryUsageDescription:
-            "Habibi Swipe needs access to your gallery to upload profile photos.",
+            "Ikhtari needs access to your gallery to upload profile photos.",
           NSCameraUsageDescription:
-            "Habibi Swipe needs access to your camera to take profile photos.",
+            "Ikhtari needs access to your camera to take profile photos.",
           NSMicrophoneUsageDescription:
-            "Habibi Swipe needs access to your microphone to send voice messages.",
+            "Ikhtari needs access to your microphone to send voice messages.",
+          NSLocationWhenInUseUsageDescription:
+            "Habibi Swipe needs your location to show events near you.",
           "ITSAppUsesNonExemptEncryption": false,
           // Lock iOS to portrait mode only
           UISupportedInterfaceOrientations: [
@@ -51,12 +53,13 @@ export default {
         },
       },
       android: {
-        package: "com.habibiswipe.app",
+        package: "com.ikhtari.app",
         screenOrientation: "portrait", // Lock Android to portrait mode only
         permissions: [
           "READ_EXTERNAL_STORAGE",
           "WRITE_EXTERNAL_STORAGE",
           "CAMERA",
+          "android.permission.ACCESS_FINE_LOCATION",
         ],
         // Android notification icon configuration
         icon: "./assets/images/icon.png",

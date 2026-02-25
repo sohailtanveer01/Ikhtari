@@ -12,7 +12,7 @@ function FeatureItem({ text }: { text: string }) {
       <View className="w-6 h-6 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
         <Ionicons name="checkmark" size={16} color="#B8860B" />
       </View>
-      <Text className="text-white/90 text-base">{text}</Text>
+      <Text className="text-[#1C1208] text-base">{text}</Text>
     </View>
   );
 }
@@ -51,7 +51,7 @@ export default function SubscriptionScreen() {
 
       // Check current entitlement status
       const purchaserInfo = await Purchases.getCustomerInfo();
-      const hasPremium = purchaserInfo.entitlements.active['Habibi Swipe Pro'] !== undefined;
+      const hasPremium = purchaserInfo.entitlements.active['Ikhtari Pro'] !== undefined;
 
       if (hasPremium !== data?.is_premium) {
         // Sync with DB if there's a mismatch
@@ -97,7 +97,7 @@ export default function SubscriptionScreen() {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
 
       const activeEntitlementIds = Object.keys(customerInfo.entitlements.active);
-      const hasPremium = customerInfo.entitlements.active['Habibi Swipe Pro'] !== undefined;
+      const hasPremium = customerInfo.entitlements.active['Ikhtari Pro'] !== undefined;
 
       if (hasPremium) {
         const { error } = await supabase
@@ -112,12 +112,12 @@ export default function SubscriptionScreen() {
 
         setIsPremium(true);
         setBoostCount(5);
-        Alert.alert("Success!", "Welcome to Habibi Gold! Your premium features are now active.");
+        Alert.alert("Success!", "Welcome to Ikhtari Gold! Your premium features are now active.");
       } else {
-        console.warn("Purchase completed but 'Habibi Swipe Pro' entitlement not found. Found:", activeEntitlementIds);
+        console.warn("Purchase completed but 'Ikhtari Pro' entitlement not found. Found:", activeEntitlementIds);
         Alert.alert(
           "Entitlement Mismatch",
-          `Success, but we couldn't find the "Habibi Swipe Pro" entitlement. Found: ${activeEntitlementIds.join(", ") || "none"}.`
+          `Success, but we couldn't find the "Ikhtari Pro" entitlement. Found: ${activeEntitlementIds.join(", ") || "none"}.`
         );
       }
     } catch (error: any) {
@@ -133,32 +133,32 @@ export default function SubscriptionScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
         <ActivityIndicator size="large" color="#B8860B" />
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#000000", paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: "#FDFAF5", paddingTop: insets.top }}>
       {/* Header */}
       <View className="flex-row items-center px-6 py-4">
         <Pressable
           onPress={() => router.back()}
-          className="w-10 h-10 rounded-full bg-white/10 items-center justify-center"
+          className="w-10 h-10 rounded-full bg-[#F5F0E8] items-center justify-center"
         >
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color="#1C1208" />
         </Pressable>
-        <Text className="text-white text-xl font-bold ml-4">Subscription</Text>
+        <Text className="text-[#1C1208] text-xl font-bold ml-4">Subscription</Text>
       </View>
 
       <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
         {/* Current Status */}
-        <View className="mt-6 p-6 rounded-3xl bg-white/5 border border-white/10 items-center">
+        <View className="mt-6 p-6 rounded-3xl bg-white border border-[#EDE5D5] items-center">
           <View className={`w-16 h-16 rounded-full items-center justify-center mb-4 ${isPremium ? 'bg-[#B8860B]/20' : 'bg-gray-500/20'}`}>
             <Ionicons name={isPremium ? "diamond" : "person-outline"} size={32} color={isPremium ? "#B8860B" : "#9CA3AF"} />
           </View>
-          <Text className="text-white text-2xl font-bold mb-1">
+          <Text className="text-[#1C1208] text-2xl font-bold mb-1">
             {isPremium ? "Premium Member" : "Free Member"}
           </Text>
           <Text className="text-gray-400 text-base">
@@ -175,7 +175,7 @@ export default function SubscriptionScreen() {
             <View className="p-8 rounded-[40px] bg-[#B8860B]/10 border border-[#B8860B]/30 relative overflow-hidden">
               <View className="absolute -top-10 -right-10 w-40 h-40 bg-[#B8860B]/20 rounded-full blur-3xl" />
 
-              <Text className="text-white text-3xl font-black mb-6">Habibi Gold</Text>
+              <Text className="text-[#1C1208] text-3xl font-black mb-6">Ikhtari Gold</Text>
 
               <FeatureItem text="Unlimited Likes" />
               <FeatureItem text="5 Profile Boosts per month" />
@@ -183,7 +183,7 @@ export default function SubscriptionScreen() {
               <FeatureItem text="Advanced filters" />
 
               <View className="mt-8">
-                <Text className="text-white/60 text-center text-sm mb-4">
+                <Text className="text-[#9E8E7E] text-center text-sm mb-4">
                   {currentOffering?.availablePackages?.[0]?.product?.priceString ?
                     `Starting at ${currentOffering.availablePackages[0].product.priceString} / month` :
                     "Choose your plan"}

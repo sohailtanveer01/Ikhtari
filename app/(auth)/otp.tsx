@@ -42,11 +42,11 @@ export default function OTP() {
   };
 
   return (
-    <View className="flex-1 bg-black px-6 justify-center">
-      <Text className="text-white text-xl mb-2">Enter OTP</Text>
+    <View className="flex-1 bg-[#FDFAF5] px-6 justify-center">
+      <Text className="text-[#1C1208] text-xl mb-2">Enter OTP</Text>
 
       <TextInput
-        className="bg-white/10 text-white p-4 rounded-2xl mb-4 text-lg tracking-widest"
+        className="bg-white text-[#1C1208] p-4 rounded-2xl mb-4 text-lg tracking-widest border border-[#EDE5D5]"
         placeholder="123456"
         placeholderTextColor="#777"
         onChangeText={setCode}
@@ -55,7 +55,7 @@ export default function OTP() {
       />
 
       <Pressable className="bg-[#B8860B] p-4 rounded-2xl items-center" onPress={verify}>
-        <Text className="text-white font-semibold">Verify</Text>
+        <Text className="text-[#1C1208] font-semibold">Verify</Text>
       </Pressable>
     </View>
   );

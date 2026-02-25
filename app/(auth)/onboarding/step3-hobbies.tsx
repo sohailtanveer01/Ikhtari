@@ -52,7 +52,7 @@ const HOBBIES = [
   { emoji: "🌌", name: "Astronomy" },
 ];
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 9;
 const CURRENT_STEP = 3;
 
 export default function Step4Hobbies() {
@@ -106,7 +106,7 @@ export default function Step4Hobbies() {
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full border border-[#B8860B] items-center justify-center"
           >
-            <Ionicons name="chevron-back" size={20} color="white" />
+            <Ionicons name="chevron-back" size={20} color="#1C1208" />
           </Pressable>
 
           <View className="flex-row items-center gap-2 flex-1 justify-center px-4">
@@ -142,17 +142,17 @@ export default function Step4Hobbies() {
       <View className="px-6 pt-2 pb-10">
         {/* Header Section */}
         <View className="mb-10">
-          <Text className="text-white text-4xl font-bold mb-3 leading-tight">
+          <Text className="text-[#1C1208] text-4xl font-bold mb-3 leading-tight">
             Hobbies
           </Text>
-          <Text className="text-white/80 text-xl font-medium">
+          <Text className="text-[#6B5D4F] text-xl font-medium">
             What do you love to do?
           </Text>
         </View>
 
         {/* Hobbies Grid */}
         <View className="mb-10">
-          <Text className="text-white/60 text-sm mb-3 ml-1">
+          <Text className="text-[#6B5D4F] text-sm mb-3 ml-1">
             Select up to 3 hobbies ({selectedHobbies.length}/3)
           </Text>
           <View className="flex-row flex-wrap gap-3">
@@ -168,14 +168,14 @@ export default function Step4Hobbies() {
                     isSelected
                       ? "bg-[#B8860B] border-[#B8860B]"
                       : isDisabled
-                      ? "bg-white/5 border-[#eebd2b]/10 opacity-50"
-                      : "bg-white/5 border-[#eebd2b]/20"
+                      ? "bg-[#F5F0E8] border-[#eebd2b]/10 opacity-50"
+                      : "bg-[#F5F0E8] border-[#eebd2b]/20"
                   }`}
                 >
                   <View className="flex-row items-center gap-2">
                     <Text className="text-xl">{hobby.emoji}</Text>
                     <Text className={`text-sm font-medium ${
-                      isSelected ? "text-white" : isDisabled ? "text-white/40" : "text-white/90"
+                      isSelected ? "text-white" : isDisabled ? "text-[#9E8E7E]" : "text-[#1C1208]"
                     }`}>
                       {hobby.name}
                     </Text>
@@ -192,10 +192,10 @@ export default function Step4Hobbies() {
       <View className="px-6 pb-8 pt-4">
         {!isComplete && (
           <Pressable
-            className="bg-white/10 p-5 rounded-2xl items-center mb-3"
+            className="bg-[#F5F0E8] p-5 rounded-2xl items-center mb-3"
             onPress={() => router.push("/onboarding/step4-prompts")}
           >
-            <Text className="text-white/80 text-lg font-semibold">Skip</Text>
+            <Text className="text-[#6B5D4F] text-lg font-semibold">Skip</Text>
           </Pressable>
         )}
         <Pressable

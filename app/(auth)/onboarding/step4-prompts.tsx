@@ -18,7 +18,7 @@ const DEFAULT_PROMPTS = [
   "A goal or dua I'm working towards is…",
 ];
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 9;
 const CURRENT_STEP = 4;
 
 interface Prompt {
@@ -142,7 +142,7 @@ export default function Step5Prompts() {
       ...d,
       prompts: filledPrompts,
     }));
-    router.push("/onboarding/step5-photos");
+    router.push("/onboarding/step5-intent-questions");
   };
 
   return (
@@ -159,7 +159,7 @@ export default function Step5Prompts() {
               onPress={() => router.back()}
               className="w-10 h-10 rounded-full border border-[#B8860B] items-center justify-center"
             >
-              <Ionicons name="chevron-back" size={20} color="white" />
+              <Ionicons name="chevron-back" size={20} color="#1C1208" />
             </Pressable>
 
             <View className="flex-row items-center gap-2 flex-1 justify-center px-4">
@@ -200,10 +200,10 @@ export default function Step5Prompts() {
           {/* Header Section */}
           <View className="px-6 pt-2 pb-8">
             <View className="mb-10">
-              <Text className="text-white text-4xl font-bold mb-3 leading-tight">
+              <Text className="text-[#1C1208] text-4xl font-bold mb-3 leading-tight">
                 Add Your Prompts
               </Text>
-              <Text className="text-white/80 text-xl font-medium">
+              <Text className="text-[#6B5D4F] text-xl font-medium">
                 Choose up to 3 prompts and write your answers
               </Text>
             </View>
@@ -213,10 +213,10 @@ export default function Step5Prompts() {
             {/* All 3 Prompt Slots */}
             {prompts.map((prompt, index) => (
               <View key={prompt.id} className="mb-6">
-                <View className="bg-white/5 rounded-2xl border border-[#eebd2b]/30 p-4">
+                <View className="bg-[#F5F0E8] rounded-2xl border border-[#eebd2b]/30 p-4">
                   {/* Prompt Header with Clear Button */}
                   <View className="flex-row items-center justify-between mb-4">
-                    <Text className="text-white text-base font-bold">
+                    <Text className="text-[#1C1208] text-base font-bold">
                       Prompt {index + 1}
                     </Text>
                     {(prompt.question || prompt.answer) && (
@@ -231,30 +231,30 @@ export default function Step5Prompts() {
 
                   {/* Prompt Question Dropdown */}
                   <View className="mb-4">
-                    <Text className="text-white/70 text-sm font-medium mb-2">
+                    <Text className="text-[#6B5D4F] text-sm font-medium mb-2">
                       Select a prompt
                     </Text>
                     <Pressable
                       onPress={() => setShowDropdown(showDropdown === index ? null : index)}
-                      className="bg-white/5 p-4 rounded-xl border border-[#eebd2b]/30"
+                      className="bg-white p-4 rounded-xl border border-[#eebd2b]/30"
                     >
                       <View className="flex-row items-center justify-between">
                         <Text className={`text-base ${
-                          prompt.question ? "text-white" : "text-white/50"
+                          prompt.question ? "text-[#1C1208]" : "text-[#9E8E7E]"
                         }`}>
                           {prompt.question || DEFAULT_PROMPTS[index] || DEFAULT_PROMPTS[0]}
                         </Text>
-                        <Ionicons 
-                          name={showDropdown === index ? "chevron-up" : "chevron-down"} 
-                          size={20} 
-                          color="#eebd2b" 
+                        <Ionicons
+                          name={showDropdown === index ? "chevron-up" : "chevron-down"}
+                          size={20}
+                          color="#eebd2b"
                         />
                       </View>
                     </Pressable>
 
                     {/* Dropdown Options */}
                     {showDropdown === index && (
-                      <View className="bg-white/5 rounded-xl border border-[#eebd2b]/30 mt-2 overflow-hidden max-h-64">
+                      <View className="bg-white rounded-xl border border-[#eebd2b]/30 mt-2 overflow-hidden max-h-64">
                         <ScrollView showsVerticalScrollIndicator={true}>
                           {DEFAULT_PROMPTS.map((option) => {
                             // Check if this prompt is already used in another slot
@@ -266,9 +266,9 @@ export default function Step5Prompts() {
                                 key={option}
                                 onPress={() => updatePromptQuestion(prompt.id, option)}
                                 disabled={isUsed}
-                                className={`p-4 border-b border-white/5 ${
-                                  prompt.question === option 
-                                    ? "bg-[#B8860B]/20" 
+                                className={`p-4 border-b border-[#EDE5D5] ${
+                                  prompt.question === option
+                                    ? "bg-[#B8860B]/20"
                                     : isUsed
                                     ? "opacity-50"
                                     : ""
@@ -276,16 +276,16 @@ export default function Step5Prompts() {
                               >
                                 <View className="flex-row items-center justify-between">
                                   <Text className={`text-base ${
-                                    prompt.question === option 
-                                      ? "text-white font-semibold" 
+                                    prompt.question === option
+                                      ? "text-[#1C1208] font-semibold"
                                       : isUsed
-                                      ? "text-white/40"
-                                      : "text-white"
+                                      ? "text-[#9E8E7E]"
+                                      : "text-[#1C1208]"
                                   }`}>
                                     {option}
                                   </Text>
                                   {isUsed && (
-                                    <Text className="text-white/40 text-xs">(Used)</Text>
+                                    <Text className="text-[#9E8E7E] text-xs">(Used)</Text>
                                   )}
                                 </View>
                               </Pressable>
@@ -299,13 +299,13 @@ export default function Step5Prompts() {
                   {/* Answer Input */}
                   {prompt.question && (
                     <View>
-                      <Text className="text-white/70 text-sm font-medium mb-2">
+                      <Text className="text-[#6B5D4F] text-sm font-medium mb-2">
                         Your answer
                       </Text>
                       <TextInput
-                        className="bg-white/5 text-white p-4 rounded-xl border border-[#eebd2b]/30 text-base"
+                        className="bg-white text-[#1C1208] p-4 rounded-xl border border-[#eebd2b]/30 text-base"
                         placeholder="Write your answer here..."
-                        placeholderTextColor="#999"
+                        placeholderTextColor="#BDB0A4"
                         value={prompt.answer}
                         onChangeText={(text) => {
                           // Limit to 500 characters
@@ -318,7 +318,7 @@ export default function Step5Prompts() {
                         maxLength={500}
                         style={{ minHeight: 100 }}
                       />
-                      <Text className="text-white/50 text-xs mt-2 ml-1">
+                      <Text className="text-[#9E8E7E] text-xs mt-2 ml-1">
                         {prompt.answer.length}/500 characters
                       </Text>
                     </View>
@@ -334,10 +334,10 @@ export default function Step5Prompts() {
           <View className="px-6 pb-8 pt-4">
             {!isComplete && (
               <Pressable
-                className="bg-white/10 p-5 rounded-2xl items-center mb-3"
+                className="bg-[#F5F0E8] p-5 rounded-2xl items-center mb-3"
                 onPress={() => router.push("/onboarding/step5-photos")}
               >
-                <Text className="text-white/80 text-lg font-semibold">Skip</Text>
+                <Text className="text-[#6B5D4F] text-lg font-semibold">Skip</Text>
               </Pressable>
             )}
             <Pressable

@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
+import { MarriageFoundationsBadge } from "./MarriageFoundationsBadge";
 
 const { width, height } = Dimensions.get("window");
 
@@ -75,10 +76,17 @@ export default function SwipeCard({ profile, onTap }: SwipeCardProps) {
       {/* Name, Age, and optional profession */}
       <View style={styles.infoContainer} pointerEvents="none">
         <View style={styles.nameContainer}>
-          <Text style={styles.nameText}>
-            {fullName}
-            {age !== null ? `, ${age}` : ""}
-          </Text>
+          <View style={styles.nameRow}>
+            <Text style={styles.nameText}>
+              {fullName}
+              {age !== null ? `, ${age}` : ""}
+            </Text>
+            {profile?.is_certified && profile?.show_badge && (
+              <View style={styles.badgeContainer}>
+                <MarriageFoundationsBadge size="small" showText={false} />
+              </View>
+            )}
+          </View>
           {profile?.is_liked_by_them && (
             <View style={styles.likedBadge}>
               <Text style={styles.likedBadgeText}>Liked you</Text>
@@ -99,7 +107,7 @@ const styles = StyleSheet.create({
   container: {
     width,
     height,
-    backgroundColor: "#000",
+    backgroundColor: "#F5F0E8",
     position: "relative",
   },
   imageContainer: {
@@ -113,7 +121,7 @@ const styles = StyleSheet.create({
   placeholder: {
     width: "100%",
     height: "100%",
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#F5F0E8",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -159,12 +167,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  badgeContainer: {
+    marginLeft: 4,
+  },
   likedBadge: {
-    backgroundColor: "#B8860B", // Gold color
+    backgroundColor: "#B8860B",
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
     marginTop: 4,
+    shadowColor: "#B8860B",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.55,
+    shadowRadius: 12,
+    elevation: 8,
   },
   likedBadgeText: {
     color: "#000",

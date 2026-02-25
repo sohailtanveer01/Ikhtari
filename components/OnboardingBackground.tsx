@@ -10,14 +10,14 @@ export default function OnboardingBackground({ children }: OnboardingBackgroundP
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={["rgba(238,189,43,0.65)", "rgba(10,10,10,0)"]}
+        colors={["rgba(184,134,11,0.18)", "rgba(253,250,245,0)"]}
         style={[styles.gradientBase, styles.gradientTopLeft]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={["rgba(10,10,10,0)", "rgba(238,189,43,0.55)"]}
+        colors={["rgba(253,250,245,0)", "rgba(184,134,11,0.12)"]}
         style={[styles.gradientBase, styles.gradientBottomRight]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -35,7 +35,7 @@ export default function OnboardingBackground({ children }: OnboardingBackgroundP
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#FDFAF5",
     position: "relative",
   },
   gradientBase: {

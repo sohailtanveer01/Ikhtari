@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://habibiswipe.com",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtari.com",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
@@ -378,6 +378,83 @@ serve(async (req) => {
       console.error("Push notify failed:", e);
     }
 
+
+    // ------------------------------------------------------------------------
+    // CHAPERONE NOTIFICATIONS: notify any active chaperones for either participant
+    // ------------------------------------------------------------------------
+    try {
+      const senderId = user.id;
+      const recipientId = match.user1 === user.id ? match.user2 : match.user1;
+      const serviceKeyChaperone = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+      if (serviceKeyChaperone) {
+        const chaperoneServiceClient = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          serviceKeyChaperone,
+          { auth: { persistSession: false } }
+        );
+
+        // Find all active chaperones for either participant
+        const { data: chaperoneLinks } = await chaperoneServiceClient
+          .from("chaperone_links")
+          .select("chaperone_id, user_id")
+          .in("user_id", [senderId, recipientId])
+          .eq("status", "active");
+
+        if (chaperoneLinks && chaperoneLinks.length > 0) {
+          // Get sender name for notification
+          const { data: senderProfile } = await chaperoneServiceClient
+            .from("users")
+            .select("first_name, last_name, name")
+            .eq("id", senderId)
+            .single();
+
+          const senderDisplayName = senderProfile?.first_name
+            ? `${senderProfile.first_name}`
+            : senderProfile?.name || "Someone";
+
+          for (const link of chaperoneLinks) {
+            if (!link.chaperone_id) continue;
+
+            // Get ward's name
+            const { data: wardProfile } = await chaperoneServiceClient
+              .from("users")
+              .select("first_name, name")
+              .eq("id", link.user_id)
+              .single();
+
+            const wardName = wardProfile?.first_name || wardProfile?.name || "Your ward";
+
+            const { data: chaperoneTokens } = await chaperoneServiceClient
+              .from("user_push_tokens")
+              .select("token")
+              .eq("user_id", link.chaperone_id)
+              .eq("revoked", false)
+              .order("last_seen_at", { ascending: false })
+              .limit(5);
+
+            const tokens = (chaperoneTokens ?? []).map((r: any) => r.token).filter(Boolean);
+
+            if (tokens.length > 0) {
+              const hasImage = message?.image_url || (mediaUrl && (mediaType === "image" || !mediaType));
+              const notifBody = hasImage
+                ? `${senderDisplayName} sent an image`
+                : content
+                ? String(content).slice(0, 80)
+                : "New message";
+
+              await sendExpoPush(tokens, {
+                title: `New message in ${wardName}'s chat`,
+                body: notifBody,
+                data: { type: "chaperone_message", chatId: matchId, wardId: link.user_id },
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Chaperone push notify failed:", e);
+    }
 
     return new Response(
       JSON.stringify({

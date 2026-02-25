@@ -124,24 +124,24 @@ export default function EthnicityFilterScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
-        <ActivityIndicator size="large" color="#fff" />
-        <Text className="text-white/70 mt-4">Loading preferences...</Text>
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
+        <ActivityIndicator size="large" color="#1C1208" />
+        <Text className="text-[#9E8E7E] mt-4">Loading preferences...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-[#FDFAF5]">
       {/* Header */}
-      <View className="pt-14 px-6 pb-6 flex-row items-center justify-between border-b border-white/10">
+      <View className="pt-14 px-6 pb-6 flex-row items-center justify-between border-b border-[#EDE5D5]">
         <Pressable 
           onPress={() => router.push("/(main)/swipe/filters/")}
           className="px-2 py-1"
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Ionicons name="arrow-back" size={24} color="#1C1208" />
         </Pressable>
-        <Text className="text-white text-2xl font-bold">Ethnicity</Text>
+        <Text className="text-[#1C1208] text-2xl font-bold">Ethnicity</Text>
         <Pressable 
           onPress={async () => {
             setSelectedEthnicities([]);
@@ -174,7 +174,7 @@ export default function EthnicityFilterScreen() {
           }}
           className="px-2 py-1"
         >
-          <Text className="text-white/70 text-base font-medium">Clear</Text>
+          <Text className="text-[#6B5D4F] text-base font-medium">Clear</Text>
         </Pressable>
       </View>
 
@@ -185,11 +185,11 @@ export default function EthnicityFilterScreen() {
       >
         {/* Ethnicity Filter */}
         <View className="mb-8">
-          <Text className="text-white text-lg font-bold mb-4">Ethnicity</Text>
+          <Text className="text-[#1C1208] text-lg font-bold mb-4">Ethnicity</Text>
           
           {/* Search Input */}
           <View className="mb-4">
-            <View className="flex-row items-center bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+            <View className="flex-row items-center bg-[#F5F0E8] border border-[#EDE5D5] rounded-xl px-4 py-3">
               <Ionicons name="search" size={20} color="#9CA3AF" style={{ marginRight: 10 }} />
               <TextInput
                 placeholder="Search ethnicity..."
@@ -211,7 +211,7 @@ export default function EthnicityFilterScreen() {
           {/* Filtered Ethnicity List */}
           <ScrollView
             style={styles.ethnicityList}
-            className="bg-white/5 rounded-2xl"
+            className="bg-white rounded-2xl"
             contentContainerStyle={{ padding: 12 }}
             showsVerticalScrollIndicator={true}
           >
@@ -223,8 +223,8 @@ export default function EthnicityFilterScreen() {
               if (filteredEthnicities.length === 0) {
                 return (
                   <View className="py-8 items-center">
-                    <Text className="text-white/50 text-base">No ethnicities found</Text>
-                    <Text className="text-white/40 text-sm mt-1">Try a different search term</Text>
+                    <Text className="text-[#9E8E7E] text-base">No ethnicities found</Text>
+                    <Text className="text-[#C9BFB5] text-sm mt-1">Try a different search term</Text>
                   </View>
                 );
               }
@@ -235,7 +235,7 @@ export default function EthnicityFilterScreen() {
                   <Pressable
                     key={ethnicity}
                     className={`p-4 rounded-xl mb-2 ${
-                      isSelected ? "bg-[#B8860B]" : "bg-white/5"
+                      isSelected ? "bg-[#B8860B]" : "bg-white"
                     }`}
                     onPress={() => {
                       if (isSelected) {
@@ -248,7 +248,7 @@ export default function EthnicityFilterScreen() {
                   >
                     <Text
                       className={`text-base ${
-                        isSelected ? "text-white font-bold" : "text-white/80 font-medium"
+                        isSelected ? "text-[#1C1208] font-bold" : "text-[#6B5D4F] font-medium"
                       }`}
                     >
                       {ethnicity}
@@ -260,7 +260,7 @@ export default function EthnicityFilterScreen() {
           </ScrollView>
           {selectedEthnicities.length > 0 && (
             <View className="mt-4 bg-[#B8860B]/20 border border-[#B8860B]/30 p-4 rounded-xl">
-              <Text className="text-white/70 text-sm font-medium mb-2">
+              <Text className="text-[#6B5D4F] text-sm font-medium mb-2">
                 Selected ({selectedEthnicities.length})
               </Text>
               <View className="flex-row flex-wrap gap-2">
@@ -282,7 +282,7 @@ export default function EthnicityFilterScreen() {
           style={styles.saveButton}
         >
           {saving ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color="#1C1208" />
           ) : (
             <Text className="text-white font-bold text-lg">Save</Text>
           )}
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: "#FFFFFF",
+    color: "#1C1208",
     padding: 0,
   },
   ethnicityList: {
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
   },
   ethnicityItem: {
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "#EDE5D5",
   },
   selectedItem: {
     shadowColor: "#B8860B",

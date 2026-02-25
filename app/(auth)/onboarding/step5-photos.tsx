@@ -32,8 +32,8 @@ async function uploadPhoto(uri: string, userId: string) {
   return data.publicUrl;
 }
 
-const TOTAL_STEPS = 8;
-const CURRENT_STEP = 5;
+const TOTAL_STEPS = 5;
+const CURRENT_STEP = 2;
 
 export default function Step5Photos() {
   const router = useRouter();
@@ -217,7 +217,7 @@ export default function Step5Photos() {
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full border border-[#B8860B] items-center justify-center"
           >
-            <Ionicons name="chevron-back" size={20} color="white" />
+            <Ionicons name="chevron-back" size={20} color="#1C1208" />
           </Pressable>
 
           <View className="flex-row items-center gap-2 flex-1 justify-center px-4">
@@ -253,13 +253,13 @@ export default function Step5Photos() {
       <View className="px-6 pt-2 pb-10">
         {/* Header Section */}
         <View className="mb-10">
-          <Text className="text-white text-4xl font-bold mb-3 leading-tight">
+          <Text className="text-[#1C1208] text-4xl font-bold mb-3 leading-tight">
             Your Photos
           </Text>
-          <Text className="text-white/80 text-xl font-medium mb-2">
+          <Text className="text-[#6B5D4F] text-xl font-medium mb-2">
             Add up to 6 photos
           </Text>
-          <Text className="text-white/60 text-sm">
+          <Text className="text-[#6B5D4F] text-sm">
             The first photo will be your main profile picture
           </Text>
         </View>

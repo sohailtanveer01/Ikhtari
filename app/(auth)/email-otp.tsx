@@ -237,7 +237,7 @@ export default function EmailOTP() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#FDFAF5",
     justifyContent: "center",
     paddingHorizontal: 24,
     position: "relative",
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: "#1C1208",
     textAlign: "center",
     marginBottom: 12,
     marginTop: 120,
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(238, 189, 43, 0.3)",
     borderRadius: 8,
-    color: "#FFFFFF",
+    color: "#1C1208",
     fontSize: 24,
     fontWeight: "bold",
     textAlign: "center",

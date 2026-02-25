@@ -25,6 +25,7 @@ type OnboardingData = {
   ethnicity: string;
   nationality: string;
   prompts: Array<{ id: string; question: string; answer: string }>; // User prompts and answers
+  intentQuestions: Array<{ question_text: string; is_from_library: boolean; library_question_id?: string; display_order: number }>;
   preferences: {
     ageMin: number;
     ageMax: number;
@@ -62,6 +63,7 @@ const defaultData: OnboardingData = {
   ethnicity: "",
   nationality: "",
   prompts: [],
+  intentQuestions: [],
   preferences: {
     ageMin: 18,
     ageMax: 50,

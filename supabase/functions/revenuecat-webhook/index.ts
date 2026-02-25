@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://habibiswipe.com",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtari.com",
   "Access-Control-Allow-Headers": "authorization, x-client-info, content-type",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
@@ -35,8 +35,8 @@ serve(async (req) => {
         let isPremium = false;
         let boostCountUpdate = undefined;
 
-        // Check for Habibi Swipe Pro entitlement
-        if (entitlement_ids && entitlement_ids.includes('Habibi Swipe Pro')) {
+        // Check for Ikhtari Pro entitlement
+        if (entitlement_ids && entitlement_ids.includes('Ikhtari Pro')) {
             isPremium = true;
         }
 

@@ -15,7 +15,7 @@ const RELIGIOUS_PRACTICE_OPTIONS = [
 const ALCOHOL_OPTIONS = ["never", "socially", "often"];
 const SMOKING_OPTIONS = ["never", "socially", "often"];
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 9;
 const CURRENT_STEP = 2;
 
 export default function Step3Religiosity() {
@@ -65,7 +65,7 @@ export default function Step3Religiosity() {
             onPress={() => router.back()}
             className="w-10 h-10 rounded-full border border-[#B8860B] items-center justify-center"
           >
-            <Ionicons name="chevron-back" size={20} color="white" />
+            <Ionicons name="chevron-back" size={20} color="#1C1208" />
           </Pressable>
 
           <View className="flex-row items-center gap-2 flex-1 justify-center px-4">
@@ -101,29 +101,29 @@ export default function Step3Religiosity() {
       <View className="px-6 pt-2 pb-10">
         {/* Header Section */}
         <View className="mb-10">
-          <Text className="text-white text-4xl font-bold mb-3 leading-tight">
+          <Text className="text-[#1C1208] text-4xl font-bold mb-3 leading-tight">
             Religiosity
           </Text>
-          <Text className="text-white/80 text-xl font-medium">
+          <Text className="text-[#6B5D4F] text-xl font-medium">
             Tell us a bit about your deen and lifestyle
           </Text>
         </View>
 
         {/* Sect Dropdown */}
         <View className="mb-8">
-          <Text className="text-white text-base font-bold mb-4">
+          <Text className="text-[#1C1208] text-base font-bold mb-4">
             Sect
           </Text>
           <Pressable
             onPress={() => setShowSectDropdown(!showSectDropdown)}
-            className="bg-white/5 p-4 rounded-2xl border border-[#eebd2b]/30"
+            className="bg-[#F5F0E8] p-4 rounded-2xl border border-[#eebd2b]/30"
           >
-            <Text className="text-white text-lg">
+            <Text className="text-[#1C1208] text-lg">
               {sect ? sect.charAt(0).toUpperCase() + sect.slice(1) : "Select sect"}
             </Text>
           </Pressable>
           {showSectDropdown && (
-            <View className="bg-white/5 rounded-2xl border border-[#eebd2b]/30 mt-2 overflow-hidden">
+            <View className="bg-[#F5F0E8] rounded-2xl border border-[#eebd2b]/30 mt-2 overflow-hidden">
               {SECT_OPTIONS.map((option) => (
                 <Pressable
                   key={option}
@@ -131,11 +131,11 @@ export default function Step3Religiosity() {
                     setSect(option);
                     setShowSectDropdown(false);
                   }}
-                  className={`p-4 border-b border-white/5 ${
+                  className={`p-4 border-b border-[#EDE5D5] ${
                     sect === option ? "bg-[#B8860B]/20" : ""
                   }`}
                 >
-                  <Text className="text-white text-lg capitalize">{option}</Text>
+                  <Text className="text-[#1C1208] text-lg capitalize">{option}</Text>
                 </Pressable>
               ))}
             </View>
@@ -144,7 +144,7 @@ export default function Step3Religiosity() {
 
         {/* Born Muslim */}
         <View className="mb-8">
-          <Text className="text-white text-base font-bold mb-4">
+          <Text className="text-[#1C1208] text-base font-bold mb-4">
             Born Muslim?
           </Text>
           <View className="flex-row gap-3">
@@ -158,11 +158,11 @@ export default function Step3Religiosity() {
                 className={`flex-1 px-4 py-4 rounded-2xl border ${
                   bornMuslim === option.value
                     ? "bg-[#B8860B] border-[#B8860B]"
-                    : "bg-white/5 border-[#eebd2b]/20"
+                    : "bg-[#F5F0E8] border-[#eebd2b]/20"
                 }`}
               >
                 <Text className={`text-center font-semibold text-lg ${
-                  bornMuslim === option.value ? "text-white" : "text-white/90"
+                  bornMuslim === option.value ? "text-white" : "text-[#1C1208]"
                 }`}>
                   {option.label}
                 </Text>
@@ -173,7 +173,7 @@ export default function Step3Religiosity() {
 
         {/* Religious Practice */}
         <View className="mb-8">
-          <Text className="text-white text-base font-bold mb-4">
+          <Text className="text-[#1C1208] text-base font-bold mb-4">
             Religious Practice
           </Text>
           <View className="flex-row gap-3 flex-wrap">
@@ -184,11 +184,11 @@ export default function Step3Religiosity() {
                 className={`px-5 py-3 rounded-full border ${
                   religiousPractice === practice
                     ? "bg-[#B8860B] border-[#B8860B]"
-                    : "bg-white/5 border-[#eebd2b]/20"
+                    : "bg-[#F5F0E8] border-[#eebd2b]/20"
                 }`}
               >
                 <Text className={`text-center capitalize font-medium ${
-                  religiousPractice === practice ? "text-white" : "text-white/90"
+                  religiousPractice === practice ? "text-white" : "text-[#1C1208]"
                 }`}>
                   {practice}
                 </Text>
@@ -199,11 +199,11 @@ export default function Step3Religiosity() {
 
         {/* Habits */}
         <View className="mb-10">
-       
+
 
           {/* Alcohol */}
           <View className="mb-6">
-            <Text className="text-white text-base font-bold mb-4">
+            <Text className="text-[#1C1208] text-base font-bold mb-4">
               Alcohol
             </Text>
             <View className="flex-row gap-3 flex-wrap">
@@ -214,11 +214,11 @@ export default function Step3Religiosity() {
                 className={`px-5 py-3 rounded-full border ${
                   alcoholHabit === option
                     ? "bg-[#B8860B] border-[#B8860B]"
-                    : "bg-white/5 border-[#eebd2b]/20"
+                    : "bg-[#F5F0E8] border-[#eebd2b]/20"
                   }`}
                 >
                   <Text className={`text-center capitalize font-medium ${
-                    alcoholHabit === option ? "text-white" : "text-white/90"
+                    alcoholHabit === option ? "text-white" : "text-[#1C1208]"
                   }`}>
                     {option}
                   </Text>
@@ -229,7 +229,7 @@ export default function Step3Religiosity() {
 
           {/* Smoking */}
           <View>
-            <Text className="text-white text-base font-bold mb-4">
+            <Text className="text-[#1C1208] text-base font-bold mb-4">
               Smoking
             </Text>
             <View className="flex-row gap-3 flex-wrap">
@@ -240,11 +240,11 @@ export default function Step3Religiosity() {
                 className={`px-5 py-3 rounded-full border ${
                   smokingHabit === option
                     ? "bg-[#B8860B] border-[#B8860B]"
-                    : "bg-white/5 border-[#eebd2b]/20"
+                    : "bg-[#F5F0E8] border-[#eebd2b]/20"
                   }`}
                 >
                   <Text className={`text-center capitalize font-medium ${
-                    smokingHabit === option ? "text-white" : "text-white/90"
+                    smokingHabit === option ? "text-white" : "text-[#1C1208]"
                   }`}>
                     {option}
                   </Text>
@@ -260,10 +260,10 @@ export default function Step3Religiosity() {
       <View className="px-6 pb-8 pt-4">
         {!isComplete && (
           <Pressable
-            className="bg-white/10 p-5 rounded-2xl items-center mb-3"
+            className="bg-[#F5F0E8] p-5 rounded-2xl items-center mb-3"
             onPress={() => router.push("/onboarding/step3-hobbies")}
           >
-            <Text className="text-white/80 text-lg font-semibold">Skip</Text>
+            <Text className="text-[#6B5D4F] text-lg font-semibold">Skip</Text>
           </Pressable>
         )}
         <Pressable

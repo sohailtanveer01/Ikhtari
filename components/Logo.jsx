@@ -14,7 +14,11 @@ export default function Logo({
   height,
   style 
 }) {
-  const logoSource = variant === 'transparent' 
+  const logoSource = variant === 'new-big-transparent'
+    ? require('../assets/Logos/new-big-transparent (1).png')
+    : variant === 'new-transparent'
+    ? require('../assets/Logos/new-transparent-logo.png')
+    : variant === 'transparent'
     ? require('../assets/Logos/transparent-logo.png')
     : require('../assets/Logos/colored-logo.png');
 

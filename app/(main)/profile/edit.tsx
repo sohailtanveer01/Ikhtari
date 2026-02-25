@@ -2,52 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import IntentQuestionsSetup from "../../../components/IntentQuestionsSetup";
 import { supabase } from "../../../lib/supabase";
-
-const HOBBIES = [
-  { emoji: "📚", name: "Reading" },
-  { emoji: "🎬", name: "Movies" },
-  { emoji: "🎵", name: "Music" },
-  { emoji: "🎮", name: "Gaming" },
-  { emoji: "⚽", name: "Sports" },
-  { emoji: "🏋️", name: "Fitness" },
-  { emoji: "🥊", name: "Boxing" },
-  { emoji: "🍳", name: "Cooking" },
-  { emoji: "✈️", name: "Travel" },
-  { emoji: "📸", name: "Photography" },
-  { emoji: "🎨", name: "Art" },
-  { emoji: "🎤", name: "Singing" },
-  { emoji: "🎹", name: "Music Instruments" },
-  { emoji: "🧘", name: "Yoga" },
-  { emoji: "🏃", name: "Running" },
-  { emoji: "🚴", name: "Cycling" },
-  { emoji: "🏊", name: "Swimming" },
-  { emoji: "🎯", name: "Archery" },
-  { emoji: "🎲", name: "Board Games" },
-  { emoji: "🧩", name: "Puzzles" },
-  { emoji: "🛍️", name: "Shopping" },
-  { emoji: "🌱", name: "Gardening" },
-  { emoji: "🐕", name: "Pets" },
-  { emoji: "✍️", name: "Writing" },
-  { emoji: "🎪", name: "Theater" },
-  { emoji: "🍷", name: "Wine Tasting" },
-  { emoji: "☕", name: "Coffee" },
-  { emoji: "🍺", name: "Craft Beer" },
-  { emoji: "🎣", name: "Fishing" },
-  { emoji: "🏔️", name: "Hiking" },
-  { emoji: "⛷️", name: "Skiing" },
-  { emoji: "🏄", name: "Surfing" },
-  { emoji: "🤿", name: "Diving" },
-  { emoji: "🎭", name: "Drama" },
-  { emoji: "💃", name: "Dancing" },
-  { emoji: "🔬", name: "Science" },
-  { emoji: "🌍", name: "Languages" },
-  { emoji: "📱", name: "Technology" },
-  { emoji: "🚗", name: "Cars" },
-  { emoji: "✈️", name: "Aviation" },
-  { emoji: "🏰", name: "History" },
-  { emoji: "🌌", name: "Astronomy" },
-];
 
 const ETHNICITY_OPTIONS = [
   "Arab",
@@ -97,26 +53,6 @@ const NATIONALITY_OPTIONS = [
   "Other",
 ];
 
-const DEFAULT_PROMPTS = [
-  "My love language is…",
-  "One thing I'm proud of…",
-  "The most spontaneous thing I've done…",
-  "A green flag about me…",
-  "A red flag about me…",
-  "My perfect weekend is…",
-  "My best habit is…",
-  "A secret talent I have…",
-  "My friends describe me as…",
-  "A dream I'm chasing…",
-];
-
-interface Prompt {
-  id: string;
-  question: string;
-  answer: string;
-  display_order: number;
-}
-
 export default function ProfileEditScreen() {
   const router = useRouter();
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -132,20 +68,12 @@ export default function ProfileEditScreen() {
   const [maritalStatus, setMaritalStatus] = useState("");
   const [hasChildren, setHasChildren] = useState<boolean | null>(null);
   const [dob, setDob] = useState("");
-  const [sect, setSect] = useState("");
-  const [bornMuslim, setBornMuslim] = useState<boolean | null>(null);
-  const [religiousPractice, setReligiousPractice] = useState("");
-  const [alcoholHabit, setAlcoholHabit] = useState("");
-  const [smokingHabit, setSmokingHabit] = useState("");
   const [education, setEducation] = useState("");
   const [profession, setProfession] = useState("");
-  const [religion, setReligion] = useState("");
-  const [bio, setBio] = useState("");
   const [ethnicity, setEthnicity] = useState("");
   const [nationality, setNationality] = useState("");
-  const [hobbies, setHobbies] = useState<string[]>([]);
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [showPromptDropdown, setShowPromptDropdown] = useState<number | null>(null);
+  const [intentQuestions, setIntentQuestions] = useState<Array<{ question_text: string; is_from_library: boolean; library_question_id?: string; display_order: number }>>([]);
+  const [savingIntentQuestions, setSavingIntentQuestions] = useState(false);
   
   // Height picker state
   const [feet, setFeet] = useState("5");
@@ -229,45 +157,20 @@ export default function ProfileEditScreen() {
       setMaritalStatus(data.marital_status || "");
       setHasChildren(data.has_children !== undefined ? data.has_children : null);
       setDob(data.dob || "");
-      setSect(data.sect || "");
-      setBornMuslim(data.born_muslim !== undefined ? data.born_muslim : null);
-      setReligiousPractice(data.religious_practice || "");
-      setAlcoholHabit(data.alcohol_habit || "");
-      setSmokingHabit(data.smoking_habit || "");
       setEducation(data.education || "");
       setProfession(data.profession || "");
-      setReligion(data.religion || "");
-      setBio(data.bio || "");
       setEthnicity(data.ethnicity || "");
       setNationality(data.nationality || "");
-      setHobbies(data.hobbies || []);
 
-      // Fetch prompts from user_prompts table
-      const { data: promptsData } = await supabase
-        .from("user_prompts")
-        .select("id, question, answer, display_order")
+      // Fetch intent questions
+      const { data: intentData } = await supabase
+        .from("intent_questions")
+        .select("question_text, is_from_library, library_question_id, display_order")
         .eq("user_id", user.id)
         .order("display_order", { ascending: true });
 
-      if (promptsData && promptsData.length > 0) {
-        // Fill remaining slots up to 3
-        const filledPrompts = [...promptsData];
-        while (filledPrompts.length < 3) {
-          filledPrompts.push({
-            id: `prompt-${filledPrompts.length}`,
-            question: "",
-            answer: "",
-            display_order: filledPrompts.length,
-          });
-        }
-        setPrompts(filledPrompts.slice(0, 3));
-      } else {
-        // Initialize with 3 empty prompt slots
-        setPrompts([
-          { id: "prompt-0", question: "", answer: "", display_order: 0 },
-          { id: "prompt-1", question: "", answer: "", display_order: 1 },
-          { id: "prompt-2", question: "", answer: "", display_order: 2 },
-        ]);
+      if (intentData) {
+        setIntentQuestions(intentData);
       }
     } catch (e: any) {
       console.error("Error loading profile:", e);
@@ -346,32 +249,11 @@ export default function ProfileEditScreen() {
         }
         break;
       
-      case 'bio':
-        const trimmedBio = bio.trim();
-        if (trimmedBio.length > 1000) {
-          return "Bio must be less than 1000 characters.";
-        }
-        break;
-      
-      case 'prompts':
-        const filledPrompts = prompts.filter((p) => p.question.trim() && p.answer.trim());
-        for (const prompt of filledPrompts) {
-          const trimmedAnswer = prompt.answer.trim();
-          if (trimmedAnswer.length > 500) {
-            return "Each prompt answer must be less than 500 characters.";
-          }
-        }
-        break;
     }
     return null;
   };
 
   const handleSave = async (overrideValues?: {
-    sect?: string;
-    bornMuslim?: boolean | null;
-    religiousPractice?: string;
-    alcoholHabit?: string;
-    smokingHabit?: string;
     ethnicity?: string;
     nationality?: string;
     maritalStatus?: string;
@@ -422,26 +304,6 @@ export default function ProfileEditScreen() {
           updatePayload.has_children = overrideValues?.hasChildren !== undefined ? overrideValues.hasChildren : hasChildren;
           break;
         
-        case 'sect':
-          updatePayload.sect = (overrideValues?.sect !== undefined ? overrideValues.sect : sect).trim();
-          break;
-        
-        case 'bornMuslim':
-          updatePayload.born_muslim = overrideValues?.bornMuslim !== undefined ? overrideValues.bornMuslim : bornMuslim;
-          break;
-        
-        case 'religiousPractice':
-          updatePayload.religious_practice = overrideValues?.religiousPractice !== undefined ? overrideValues.religiousPractice : religiousPractice;
-          break;
-        
-        case 'alcoholHabit':
-          updatePayload.alcohol_habit = overrideValues?.alcoholHabit !== undefined ? overrideValues.alcoholHabit : alcoholHabit;
-          break;
-        
-        case 'smokingHabit':
-          updatePayload.smoking_habit = overrideValues?.smokingHabit !== undefined ? overrideValues.smokingHabit : smokingHabit;
-          break;
-        
         case 'education':
           updatePayload.education = education.trim();
           break;
@@ -458,14 +320,6 @@ export default function ProfileEditScreen() {
           updatePayload.nationality = (overrideValues?.nationality !== undefined ? overrideValues.nationality : nationality).trim();
           break;
         
-        case 'hobbies':
-          updatePayload.hobbies = hobbies;
-          break;
-        
-        case 'bio':
-          updatePayload.bio = bio.trim();
-          break;
-        
         default:
           // If no specific field is being edited, include all fields (fallback)
           // This handles cases where overrideValues are used for quick saves
@@ -475,32 +329,17 @@ export default function ProfileEditScreen() {
           updatePayload.height = height.trim();
           updatePayload.marital_status = maritalStatus;
           updatePayload.has_children = hasChildren;
-          updatePayload.sect = (overrideValues?.sect !== undefined ? overrideValues.sect : sect).trim();
-          updatePayload.born_muslim = overrideValues?.bornMuslim !== undefined ? overrideValues.bornMuslim : bornMuslim;
-          updatePayload.religious_practice = overrideValues?.religiousPractice !== undefined ? overrideValues.religiousPractice : religiousPractice;
-          updatePayload.alcohol_habit = overrideValues?.alcoholHabit !== undefined ? overrideValues.alcoholHabit : alcoholHabit;
-          updatePayload.smoking_habit = overrideValues?.smokingHabit !== undefined ? overrideValues.smokingHabit : smokingHabit;
           updatePayload.education = education.trim();
           updatePayload.profession = profession.trim();
-          updatePayload.religion = religion.trim();
-          updatePayload.bio = bio.trim();
           updatePayload.ethnicity = (overrideValues?.ethnicity !== undefined ? overrideValues.ethnicity : ethnicity).trim();
           updatePayload.nationality = (overrideValues?.nationality !== undefined ? overrideValues.nationality : nationality).trim();
-          updatePayload.hobbies = hobbies;
           break;
-      }
-
-      // Prepare prompts data if editing prompts
-      let promptsData = null;
-      if (editingField === 'prompts') {
-        promptsData = prompts;
       }
 
       // Call Edge Function to update profile
       const { error } = await supabase.functions.invoke("edit-profile", {
         body: {
           updatePayload,
-          prompts: promptsData,
         },
       });
 
@@ -520,27 +359,27 @@ export default function ProfileEditScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-black items-center justify-center">
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
         <ActivityIndicator size="large" color="#B8860B" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-[#FDFAF5]">
       {/* Premium Header */}
-      <View className="pt-16 px-6 pb-6 bg-black border-b border-[#B8860B]/20">
+      <View className="pt-16 px-6 pb-6 bg-[#FDFAF5] border-b border-[#EDE5D5]">
         <View className="flex-row items-center justify-between mb-2">
           <Pressable
             onPress={() => {
               // Navigate back to profile page instead of using router.back()
               router.push("/(main)/profile");
             }}
-            className="w-10 h-10 rounded-full items-center justify-center bg-white/10 active:bg-white/20"
+            className="w-10 h-10 rounded-full items-center justify-center bg-[#F5F0E8] active:bg-[#EDE5D5]"
           >
-            <Ionicons name="chevron-back" size={24} color="#fff" />
+            <Ionicons name="chevron-back" size={24} color="#1C1208" />
           </Pressable>
-          <Text className="text-white text-2xl font-bold">Edit Profile</Text>
+          <Text className="text-[#1C1208] text-2xl font-bold">Edit Profile</Text>
           <View className="w-10" />
         </View>
         <View className="h-1 w-16 bg-[#B8860B] rounded-full self-center mt-2" />
@@ -553,38 +392,38 @@ export default function ProfileEditScreen() {
       >
         <View className="px-6 pt-6 pb-8">
           {/* About You Section */}
-          <View className="bg-white/5 rounded-3xl p-6 mb-6 border border-white/10 shadow-lg">
+          <View className="bg-white rounded-3xl p-6 mb-6 border border-[#EDE5D5] shadow-lg">
             <View className="flex-row items-center mb-6">
               <View className="w-1 h-6 bg-[#B8860B] rounded-full mr-3" />
-              <Text className="text-white text-xl font-bold">About You</Text>
+              <Text className="text-[#1C1208] text-xl font-bold">About You</Text>
             </View>
             
             {/* Name Row */}
             <Pressable
               onPress={() => setEditingField(editingField === 'name' ? null : 'name')}
-              className="flex-row items-center justify-between py-4 border-b border-white/10 active:bg-white/5 rounded-lg"
+              className="flex-row items-center justify-between py-4 border-b border-[#EDE5D5] active:bg-[#F5F0E8] rounded-lg"
             >
               <View className="flex-row items-center flex-1">
                 <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
                   <Text className="text-lg">👤</Text>
                 </View>
-                <Text className="text-white text-base font-medium">Name</Text>
+                <Text className="text-[#1C1208] text-base font-medium">Name</Text>
               </View>
               {editingField === 'name' ? (
                 <View className="items-end flex-1 ml-4">
                   <TextInput
-                    className="bg-white/10 border border-[#B8860B]/30 text-white px-4 py-2.5 rounded-xl text-right min-w-[140] mb-2 focus:border-[#B8860B]"
+                    className="bg-white border border-[#EDE5D5] text-[#1C1208] px-4 py-2.5 rounded-xl text-right min-w-[140] mb-2 focus:border-[#B8860B]"
                     placeholder="First Name"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor="#9E8E7E"
                     value={firstName}
                     onChangeText={setFirstName}
                     autoCapitalize="words"
                     autoFocus
                   />
                   <TextInput
-                    className="bg-white/10 border border-[#B8860B]/30 text-white px-4 py-2.5 rounded-xl text-right min-w-[140] focus:border-[#B8860B]"
+                    className="bg-white border border-[#EDE5D5] text-[#1C1208] px-4 py-2.5 rounded-xl text-right min-w-[140] focus:border-[#B8860B]"
                     placeholder="Last Name"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor="#9E8E7E"
                     value={lastName}
                     onChangeText={setLastName}
                     autoCapitalize="words"
@@ -592,7 +431,7 @@ export default function ProfileEditScreen() {
                 </View>
               ) : (
                 <View className="flex-row items-center">
-                  <Text className="text-white text-base mr-2 font-medium">
+                  <Text className="text-[#1C1208] text-base mr-2 font-medium">
                     {firstName && lastName ? `${firstName} ${lastName}` : firstName || lastName || "Not set"}
                   </Text>
                   <Ionicons name="chevron-forward" size={20} color="#B8860B" />
@@ -601,7 +440,7 @@ export default function ProfileEditScreen() {
             </Pressable>
 
             {/* Height Row */}
-            <View className="py-4 border-b border-white/10">
+            <View className="py-4 border-b border-[#EDE5D5]">
               <Pressable
                 onPress={() => setEditingField(editingField === 'height' ? null : 'height')}
                 className="flex-row items-center justify-between"
@@ -611,20 +450,20 @@ export default function ProfileEditScreen() {
                   <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
                     <Text className="text-lg">📏</Text>
                   </View>
-                  <Text className="text-white text-base font-medium">Height</Text>
+                  <Text className="text-[#1C1208] text-base font-medium">Height</Text>
                 </View>
                 {editingField !== 'height' && (
                   <View className="flex-row items-center">
-                    <Text className="text-white text-base mr-2 font-medium">{height || "Not set"}</Text>
+                    <Text className="text-[#1C1208] text-base mr-2 font-medium">{height || "Not set"}</Text>
                     <Ionicons name="chevron-forward" size={20} color="#B8860B" />
                   </View>
                 )}
               </Pressable>
               {editingField === 'height' && (
                 <View className="mt-4">
-                  <View className="bg-white/5 rounded-2xl border border-[#B8860B]/30 p-4">
+                  <View className="bg-[#F5F0E8] rounded-2xl border border-[#B8860B]/30 p-4">
                     <View className="flex-row justify-between items-center mb-4">
-                      <Text className="text-white text-lg font-semibold">Select Height</Text>
+                      <Text className="text-[#1C1208] text-lg font-semibold">Select Height</Text>
                       <Pressable onPress={async () => { await handleSave(); setEditingField(null); }} disabled={saving}>
                         {saving ? (
                           <ActivityIndicator color="#B8860B" size="small" />
@@ -666,7 +505,7 @@ export default function ProfileEditScreen() {
                               <Text
                                 style={{
                                   fontSize: 21,
-                                  color: '#FFFFFF',
+                                  color: '#1C1208',
                                 }}
                               >
                                 {ft}
@@ -684,14 +523,14 @@ export default function ProfileEditScreen() {
                             height: 44,
                             borderTopWidth: 0.5,
                             borderBottomWidth: 0.5,
-                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderColor: '#EDE5D5',
                             marginTop: -22,
                             pointerEvents: 'none',
                           }}
                         />
                       </View>
                       
-                      <Text style={{ fontSize: 21, color: '#FFFFFF', marginHorizontal: 8 }}>&apos;</Text>
+                      <Text style={{ fontSize: 21, color: '#1C1208', marginHorizontal: 8 }}>&apos;</Text>
                       
                       {/* Inches Picker */}
                       <View className="flex-1" style={{ height: 200 }}>
@@ -725,7 +564,7 @@ export default function ProfileEditScreen() {
                               <Text
                                 style={{
                                   fontSize: 21,
-                                  color: '#FFFFFF',
+                                  color: '#1C1208',
                                 }}
                               >
                                 {inch}
@@ -743,14 +582,14 @@ export default function ProfileEditScreen() {
                             height: 44,
                             borderTopWidth: 0.5,
                             borderBottomWidth: 0.5,
-                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderColor: '#EDE5D5',
                             marginTop: -22,
                             pointerEvents: 'none',
                           }}
                         />
                       </View>
                       
-                      <Text style={{ fontSize: 21, color: '#FFFFFF', marginLeft: 8 }}>&quot;</Text>
+                      <Text style={{ fontSize: 21, color: '#1C1208', marginLeft: 8 }}>&quot;</Text>
                     </View>
                   </View>
                 </View>
@@ -760,18 +599,18 @@ export default function ProfileEditScreen() {
             {/* Marital Status Row */}
             <Pressable
               onPress={() => setEditingField(editingField === 'maritalStatus' ? null : 'maritalStatus')}
-              className="py-4 border-b border-white/10 active:bg-white/5 rounded-lg"
+              className="py-4 border-b border-[#EDE5D5] active:bg-[#F5F0E8] rounded-lg"
             >
               <View className="flex-row items-center justify-between mb-2">
                 <View className="flex-row items-center flex-1">
                   <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
                     <Text className="text-lg">💍</Text>
                   </View>
-                  <Text className="text-white text-base font-medium">Marital Status</Text>
+                  <Text className="text-[#1C1208] text-base font-medium">Marital Status</Text>
                 </View>
                 {editingField !== 'maritalStatus' && (
                   <View className="flex-row items-center">
-                    <Text className="text-white text-base mr-2 capitalize font-medium">{maritalStatus || "Not set"}</Text>
+                    <Text className="text-[#1C1208] text-base mr-2 capitalize font-medium">{maritalStatus || "Not set"}</Text>
                     <Ionicons name="chevron-forward" size={20} color="#B8860B" />
                   </View>
                 )}
@@ -790,7 +629,7 @@ export default function ProfileEditScreen() {
                       className={`px-4 py-2 rounded-full border ${
                         maritalStatus === status 
                           ? "bg-[#B8860B] border-[#B8860B]" 
-                          : "bg-white/10 border-white/20"
+                          : "bg-[#F5F0E8] border-[#EDE5D5]"
                       }`}
                     >
                       <Text className={`text-sm capitalize font-medium ${
@@ -807,18 +646,18 @@ export default function ProfileEditScreen() {
             {/* Children Row */}
             <Pressable
               onPress={() => setEditingField(editingField === 'children' ? null : 'children')}
-              className="py-4 border-b border-white/10 active:bg-white/5 rounded-lg"
+              className="py-4 border-b border-[#EDE5D5] active:bg-[#F5F0E8] rounded-lg"
             >
               <View className="flex-row items-center justify-between mb-2">
                 <View className="flex-row items-center flex-1">
                   <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
                     <Text className="text-lg">👶</Text>
                   </View>
-                  <Text className="text-white text-base font-medium">Children</Text>
+                  <Text className="text-[#1C1208] text-base font-medium">Children</Text>
                 </View>
                 {editingField !== 'children' && (
                   <View className="flex-row items-center">
-                    <Text className="text-white text-base mr-2 font-medium">
+                    <Text className="text-[#1C1208] text-base mr-2 font-medium">
                       {hasChildren === null ? "Not set" : hasChildren ? "Yes" : "No"}
                     </Text>
                     <Ionicons name="chevron-forward" size={20} color="#B8860B" />
@@ -842,7 +681,7 @@ export default function ProfileEditScreen() {
                       className={`flex-1 px-4 py-2.5 rounded-xl border ${
                         hasChildren === option.value 
                           ? "bg-[#B8860B] border-[#B8860B]" 
-                          : "bg-white/10 border-white/20"
+                          : "bg-[#F5F0E8] border-[#EDE5D5]"
                       }`}
                     >
                       <Text className={`text-center text-sm font-semibold ${
@@ -859,26 +698,26 @@ export default function ProfileEditScreen() {
             {/* Date of Birth Row */}
             <Pressable
               onPress={() => setEditingField(editingField === 'dob' ? null : 'dob')}
-              className="flex-row items-center justify-between py-4 active:bg-white/5 rounded-lg"
+              className="flex-row items-center justify-between py-4 active:bg-[#F5F0E8] rounded-lg"
             >
               <View className="flex-row items-center flex-1">
                 <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
                   <Text className="text-lg">📅</Text>
                 </View>
-                <Text className="text-white text-base font-medium">Date of Birth</Text>
+                <Text className="text-[#1C1208] text-base font-medium">Date of Birth</Text>
               </View>
               {editingField === 'dob' ? (
                 <TextInput
-                  className="bg-white/10 border border-[#B8860B]/30 text-white px-4 py-2.5 rounded-xl text-right min-w-[140] focus:border-[#B8860B]"
+                  className="bg-white border border-[#EDE5D5] text-[#1C1208] px-4 py-2.5 rounded-xl text-right min-w-[140] focus:border-[#B8860B]"
                   placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="#9E8E7E"
                   value={dob}
                   onChangeText={setDob}
                   autoFocus
                 />
               ) : (
                 <View className="flex-row items-center">
-                  <Text className="text-white text-base mr-2 font-medium">{dob || "Not set"}</Text>
+                  <Text className="text-[#1C1208] text-base mr-2 font-medium">{dob || "Not set"}</Text>
                   <Ionicons name="chevron-forward" size={20} color="#B8860B" />
                 </View>
               )}
@@ -888,13 +727,13 @@ export default function ProfileEditScreen() {
             {(editingField === 'name' || editingField === 'dob') && (
               <View className="flex-row gap-3 mt-6">
                 <Pressable
-                  className="flex-1 bg-white/10 px-4 py-3 rounded-xl border border-white/20 active:bg-white/15"
+                  className="flex-1 bg-white px-4 py-3 rounded-xl border border-[#EDE5D5] active:bg-[#F5F0E8]"
                   onPress={() => {
                     setEditingField(null);
                     loadProfile();
                   }}
                 >
-                  <Text className="text-white font-semibold text-center">Cancel</Text>
+                  <Text className="text-[#1C1208] font-semibold text-center">Cancel</Text>
                 </Pressable>
                 <Pressable
                   className="flex-1 bg-[#B8860B] px-4 py-3 rounded-xl active:bg-[#B8860B]/90"
@@ -905,276 +744,39 @@ export default function ProfileEditScreen() {
                   disabled={saving}
                 >
                   {saving ? (
-                    <ActivityIndicator color="#fff" size="small" />
+                    <ActivityIndicator color="#1C1208" size="small" />
                   ) : (
-                    <Text className="text-white font-semibold text-center">Save</Text>
+                    <Text className="text-[#1C1208] font-semibold text-center">Save</Text>
                   )}
                 </Pressable>
               </View>
             )}
           </View>
 
-          {/* Religiosity Section */}
-          <View className="bg-white/5 rounded-3xl p-6 mb-6 border border-white/10 shadow-lg">
-            <View className="flex-row items-center mb-6">
-              <View className="w-1 h-6 bg-[#B8860B] rounded-full mr-3" />
-              <Text className="text-white text-xl font-bold">Religiosity</Text>
-            </View>
-            
-            {/* Sect Row */}
-            <Pressable
-              onPress={() => setEditingField(editingField === 'sect' ? null : 'sect')}
-              className="flex-row items-center justify-between py-4 border-b border-white/10 active:bg-white/5 rounded-lg"
-            >
-              <View className="flex-row items-center flex-1">
-                <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
-                  <Text className="text-lg">🕌</Text>
-                </View>
-                <Text className="text-white text-base font-medium">Sect</Text>
-              </View>
-              {editingField === 'sect' ? (
-                <View className="items-end flex-1 ml-4">
-                  {["sunni", "shia", "sufi", "other", "prefer not to say"].map((option) => (
-                    <Pressable
-                      key={option}
-                      onPress={async () => {
-                        setSect(option);
-                        setEditingField(null);
-                        await handleSave({ sect: option });
-                      }}
-                      className={`px-4 py-2 rounded-xl mb-2 border w-full ${
-                        sect === option 
-                          ? "bg-[#B8860B] border-[#B8860B]" 
-                          : "bg-white/10 border-white/20"
-                      }`}
-                    >
-                      <Text className={`text-sm capitalize font-medium text-center ${
-                        sect === option ? "text-white" : "text-white/90"
-                      }`}>
-                        {option}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              ) : (
-                <View className="flex-row items-center">
-                  <Text className="text-white text-base mr-2 capitalize font-medium">{sect || "Not set"}</Text>
-                  <Ionicons name="chevron-forward" size={20} color="#B8860B" />
-                </View>
-              )}
-            </Pressable>
-
-            {/* Born Muslim Row */}
-            <Pressable
-              onPress={() => setEditingField(editingField === 'bornMuslim' ? null : 'bornMuslim')}
-              className="flex-row items-center justify-between py-4 border-b border-white/10 active:bg-white/5 rounded-lg"
-            >
-              <View className="flex-row items-center flex-1">
-                <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
-                  <Text className="text-lg">🌙</Text>
-                </View>
-                <Text className="text-white text-base font-medium">Born Muslim?</Text>
-              </View>
-              {editingField === 'bornMuslim' ? (
-                <View className="flex-row gap-3 flex-1 ml-4">
-                  {[
-                    { value: true, label: "Yes" },
-                    { value: false, label: "No" },
-                  ].map((option) => (
-                    <Pressable
-                      key={option.label}
-                      onPress={async () => {
-                        setBornMuslim(option.value);
-                        setEditingField(null);
-                        await handleSave({ bornMuslim: option.value });
-                      }}
-                      className={`flex-1 px-4 py-2.5 rounded-xl border ${
-                        bornMuslim === option.value 
-                          ? "bg-[#B8860B] border-[#B8860B]" 
-                          : "bg-white/10 border-white/20"
-                      }`}
-                    >
-                      <Text className={`text-center text-sm font-semibold ${
-                        bornMuslim === option.value ? "text-white" : "text-white/90"
-                      }`}>
-                        {option.label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              ) : (
-                <View className="flex-row items-center">
-                  <Text className="text-white text-base mr-2 font-medium">
-                    {bornMuslim === true ? "Yes" : bornMuslim === false ? "No" : "Not set"}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={20} color="#B8860B" />
-                </View>
-              )}
-            </Pressable>
-
-            {/* Religious Practice Row */}
-            <Pressable
-              onPress={() => setEditingField(editingField === 'religiousPractice' ? null : 'religiousPractice')}
-              className="py-4 border-b border-white/10 active:bg-white/5 rounded-lg"
-            >
-              <View className="flex-row items-center justify-between mb-2">
-                <View className="flex-row items-center flex-1">
-                  <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
-                    <Text className="text-lg">🤲</Text>
-                  </View>
-                  <Text className="text-white text-base font-medium">Religious Practice</Text>
-                </View>
-                {editingField !== 'religiousPractice' && (
-                  <View className="flex-row items-center">
-                    <Text className="text-white text-base mr-2 capitalize font-medium">{religiousPractice || "Not set"}</Text>
-                    <Ionicons name="chevron-forward" size={20} color="#B8860B" />
-                  </View>
-                )}
-              </View>
-              {editingField === 'religiousPractice' && (
-                <View className="flex-row gap-2 flex-wrap ml-13 mt-2">
-                  {["actively practicing", "moderately practicing", "not practicing", "Prays 5 times a day"].map((option) => (
-                    <Pressable
-                      key={option}
-                      onPress={async () => {
-                        setReligiousPractice(option);
-                        setEditingField(null);
-                        await handleSave({ religiousPractice: option });
-                      }}
-                      className={`px-4 py-2 rounded-xl border ${
-                        religiousPractice === option 
-                          ? "bg-[#B8860B] border-[#B8860B]" 
-                          : "bg-white/10 border-white/20"
-                      }`}
-                    >
-                      <Text className={`text-sm capitalize font-medium ${
-                        religiousPractice === option ? "text-white" : "text-white/90"
-                      }`}>
-                        {option}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              )}
-            </Pressable>
-
-            {/* Alcohol Habit Row */}
-            <Pressable
-              onPress={() => setEditingField(editingField === 'alcoholHabit' ? null : 'alcoholHabit')}
-              className="py-4 border-b border-white/10 active:bg-white/5 rounded-lg"
-            >
-              <View className="flex-row items-center justify-between mb-2">
-                <View className="flex-row items-center flex-1">
-                  <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
-                    <Text className="text-lg">🍷</Text>
-                  </View>
-                  <Text className="text-white text-base font-medium">Alcohol</Text>
-                </View>
-                {editingField !== 'alcoholHabit' && (
-                  <View className="flex-row items-center">
-                    <Text className="text-white text-base mr-2 capitalize font-medium">{alcoholHabit || "Not set"}</Text>
-                    <Ionicons name="chevron-forward" size={20} color="#B8860B" />
-                  </View>
-                )}
-              </View>
-              {editingField === 'alcoholHabit' && (
-                <View className="flex-row gap-2 flex-wrap ml-13 mt-2">
-                  {["never", "socially", "often"].map((option) => (
-                    <Pressable
-                      key={option}
-                      onPress={async () => {
-                        setAlcoholHabit(option);
-                        setEditingField(null);
-                        await handleSave({ alcoholHabit: option });
-                      }}
-                      className={`px-4 py-2 rounded-xl border ${
-                        alcoholHabit === option 
-                          ? "bg-[#B8860B] border-[#B8860B]" 
-                          : "bg-white/10 border-white/20"
-                      }`}
-                    >
-                      <Text className={`text-sm capitalize font-medium ${
-                        alcoholHabit === option ? "text-white" : "text-white/90"
-                      }`}>
-                        {option}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              )}
-            </Pressable>
-
-            {/* Smoking Habit Row */}
-            <Pressable
-              onPress={() => setEditingField(editingField === 'smokingHabit' ? null : 'smokingHabit')}
-              className="py-4 active:bg-white/5 rounded-lg"
-            >
-              <View className="flex-row items-center justify-between mb-2">
-                <View className="flex-row items-center flex-1">
-                  <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
-                    <Text className="text-lg">🚬</Text>
-                  </View>
-                  <Text className="text-white text-base font-medium">Smoking</Text>
-                </View>
-                {editingField !== 'smokingHabit' && (
-                  <View className="flex-row items-center">
-                    <Text className="text-white text-base mr-2 capitalize font-medium">{smokingHabit || "Not set"}</Text>
-                    <Ionicons name="chevron-forward" size={20} color="#B8860B" />
-                  </View>
-                )}
-              </View>
-              {editingField === 'smokingHabit' && (
-                <View className="flex-row gap-2 flex-wrap ml-13 mt-2">
-                  {["never", "socially", "often"].map((option) => (
-                    <Pressable
-                      key={option}
-                      onPress={async () => {
-                        setSmokingHabit(option);
-                        setEditingField(null);
-                        await handleSave({ smokingHabit: option });
-                      }}
-                      className={`px-4 py-2 rounded-xl border ${
-                        smokingHabit === option 
-                          ? "bg-[#B8860B] border-[#B8860B]" 
-                          : "bg-white/10 border-white/20"
-                      }`}
-                    >
-                      <Text className={`text-sm capitalize font-medium ${
-                        smokingHabit === option ? "text-white" : "text-white/90"
-                      }`}>
-                        {option}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              )}
-            </Pressable>
-          </View>
-
           {/* Background Section */}
-          <View className="bg-white/5 rounded-3xl p-6 mb-6 border border-white/10 shadow-lg">
+          <View className="bg-white rounded-3xl p-6 mb-6 border border-[#EDE5D5] shadow-lg">
             <View className="flex-row items-center mb-6">
               <View className="w-1 h-6 bg-[#B8860B] rounded-full mr-3" />
-              <Text className="text-white text-xl font-bold">Background</Text>
+              <Text className="text-[#1C1208] text-xl font-bold">Background</Text>
             </View>
             
             {/* Education Row */}
             <Pressable
               onPress={() => setEditingField(editingField === 'education' ? null : 'education')}
-              className="flex-row items-center justify-between py-4 border-b border-white/10 active:bg-white/5 rounded-lg"
+              className="flex-row items-center justify-between py-4 border-b border-[#EDE5D5] active:bg-[#F5F0E8] rounded-lg"
             >
               <View className="flex-row items-center flex-1">
                 <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
                   <Text className="text-lg">🎓</Text>
                 </View>
-                <Text className="text-white text-base font-medium">Education</Text>
+                <Text className="text-[#1C1208] text-base font-medium">Education</Text>
               </View>
               {editingField === 'education' ? (
                 <View className="flex-1 ml-4">
                   <TextInput
-                    className="bg-white/10 border border-[#B8860B]/30 text-white px-4 py-2.5 rounded-xl text-right min-w-[140] focus:border-[#B8860B]"
+                    className="bg-white border border-[#EDE5D5] text-[#1C1208] px-4 py-2.5 rounded-xl text-right min-w-[140] focus:border-[#B8860B]"
                     placeholder="Enter education"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor="#9E8E7E"
                     value={education}
                     onChangeText={(text) => {
                       setEducation(text.slice(0, 100));
@@ -1184,14 +786,14 @@ export default function ProfileEditScreen() {
                     autoFocus
                   />
                   {education.length > 0 && (
-                    <Text className="text-white/50 text-xs mt-1 text-right">
+                    <Text className="text-[#C9BFB5] text-xs mt-1 text-right">
                       {education.length}/100 characters
                     </Text>
                   )}
                 </View>
               ) : (
                 <View className="flex-row items-center">
-                  <Text className="text-white text-base mr-2 font-medium">{education || "Not set"}</Text>
+                  <Text className="text-[#1C1208] text-base mr-2 font-medium">{education || "Not set"}</Text>
                   <Ionicons name="chevron-forward" size={20} color="#B8860B" />
                 </View>
               )}
@@ -1200,20 +802,20 @@ export default function ProfileEditScreen() {
             {/* Profession Row */}
             <Pressable
               onPress={() => setEditingField(editingField === 'profession' ? null : 'profession')}
-              className="flex-row items-center justify-between py-4 active:bg-white/5 rounded-lg"
+              className="flex-row items-center justify-between py-4 active:bg-[#F5F0E8] rounded-lg"
             >
               <View className="flex-row items-center flex-1">
                 <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
                   <Text className="text-lg">💼</Text>
                 </View>
-                <Text className="text-white text-base font-medium">Profession</Text>
+                <Text className="text-[#1C1208] text-base font-medium">Profession</Text>
               </View>
               {editingField === 'profession' ? (
                 <View className="flex-1 ml-4">
                   <TextInput
-                    className="bg-white/10 border border-[#B8860B]/30 text-white px-4 py-2.5 rounded-xl text-right min-w-[140] focus:border-[#B8860B]"
+                    className="bg-white border border-[#EDE5D5] text-[#1C1208] px-4 py-2.5 rounded-xl text-right min-w-[140] focus:border-[#B8860B]"
                     placeholder="Enter profession"
-                    placeholderTextColor="#9CA3AF"
+                    placeholderTextColor="#9E8E7E"
                     value={profession}
                     onChangeText={(text) => {
                       setProfession(text.slice(0, 100));
@@ -1223,14 +825,14 @@ export default function ProfileEditScreen() {
                     autoFocus
                   />
                   {profession.length > 0 && (
-                    <Text className="text-white/50 text-xs mt-1 text-right">
+                    <Text className="text-[#C9BFB5] text-xs mt-1 text-right">
                       {profession.length}/100 characters
                     </Text>
                   )}
                 </View>
               ) : (
                 <View className="flex-row items-center">
-                  <Text className="text-white text-base mr-2 font-medium">{profession || "Not set"}</Text>
+                  <Text className="text-[#1C1208] text-base mr-2 font-medium">{profession || "Not set"}</Text>
                   <Ionicons name="chevron-forward" size={20} color="#B8860B" />
                 </View>
               )}
@@ -1240,13 +842,13 @@ export default function ProfileEditScreen() {
             {(editingField === 'education' || editingField === 'profession') && (
               <View className="flex-row gap-3 mt-6">
                 <Pressable
-                  className="flex-1 bg-white/10 px-4 py-3 rounded-xl border border-white/20 active:bg-white/15"
+                  className="flex-1 bg-white px-4 py-3 rounded-xl border border-[#EDE5D5] active:bg-[#F5F0E8]"
                   onPress={() => {
                     setEditingField(null);
                     loadProfile();
                   }}
                 >
-                  <Text className="text-white font-semibold text-center">Cancel</Text>
+                  <Text className="text-[#1C1208] font-semibold text-center">Cancel</Text>
                 </Pressable>
                 <Pressable
                   className="flex-1 bg-[#B8860B] px-4 py-3 rounded-xl active:bg-[#B8860B]/90"
@@ -1257,9 +859,9 @@ export default function ProfileEditScreen() {
                   disabled={saving}
                 >
                   {saving ? (
-                    <ActivityIndicator color="#fff" size="small" />
+                    <ActivityIndicator color="#1C1208" size="small" />
                   ) : (
-                    <Text className="text-white font-semibold text-center">Save</Text>
+                    <Text className="text-[#1C1208] font-semibold text-center">Save</Text>
                   )}
                 </Pressable>
               </View>
@@ -1267,22 +869,22 @@ export default function ProfileEditScreen() {
           </View>
 
           {/* Ethnicity & Nationality Section */}
-          <View className="bg-white/5 rounded-3xl p-6 mb-6 border border-white/10 shadow-lg">
+          <View className="bg-white rounded-3xl p-6 mb-6 border border-[#EDE5D5] shadow-lg">
             <View className="flex-row items-center mb-6">
               <View className="w-1 h-6 bg-[#B8860B] rounded-full mr-3" />
-              <Text className="text-white text-xl font-bold">Ethnicity & Nationality</Text>
+              <Text className="text-[#1C1208] text-xl font-bold">Ethnicity & Nationality</Text>
             </View>
             
             {/* Ethnicity Row */}
             <Pressable
               onPress={() => setEditingField(editingField === 'ethnicity' ? null : 'ethnicity')}
-              className="flex-row items-center justify-between py-4 border-b border-white/10 active:bg-white/5 rounded-lg"
+              className="flex-row items-center justify-between py-4 border-b border-[#EDE5D5] active:bg-[#F5F0E8] rounded-lg"
             >
               <View className="flex-row items-center flex-1">
                 <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
                   <Text className="text-lg">🌍</Text>
                 </View>
-                <Text className="text-white text-base font-medium">Ethnicity</Text>
+                <Text className="text-[#1C1208] text-base font-medium">Ethnicity</Text>
               </View>
               {editingField === 'ethnicity' ? (
                 <ScrollView className="max-h-64 flex-1 ml-4" showsVerticalScrollIndicator={false}>
@@ -1297,7 +899,7 @@ export default function ProfileEditScreen() {
                       className={`px-4 py-2.5 rounded-xl mb-2 border ${
                         ethnicity === option 
                           ? "bg-[#B8860B] border-[#B8860B]" 
-                          : "bg-white/10 border-white/20"
+                          : "bg-[#F5F0E8] border-[#EDE5D5]"
                       }`}
                     >
                       <Text className={`text-sm font-medium text-center ${
@@ -1310,7 +912,7 @@ export default function ProfileEditScreen() {
                 </ScrollView>
               ) : (
                 <View className="flex-row items-center">
-                  <Text className="text-white text-base mr-2 font-medium">{ethnicity || "Not set"}</Text>
+                  <Text className="text-[#1C1208] text-base mr-2 font-medium">{ethnicity || "Not set"}</Text>
                   <Ionicons name="chevron-forward" size={20} color="#B8860B" />
                 </View>
               )}
@@ -1319,18 +921,18 @@ export default function ProfileEditScreen() {
             {/* Nationality Row */}
             <Pressable
               onPress={() => setEditingField(editingField === 'nationality' ? null : 'nationality')}
-              className="py-4 active:bg-white/5 rounded-lg"
+              className="py-4 active:bg-[#F5F0E8] rounded-lg"
             >
               <View className="flex-row items-center justify-between mb-2">
                 <View className="flex-row items-center flex-1">
                   <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
                     <Text className="text-lg">🏳️</Text>
                   </View>
-                  <Text className="text-white text-base font-medium">Nationality</Text>
+                  <Text className="text-[#1C1208] text-base font-medium">Nationality</Text>
                 </View>
                 {editingField !== 'nationality' && (
                   <View className="flex-row items-center">
-                    <Text className="text-white text-base mr-2 font-medium">{nationality || "Not set"}</Text>
+                    <Text className="text-[#1C1208] text-base mr-2 font-medium">{nationality || "Not set"}</Text>
                     <Ionicons name="chevron-forward" size={20} color="#B8860B" />
                   </View>
                 )}
@@ -1348,7 +950,7 @@ export default function ProfileEditScreen() {
                       className={`px-4 py-2.5 rounded-xl mb-2 border ${
                         nationality === option 
                           ? "bg-[#B8860B] border-[#B8860B]" 
-                          : "bg-white/10 border-white/20"
+                          : "bg-[#F5F0E8] border-[#EDE5D5]"
                       }`}
                     >
                       <Text className={`text-sm font-medium ${
@@ -1363,293 +965,69 @@ export default function ProfileEditScreen() {
             </Pressable>
           </View>
 
-          {/* Hobbies Section */}
-          <View className="bg-white/5 rounded-3xl p-6 mb-6 border border-white/10 shadow-lg">
+          {/* Intent Questions Section */}
+          <View className="bg-white rounded-3xl p-6 mb-6 border border-[#EDE5D5] shadow-lg">
             <View className="flex-row items-center mb-6">
               <View className="w-1 h-6 bg-[#B8860B] rounded-full mr-3" />
-              <Text className="text-white text-xl font-bold">Hobbies</Text>
+              <Text className="text-[#1C1208] text-xl font-bold">Intent Questions</Text>
             </View>
-            
-            {editingField === 'hobbies' ? (
-              <ScrollView className="max-h-96" showsVerticalScrollIndicator={false}>
-                <View className="flex-row flex-wrap gap-3">
-                  {HOBBIES.map((hobby) => {
-                    const isSelected = hobbies.includes(hobby.name);
-                    return (
-                      <Pressable
-                        key={hobby.name}
-                        onPress={() => {
-                          if (isSelected) {
-                            setHobbies(hobbies.filter((h) => h !== hobby.name));
-                          } else {
-                            if (hobbies.length < 3) {
-                              setHobbies([...hobbies, hobby.name]);
-                            } else {
-                              Alert.alert("Limit Reached", "You can only select up to 3 hobbies.");
-                            }
-                          }
-                        }}
-                        className={`px-4 py-2.5 rounded-xl flex-row items-center gap-2 border ${
-                          isSelected 
-                            ? "bg-[#B8860B] border-[#B8860B]" 
-                            : "bg-white/10 border-white/20"
-                        } ${hobbies.length >= 3 && !isSelected ? "opacity-50" : ""}`}
-                      >
-                        <Text className="text-base">{hobby.emoji}</Text>
-                        <Text className={`text-sm font-medium ${
-                          isSelected ? "text-white" : "text-white/90"
-                        }`}>
-                          {hobby.name}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-            ) : (
-              <Pressable
-                onPress={() => setEditingField(editingField === 'hobbies' ? null : 'hobbies')}
-                className="py-4 active:bg-white/5 rounded-lg"
-              >
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center flex-1 mr-3">
-                    <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
-                      <Text className="text-lg">🎯</Text>
-                    </View>
-                    <Text className="text-white text-base font-medium">Hobbies</Text>
-                  </View>
-                  <View className="flex-row items-center flex-shrink-0">
-                    {hobbies.length > 0 ? (
-                      <View className="flex-row flex-wrap gap-1.5 mr-2 items-center" style={{ maxWidth: 180 }}>
-                        {hobbies.map((hobbyName) => {
-                          const hobby = HOBBIES.find((h) => h.name === hobbyName);
-                          return (
-                            <View key={hobbyName} className="bg-[#B8860B]/30 px-2.5 py-1 rounded-full flex-row items-center gap-1 border border-[#B8860B]/50">
-                              {hobby && <Text className="text-xs">{hobby.emoji}</Text>}
-                              <Text className="text-white text-xs font-medium" numberOfLines={1}>{hobbyName}</Text>
-                            </View>
-                          );
-                        })}
-                      </View>
-                    ) : (
-                      <Text className="text-white/50 text-base mr-2 font-medium">Not set</Text>
-                    )}
-                    <Ionicons name="chevron-forward" size={20} color="#B8860B" />
-                  </View>
-                </View>
-              </Pressable>
-            )}
-            {editingField === 'hobbies' && (
-              <View className="flex-row gap-3 mt-6">
-                <Pressable
-                  className="flex-1 bg-white/10 px-4 py-3 rounded-xl border border-white/20 active:bg-white/15"
-                  onPress={() => {
-                    setEditingField(null);
-                    loadProfile();
-                  }}
-                >
-                  <Text className="text-white font-semibold text-center">Cancel</Text>
-                </Pressable>
-                <Pressable
-                  className="flex-1 bg-[#B8860B] px-4 py-3 rounded-xl active:bg-[#B8860B]/90"
-                  onPress={async () => {
-                    await handleSave();
-                    setEditingField(null);
-                  }}
-                  disabled={saving}
-                >
-                  {saving ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <Text className="text-white font-semibold text-center">Save</Text>
-                  )}
-                </Pressable>
-              </View>
-            )}
-          </View>
+            <Text className="text-[#9E8E7E] text-sm mb-4">
+              These are the questions others must answer to express interest in you.
+            </Text>
 
-          {/* Bio Section */}
-          <View className="bg-white/5 rounded-3xl p-6 mb-6 border border-white/10 shadow-lg">
-            <View className="flex-row items-center mb-6">
-              <View className="w-1 h-6 bg-[#B8860B] rounded-full mr-3" />
-              <Text className="text-white text-xl font-bold">Bio</Text>
-            </View>
-            
-            <Pressable
-              onPress={() => setEditingField(editingField === 'bio' ? null : 'bio')}
-              className="py-4 active:bg-white/5 rounded-lg"
-            >
-              {editingField === 'bio' ? (
-                <View>
-                  <TextInput
-                    className="bg-white/10 border border-[#B8860B]/30 text-white p-4 rounded-xl h-32 focus:border-[#B8860B]"
-                    placeholder="Tell us about yourself..."
-                    placeholderTextColor="#9CA3AF"
-                    value={bio}
-                    onChangeText={(text) => {
-                      setBio(text.slice(0, 1000));
-                    }}
-                    multiline
-                    textAlignVertical="top"
-                    maxLength={1000}
-                    style={{ fontSize: 16 }}
-                    autoFocus
-                  />
-                  <Text className="text-white/50 text-xs mt-2">
-                    {bio.length}/1000 characters
-                  </Text>
-                  <View className="flex-row gap-3 mt-6">
-                    <Pressable
-                      className="flex-1 bg-white/10 px-4 py-3 rounded-xl border border-white/20 active:bg-white/15"
-                      onPress={() => {
-                        setEditingField(null);
-                        loadProfile();
-                      }}
-                    >
-                      <Text className="text-white font-semibold text-center">Cancel</Text>
-                    </Pressable>
-                    <Pressable
-                      className="flex-1 bg-[#B8860B] px-4 py-3 rounded-xl active:bg-[#B8860B]/90"
-                      onPress={async () => {
-                        await handleSave();
-                        setEditingField(null);
-                      }}
-                      disabled={saving}
-                    >
-                      {saving ? (
-                        <ActivityIndicator color="#fff" size="small" />
-                      ) : (
-                        <Text className="text-white font-semibold text-center">Save</Text>
-                      )}
-                    </Pressable>
-                  </View>
-                </View>
-              ) : (
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center flex-1">
-                    <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
-                      <Text className="text-lg">✍️</Text>
-                    </View>
-                    <Text className="text-white text-base font-medium">Bio</Text>
-                  </View>
-                  <View className="flex-row items-center">
-                    <Text className="text-white/70 text-base mr-2" numberOfLines={1}>
-                      {bio || "Not set"}
-                    </Text>
-                    <Ionicons name="chevron-forward" size={20} color="#B8860B" />
-                  </View>
-                </View>
-              )}
-            </Pressable>
-          </View>
-
-          {/* Prompts Section */}
-          <View className="bg-white/5 rounded-3xl p-6 mb-6 border border-white/10 shadow-lg">
-            <View className="flex-row items-center mb-6">
-              <View className="w-1 h-6 bg-[#B8860B] rounded-full mr-3" />
-              <Text className="text-white text-xl font-bold">Prompts</Text>
-            </View>
-            
-            {editingField === 'prompts' ? (
+            {editingField === 'intentQuestions' ? (
               <View>
-                {prompts.map((prompt, index) => (
-                  <View key={prompt.id} className="mb-4 pb-4 border-b border-white/10 last:border-0 last:pb-0">
-                    <View className="mb-3">
-                      <Text className="text-white/80 text-sm mb-2 font-medium">Prompt {index + 1}</Text>
-                      <Pressable
-                        onPress={() => setShowPromptDropdown(showPromptDropdown === index ? null : index)}
-                        className="bg-white/10 border border-[#B8860B]/30 rounded-xl p-3 flex-row items-center justify-between"
-                      >
-                        <Text className="text-white flex-1" numberOfLines={1}>
-                          {prompt.question || "Select a prompt..."}
-                        </Text>
-                        <Ionicons name={showPromptDropdown === index ? "chevron-up" : "chevron-down"} size={20} color="#B8860B" />
-                      </Pressable>
-                      {showPromptDropdown === index && (
-                        <ScrollView className="max-h-48 mt-2 bg-white/5 rounded-xl border border-white/10">
-                          {DEFAULT_PROMPTS.map((defaultPrompt) => (
-                            <Pressable
-                              key={defaultPrompt}
-                              onPress={() => {
-                                const newPrompts = [...prompts];
-                                newPrompts[index].question = defaultPrompt;
-                                setPrompts(newPrompts);
-                                setShowPromptDropdown(null);
-                              }}
-                              className="px-4 py-3 border-b border-white/10 last:border-0 active:bg-white/10"
-                            >
-                              <Text className="text-white">{defaultPrompt}</Text>
-                            </Pressable>
-                          ))}
-                        </ScrollView>
-                      )}
-                    </View>
-                    <TextInput
-                      className="bg-white/10 border border-[#B8860B]/30 text-white p-4 rounded-xl min-h-[80] focus:border-[#B8860B]"
-                      placeholder="Your answer..."
-                      placeholderTextColor="#9CA3AF"
-                      value={prompt.answer}
-                      onChangeText={(text) => {
-                        const limited = text.slice(0, 500);
-                        const newPrompts = [...prompts];
-                        newPrompts[index].answer = limited;
-                        setPrompts(newPrompts);
-                      }}
-                      multiline
-                      textAlignVertical="top"
-                      maxLength={500}
-                      style={{ fontSize: 16 }}
-                    />
-                    <Text className="text-white/50 text-xs mt-2">
-                      {prompt.answer.length}/500 characters
-                    </Text>
-                  </View>
-                ))}
-                <View className="flex-row gap-3 mt-6">
-                  <Pressable
-                    className="flex-1 bg-white/10 px-4 py-3 rounded-xl border border-white/20 active:bg-white/15"
-                    onPress={() => {
+                <IntentQuestionsSetup
+                  initialQuestions={intentQuestions}
+                  onSave={async (questions) => {
+                    setSavingIntentQuestions(true);
+                    try {
+                      const { error } = await supabase.functions.invoke("save-intent-questions", {
+                        body: { questions },
+                      });
+                      if (error) throw error;
+                      setIntentQuestions(questions);
                       setEditingField(null);
-                      loadProfile();
-                    }}
-                  >
-                    <Text className="text-white font-semibold text-center">Cancel</Text>
-                  </Pressable>
-                  <Pressable
-                    className="flex-1 bg-[#B8860B] px-4 py-3 rounded-xl active:bg-[#B8860B]/90"
-                    onPress={async () => {
-                      await handleSave();
-                      setEditingField(null);
-                    }}
-                    disabled={saving}
-                  >
-                    {saving ? (
-                      <ActivityIndicator color="#fff" size="small" />
-                    ) : (
-                      <Text className="text-white font-semibold text-center">Save</Text>
-                    )}
-                  </Pressable>
-                </View>
+                      Alert.alert("Success", "Intent questions updated!");
+                    } catch (e: any) {
+                      Alert.alert("Error", e.message || "Failed to save intent questions.");
+                    } finally {
+                      setSavingIntentQuestions(false);
+                    }
+                  }}
+                  onCancel={() => {
+                    setEditingField(null);
+                  }}
+                />
+                {savingIntentQuestions && (
+                  <ActivityIndicator color="#B8860B" size="small" className="mt-4" />
+                )}
               </View>
             ) : (
               <Pressable
-                onPress={() => setEditingField(editingField === 'prompts' ? null : 'prompts')}
-                className="py-4 active:bg-white/5 rounded-lg"
+                onPress={() => setEditingField('intentQuestions')}
+                className="py-4 active:bg-[#F5F0E8] rounded-lg"
               >
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center flex-1">
                     <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
-                      <Text className="text-lg">💬</Text>
+                      <Ionicons name="help-circle-outline" size={22} color="#B8860B" />
                     </View>
-                    <Text className="text-white text-base font-medium">Prompts</Text>
-                  </View>
-                  <View className="flex-row items-center">
-                    <Text className="text-white/70 text-base mr-2">
-                      {prompts.filter((p) => p.question && p.answer).length}/3
+                    <Text className="text-[#1C1208] text-base font-medium">
+                      {intentQuestions.length > 0 ? `${intentQuestions.length} questions set` : "No questions set"}
                     </Text>
-                    <Ionicons name="chevron-forward" size={20} color="#B8860B" />
                   </View>
+                  <Ionicons name="chevron-forward" size={20} color="#B8860B" />
                 </View>
+                {intentQuestions.length > 0 && (
+                  <View className="mt-3 ml-13">
+                    {intentQuestions.map((q, i) => (
+                      <Text key={i} className="text-[#9E8E7E] text-sm mb-1" numberOfLines={1}>
+                        {i + 1}. {q.question_text}
+                      </Text>
+                    ))}
+                  </View>
+                )}
               </Pressable>
             )}
           </View>

@@ -167,8 +167,8 @@ export default function Signup() {
       }
 
       // Use a simple deep link format that Supabase can handle
-      // The scheme is "habibiswipe" as defined in app.config.js
-      const redirectUrl = "habibiswipe://auth/callback";
+      // The scheme is "ikhtari" as defined in app.config.js
+      const redirectUrl = "ikhtari://auth/callback";
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -247,7 +247,7 @@ export default function Signup() {
       if (errorMessage.includes("redirect_uri_mismatch")) {
         Alert.alert(
           "Configuration Error",
-          `Please add this URL to Supabase Dashboard > Authentication > URL Configuration > Redirect URLs:\n\nhabibiswipe://auth/callback`
+          `Please add this URL to Supabase Dashboard > Authentication > URL Configuration > Redirect URLs:\n\nikhtari://auth/callback`
         );
       } else {
         Alert.alert("Error", errorMessage);
@@ -260,14 +260,14 @@ export default function Signup() {
     <View style={styles.container}>
       {/* Gradient Backgrounds - matching onboarding */}
       <LinearGradient
-        colors={["rgba(238,189,43,0.65)", "rgba(10,10,10,0)"]}
+        colors={["rgba(184,134,11,0.18)", "rgba(253,250,245,0)"]}
         style={[styles.gradientBase, styles.gradientTopLeft]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={["rgba(10,10,10,0)", "rgba(238,189,43,0.55)"]}
+        colors={["rgba(253,250,245,0)", "rgba(184,134,11,0.12)"]}
         style={[styles.gradientBase, styles.gradientBottomRight]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -282,7 +282,7 @@ export default function Signup() {
       {/* Content */}
       <View style={styles.content}>
         <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Sign up to find your Habibi</Text>
+        <Text style={styles.subtitle}>Sign up to find your match</Text>
 
         <TextInput
           placeholder="Email"
@@ -344,7 +344,7 @@ export default function Signup() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0A0A0A",
+    backgroundColor: "#FDFAF5",
     position: "relative",
   },
   gradientBase: {
@@ -385,17 +385,17 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: "#9CA3AF",
+    color: "#9E8E7E",
     marginBottom: 32,
     textAlign: "center",
   },
   input: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#F5F0E8",
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 16,
     fontSize: 16,
-    color: "#FFFFFF",
+    color: "#1C1208",
     marginBottom: 16,
   },
   button: {
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: 13,
-    color: "#9CA3AF",
+    color: "#9E8E7E",
     textAlign: "center",
     marginBottom: 16,
   },
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: 15,
-    color: "#9CA3AF",
+    color: "#9E8E7E",
   },
   linkHighlight: {
     color: "#B8860B",
@@ -445,18 +445,18 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#EDE5D5",
   },
   dividerText: {
     marginHorizontal: 16,
     fontSize: 14,
-    color: "#9CA3AF",
+    color: "#9E8E7E",
     fontWeight: "500",
   },
   googleButton: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "#F5F0E8",
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
+    borderColor: "#EDE5D5",
     borderRadius: 16,
     paddingVertical: 16,
     flexDirection: "row",
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   googleButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: "#1C1208",
   },
 });
 

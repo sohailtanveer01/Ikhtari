@@ -106,44 +106,44 @@ export default function AccountInfoScreen() {
 
     if (loading) {
         return (
-            <View className="flex-1 bg-black items-center justify-center">
+            <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
                 <ActivityIndicator size="large" color="#B8860B" />
             </View>
         );
     }
 
     return (
-        <View className="flex-1 bg-black">
+        <View className="flex-1 bg-[#FDFAF5]">
             {/* Header */}
             <View className="flex-row items-center px-6 pt-16 pb-4">
                 <Pressable
                     onPress={() => router.back()}
-                    className="w-10 h-10 rounded-full bg-white/10 items-center justify-center"
+                    className="w-10 h-10 rounded-full bg-[#F5F0E8] items-center justify-center"
                 >
-                    <Ionicons name="arrow-back" size={24} color="#fff" />
+                    <Ionicons name="arrow-back" size={24} color="#1C1208" />
                 </Pressable>
-                <Text className="text-white text-xl font-bold ml-4">Account Information</Text>
+                <Text className="text-[#1C1208] text-xl font-bold ml-4">Account Information</Text>
             </View>
 
             <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
                 <View className="mt-6">
                     <Text className="text-gray-400 text-sm font-medium mb-2 ml-1">NAME</Text>
-                    <View className="bg-white/5 rounded-2xl p-4 gap-4">
+                    <View className="bg-white rounded-2xl p-4 gap-4">
                         <View>
                             <Text className="text-gray-500 text-xs mb-1 ml-1">First Name</Text>
                             <TextInput
-                                className="text-white text-base py-1"
+                                className="text-[#1C1208] text-base py-1"
                                 value={firstName}
                                 onChangeText={setFirstName}
                                 placeholder="First Name"
                                 placeholderTextColor="#666"
                             />
                         </View>
-                        <View className="h-[1px] bg-white/10" />
+                        <View className="h-[1px] bg-[#EDE5D5]" />
                         <View>
                             <Text className="text-gray-500 text-xs mb-1 ml-1">Last Name</Text>
                             <TextInput
-                                className="text-white text-base py-1"
+                                className="text-[#1C1208] text-base py-1"
                                 value={lastName}
                                 onChangeText={setLastName}
                                 placeholder="Last Name"
@@ -153,9 +153,9 @@ export default function AccountInfoScreen() {
                     </View>
 
                     <Text className="text-gray-400 text-sm font-medium mb-2 mt-6 ml-1">DATE OF BIRTH</Text>
-                    <View className="bg-white/5 rounded-2xl p-4">
+                    <View className="bg-white rounded-2xl p-4">
                         <TextInput
-                            className="text-white text-base py-1"
+                            className="text-[#1C1208] text-base py-1"
                             value={dob}
                             onChangeText={setDob}
                             placeholder="YYYY-MM-DD"
@@ -165,9 +165,9 @@ export default function AccountInfoScreen() {
                     <Text className="text-gray-500 text-xs mt-2 ml-1">Format: YYYY-MM-DD</Text>
 
                     <Text className="text-gray-400 text-sm font-medium mb-2 mt-6 ml-1">EMAIL ADDRESS</Text>
-                    <View className="bg-white/5 rounded-2xl p-4">
+                    <View className="bg-white rounded-2xl p-4">
                         <TextInput
-                            className="text-white text-base py-1"
+                            className="text-[#1C1208] text-base py-1"
                             value={email}
                             onChangeText={setEmail}
                             placeholder="Email Address"
@@ -186,9 +186,9 @@ export default function AccountInfoScreen() {
                         className={`mt-10 h-14 rounded-2xl items-center justify-center ${saving ? 'bg-[#B8860B]/50' : 'bg-[#B8860B]'}`}
                     >
                         {saving ? (
-                            <ActivityIndicator color="#fff" />
+                            <ActivityIndicator color="#1C1208" />
                         ) : (
-                            <Text className="text-white text-lg font-bold">Save Changes</Text>
+                            <Text className="text-[#1C1208] text-lg font-bold">Save Changes</Text>
                         )}
                     </Pressable>
                 </View>

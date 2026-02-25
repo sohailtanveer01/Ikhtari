@@ -1,400 +1,305 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Dimensions, FlatList, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  Text,
+  View,
+} from "react-native";
 import { supabase } from "../../../lib/supabase";
 
 const { width } = Dimensions.get("window");
-const CARD_WIDTH = (width - 54) / 2; // 2 columns with padding
+const CARD_WIDTH = (width - 54) / 2;
 
-// Clean photo URLs - remove localhost references and extract valid Supabase URLs
 function cleanPhotoUrl(url: string | null | undefined): string | null {
-  if (!url || typeof url !== 'string') return null;
-
-  // Remove localhost references (e.g., "blob:http://localhost:8081/...")
-  if (url.includes('localhost')) {
-    // Extract the Supabase URL part before the localhost reference
-    const supabasePart = url.split(':http://localhost')[0];
-    if (supabasePart && supabasePart.startsWith('http')) {
-      return supabasePart;
-    }
+  if (!url || typeof url !== "string") return null;
+  if (url.includes("localhost")) {
+    const supabasePart = url.split(":http://localhost")[0];
+    if (supabasePart && supabasePart.startsWith("http")) return supabasePart;
     return null;
   }
-
-  // Check if it's a valid HTTP/HTTPS URL
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
   return null;
 }
 
-export default function LikesScreen() {
+function calculateAge(dob: string | null): number | null {
+  if (!dob) return null;
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age--;
+  return age;
+}
+
+export default function InterestsScreen() {
   const router = useRouter();
-  const [likes, setLikes] = useState<any[]>([]);
-  const [myLikes, setMyLikes] = useState<any[]>([]);
-  const [viewers, setViewers] = useState<any[]>([]);
-  const [passedOn, setPassedOn] = useState<any[]>([]);
+  const [received, setReceived] = useState<any[]>([]);
+  const [sent, setSent] = useState<any[]>([]);
+  const [seen, setSeen] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"myLikes" | "likedMe" | "viewers" | "passedOn">("likedMe");
-  const [complimentModalVisible, setComplimentModalVisible] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
-  const [complimentMessage, setComplimentMessage] = useState("");
-  const [sendingCompliment, setSendingCompliment] = useState(false);
+  const [activeTab, setActiveTab] = useState<"received" | "sent" | "seen">("received");
 
-  const loadLikes = async () => {
+  const loadReceived = async () => {
     setLoading(true);
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) {
+    try {
+      const { data, error } = await supabase.functions.invoke("get-received-interests");
+      if (error) { console.error("Error fetching received interests:", error); return; }
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+      setReceived(parsed?.interests || []);
+    } catch (e) {
+      console.error("Error loading received:", e);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const { data, error } = await supabase.functions.invoke("get-liked-me");
-
-    if (error) {
-      console.error("Error fetching liked me:", error);
-      alert(`Error loading liked me: ${error.message}`);
-      setLoading(false);
-      return;
-    }
-
-    // Parse the response if it's a string
-    let parsedData = data;
-    if (typeof data === 'string') {
-      try {
-        parsedData = JSON.parse(data);
-      } catch (e) {
-        console.error("Error parsing response:", e);
-        setLoading(false);
-        return;
-      }
-    }
-
-    // Handle different response formats
-    let likesArray = [];
-    if (parsedData) {
-      if (Array.isArray(parsedData)) {
-        // If data is directly an array
-        likesArray = parsedData;
-      } else if (parsedData.likedMe && Array.isArray(parsedData.likedMe)) {
-        // If data has a likedMe property
-        likesArray = parsedData.likedMe;
-      } else if (parsedData.likes && Array.isArray(parsedData.likes)) {
-        // Fallback to likes property
-        likesArray = parsedData.likes;
-      } else if (parsedData.data && Array.isArray(parsedData.data)) {
-        // If data is wrapped in a data property
-        likesArray = parsedData.data;
-      }
-    }
-
-
-    setLikes(likesArray);
-    setLoading(false);
   };
 
-  const loadMyLikes = async () => {
+  const loadSent = async () => {
     setLoading(true);
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) {
+    try {
+      const { data, error } = await supabase.functions.invoke("get-sent-interests");
+      if (error) { console.error("Error fetching sent interests:", error); return; }
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+      setSent(parsed?.interests || []);
+    } catch (e) {
+      console.error("Error loading sent:", e);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const { data, error } = await supabase.functions.invoke("get-my-likes");
-
-    if (error) {
-      console.error("Error fetching my likes:", error);
-      alert(`Error loading my likes: ${error.message}`);
-      setLoading(false);
-      return;
-    }
-
-
-    // Parse the response if it's a string
-    let parsedData = data;
-    if (typeof data === 'string') {
-      try {
-        parsedData = JSON.parse(data);
-      } catch (e) {
-        console.error("Error parsing response:", e);
-        setLoading(false);
-        return;
-      }
-    }
-
-    // Handle different response formats
-    let myLikesArray = [];
-    if (parsedData) {
-      if (Array.isArray(parsedData)) {
-        myLikesArray = parsedData;
-      } else if (parsedData.myLikes && Array.isArray(parsedData.myLikes)) {
-        myLikesArray = parsedData.myLikes;
-      } else if (parsedData.data && Array.isArray(parsedData.data)) {
-        myLikesArray = parsedData.data;
-      }
-    }
-
-    setMyLikes(myLikesArray);
-    setLoading(false);
   };
 
-  const loadViewers = async () => {
+  const loadSeen = async () => {
     setLoading(true);
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) {
+    try {
+      const { data, error } = await supabase.functions.invoke("get-seen-profiles");
+      if (error) { console.error("Error fetching seen profiles:", error); return; }
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+      setSeen(parsed?.profiles || []);
+    } catch (e) {
+      console.error("Error loading seen:", e);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const { data, error } = await supabase.functions.invoke("get-viewers");
-
-    if (error) {
-      console.error("Error fetching viewers:", error);
-      alert(`Error loading viewers: ${error.message}`);
-      setLoading(false);
-      return;
-    }
-
-
-    // Parse the response if it's a string
-    let parsedData = data;
-    if (typeof data === 'string') {
-      try {
-        parsedData = JSON.parse(data);
-      } catch (e) {
-        console.error("Error parsing response:", e);
-        setLoading(false);
-        return;
-      }
-    }
-
-    // Handle different response formats
-    let viewersArray = [];
-    if (parsedData) {
-      if (Array.isArray(parsedData)) {
-        viewersArray = parsedData;
-      } else if (parsedData.viewers && Array.isArray(parsedData.viewers)) {
-        viewersArray = parsedData.viewers;
-      } else if (parsedData.data && Array.isArray(parsedData.data)) {
-        viewersArray = parsedData.data;
-      }
-    }
-
-    setViewers(viewersArray);
-    setLoading(false);
-  };
-
-  const loadPassedOn = async () => {
-    setLoading(true);
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-
-    const { data, error } = await supabase.functions.invoke("get-passed-on");
-
-    if (error) {
-      console.error("Error fetching passed on:", error);
-      alert(`Error loading passed on: ${error.message}`);
-      setLoading(false);
-      return;
-    }
-
-
-    // Parse the response if it's a string
-    let parsedData = data;
-    if (typeof data === 'string') {
-      try {
-        parsedData = JSON.parse(data);
-      } catch (e) {
-        console.error("Error parsing response:", e);
-        setLoading(false);
-        return;
-      }
-    }
-
-    // Handle different response formats
-    let passedOnArray = [];
-    if (parsedData) {
-      if (Array.isArray(parsedData)) {
-        passedOnArray = parsedData;
-      } else if (parsedData.passedOn && Array.isArray(parsedData.passedOn)) {
-        passedOnArray = parsedData.passedOn;
-      } else if (parsedData.data && Array.isArray(parsedData.data)) {
-        passedOnArray = parsedData.data;
-      }
-    }
-
-    setPassedOn(passedOnArray);
-    setLoading(false);
   };
 
   useEffect(() => {
-    if (activeTab === "myLikes") {
-      loadMyLikes();
-    } else if (activeTab === "likedMe") {
-      loadLikes();
-    } else if (activeTab === "viewers") {
-      loadViewers();
-    } else if (activeTab === "passedOn") {
-      loadPassedOn();
-    }
+    if (activeTab === "received") loadReceived();
+    else if (activeTab === "sent") loadSent();
+    else loadSeen();
   }, [activeTab]);
 
-
-  // Real-time subscription for profile views
+  // Realtime subscription for interest requests
   useEffect(() => {
-    if (activeTab !== "viewers") return;
-
     let channel: any = null;
-
     const setupSubscription = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
       channel = supabase
-        .channel("profile-views-updates")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "profile_views",
-            filter: `viewed_id=eq.${user.id}`, // Only listen for views of current user
-          },
-          (payload) => {
-            // Refresh viewers list to get updated counts
-            loadViewers();
+        .channel("interests-realtime")
+        .on("postgres_changes", { event: "*", schema: "public", table: "interest_requests" },
+          (payload: any) => {
+            const record = payload.new || payload.old;
+            if (record?.recipient_id === user.id || record?.sender_id === user.id) {
+              if (activeTab === "received") loadReceived();
+              else if (activeTab === "sent") loadSent();
+            }
           }
         )
         .subscribe();
     };
-
     setupSubscription();
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
+    return () => { if (channel) supabase.removeChannel(channel); };
   }, [activeTab]);
-
-  // Real-time subscription for new likes - refresh "Liked me" tab when someone likes you
-  useEffect(() => {
-    if (activeTab !== "likedMe") return; // Only subscribe when on "Liked me" tab
-
-    let channel: any = null;
-
-    const setupSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      channel = supabase
-        .channel("new-likes-realtime-likes-page")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "swipes",
-            // Don't use filter - check in callback instead (more reliable)
-          },
-          (payload) => {
-            // Check if this swipe is for the current user and is a like action
-            if (payload.new.swiped_id === user.id && payload.new.action === "like") {
-              loadLikes(); // Refresh "Liked me" list
-            }
-          }
-        )
-        .subscribe();
-    };
-
-    setupSubscription();
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
-  }, [activeTab]); // Re-subscribe when tab changes
-
-  // Real-time subscription for matches - refresh likes when a match is created
-  useEffect(() => {
-    let channel: any = null;
-
-    const setupSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      channel = supabase
-        .channel("matches-updates-likes")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "matches",
-          },
-          (payload) => {
-            const newMatch = payload.new;
-            // Check if this match involves the current user
-            if (newMatch.user1 === user.id || newMatch.user2 === user.id) {
-              // Refresh both "my likes" and "liked me" since a match affects both
-              loadMyLikes();
-              loadLikes();
-            }
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "unmatches",
-          },
-          (payload) => {
-            const newUnmatch = payload.new;
-            // Check if this unmatch involves the current user
-            if (newUnmatch.user1_id === user.id || newUnmatch.user2_id === user.id) {
-              // Refresh both "my likes" and "liked me" since an unmatch affects both
-              loadMyLikes();
-              loadLikes();
-            }
-          }
-        )
-        .subscribe();
-    };
-
-    setupSubscription();
-
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
-  }, []); // Run once on mount, not dependent on activeTab
 
   const tabs = [
-    { key: "myLikes", label: "My likes", count: myLikes.length },
-    { key: "likedMe", label: "Liked me", count: likes.length },
-    { key: "viewers", label: "Viewers", count: viewers.length },
-    { key: "passedOn", label: "Passed on", count: passedOn.length },
-  ] as const;
+    { key: "received" as const, label: "Received", count: received.length },
+    { key: "sent" as const, label: "Sent", count: sent.length },
+    { key: "seen" as const, label: "Seen", count: seen.length },
+  ];
 
-  if (loading && !likes.length && !myLikes.length && !viewers.length && !passedOn.length) {
+  if (loading && !received.length && !sent.length && !seen.length) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' }}>
+      <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
         <ActivityIndicator size="large" color="#B8860B" />
       </View>
     );
   }
 
+  const renderReceivedItem = ({ item }: { item: any }) => {
+    const profile = item.sender_profile || {};
+    let mainPhoto: string | null = null;
+    if (profile.photos?.length > 0) {
+      for (const photo of profile.photos) {
+        const cleaned = cleanPhotoUrl(photo);
+        if (cleaned) { mainPhoto = cleaned; break; }
+      }
+    }
+    const fullName = profile.first_name && profile.last_name
+      ? `${profile.first_name} ${profile.last_name}`
+      : profile.name || "Unknown";
+    const age = calculateAge(profile.dob);
+    const answersCount = item.answers?.length || 0;
+
+    return (
+      <Pressable
+        className="bg-white rounded-3xl overflow-hidden"
+        style={{ width: CARD_WIDTH, height: CARD_WIDTH * 1.45, borderWidth: 1, borderColor: "rgba(184,134,11,0.7)" }}
+        onPress={() => router.push(`/(main)/likes/review-interest?interestId=${item.id}&senderId=${item.sender_id}`)}
+      >
+        {mainPhoto ? (
+          <View style={{ width: "100%", height: "100%", position: "relative" }}>
+            <Image source={{ uri: mainPhoto }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+            <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 90, backgroundColor: "rgba(0,0,0,0.6)" }} />
+            <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
+              <Text className="text-white text-lg font-semibold" numberOfLines={1}>
+                {fullName}{age !== null ? `, ${age}` : ""}
+              </Text>
+              <Pressable
+                className="mt-2 bg-[#B8860B] px-3 py-1.5 rounded-full self-start"
+                onPress={() => router.push(`/(main)/likes/review-interest?interestId=${item.id}&senderId=${item.sender_id}`)}
+              >
+                <Text className="text-white text-xs font-bold">View Answers ({answersCount})</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <View className="w-full h-full bg-[#F5F0E8] items-center justify-center" style={{ position: "relative" }}>
+            <Text className="text-[#9E8E7E] text-4xl">👤</Text>
+            <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
+              <Text className="text-[#1C1208] text-lg font-semibold" numberOfLines={1}>{fullName}</Text>
+            </View>
+          </View>
+        )}
+      </Pressable>
+    );
+  };
+
+  const renderSentItem = ({ item }: { item: any }) => {
+    const profile = item.recipient_profile || {};
+    let mainPhoto: string | null = null;
+    if (profile.photos?.length > 0) {
+      for (const photo of profile.photos) {
+        const cleaned = cleanPhotoUrl(photo);
+        if (cleaned) { mainPhoto = cleaned; break; }
+      }
+    }
+    const fullName = profile.first_name && profile.last_name
+      ? `${profile.first_name} ${profile.last_name}`
+      : profile.name || "Unknown";
+    const age = calculateAge(profile.dob);
+    const statusColors: Record<string, { bg: string; text: string; label: string }> = {
+      pending: { bg: "bg-yellow-600/20", text: "text-yellow-500", label: "Pending" },
+      accepted: { bg: "bg-green-600/20", text: "text-green-500", label: "Accepted" },
+      declined: { bg: "bg-red-600/20", text: "text-red-400", label: "Declined" },
+      answered_back: { bg: "bg-green-600/20", text: "text-green-500", label: "Matched" },
+    };
+    const status = statusColors[item.status] || statusColors.pending;
+
+    return (
+      <Pressable
+        className="bg-white rounded-3xl overflow-hidden"
+        style={{ width: CARD_WIDTH, height: CARD_WIDTH * 1.45, borderWidth: 1, borderColor: "rgba(184,134,11,0.7)" }}
+        onPress={() => {
+          if ((item.status === "accepted" || item.status === "answered_back") && item.match_id) {
+            router.push(`/(main)/chat/${item.match_id}`);
+          }
+        }}
+      >
+        {mainPhoto ? (
+          <View style={{ width: "100%", height: "100%", position: "relative" }}>
+            <Image source={{ uri: mainPhoto }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+            <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80, backgroundColor: "rgba(0,0,0,0.6)" }} />
+            <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
+              <Text className="text-white text-lg font-semibold" numberOfLines={1}>
+                {fullName}{age !== null ? `, ${age}` : ""}
+              </Text>
+              <View className="flex-row mt-2">
+                <View className={`px-2.5 py-1.5 rounded-full ${status.bg}`}>
+                  <Text className={`text-[11px] font-semibold ${status.text}`}>{status.label}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        ) : (
+          <View className="w-full h-full bg-[#F5F0E8] items-center justify-center" style={{ position: "relative" }}>
+            <Text className="text-[#9E8E7E] text-4xl">👤</Text>
+            <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
+              <Text className="text-[#1C1208] text-lg font-semibold" numberOfLines={1}>{fullName}</Text>
+              <View className="flex-row mt-2">
+                <View className={`px-2.5 py-1.5 rounded-full ${status.bg}`}>
+                  <Text className={`text-[11px] font-semibold ${status.text}`}>{status.label}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+      </Pressable>
+    );
+  };
+
+  const renderSeenItem = ({ item }: { item: any }) => {
+    let mainPhoto: string | null = null;
+    if (item.photos?.length > 0) {
+      for (const photo of item.photos) {
+        const cleaned = cleanPhotoUrl(photo);
+        if (cleaned) { mainPhoto = cleaned; break; }
+      }
+    }
+    const fullName = item.first_name && item.last_name
+      ? `${item.first_name} ${item.last_name}`
+      : item.name || "Unknown";
+    const age = calculateAge(item.dob);
+
+    return (
+      <Pressable
+        className="bg-white rounded-3xl overflow-hidden"
+        style={{ width: CARD_WIDTH, height: CARD_WIDTH * 1.45, borderWidth: 1, borderColor: "rgba(184,134,11,0.4)" }}
+        onPress={() => router.push(`/(main)/swipe/profile-view?userId=${item.id}`)}
+      >
+        {mainPhoto ? (
+          <View style={{ width: "100%", height: "100%", position: "relative" }}>
+            <Image source={{ uri: mainPhoto }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+            {/* Slight desaturated overlay to indicate "already seen" */}
+            <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.15)" }} />
+            <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 90, backgroundColor: "rgba(0,0,0,0.6)" }} />
+            {/* Seen badge */}
+            <View style={{ position: "absolute", top: 10, right: 10, backgroundColor: "rgba(34,197,94,0.9)", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 3 }}>
+              <Ionicons name="checkmark-circle" size={12} color="#fff" />
+              <Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>Seen</Text>
+            </View>
+            <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
+              <Text className="text-white text-lg font-semibold" numberOfLines={1}>
+                {fullName}{age !== null ? `, ${age}` : ""}
+              </Text>
+              {item.city ? (
+                <Text className="text-white/70 text-xs mt-1" numberOfLines={1}>{item.city}</Text>
+              ) : null}
+            </View>
+          </View>
+        ) : (
+          <View className="w-full h-full bg-[#F5F0E8] items-center justify-center" style={{ position: "relative" }}>
+            <Text className="text-[#9E8E7E] text-4xl">👤</Text>
+            <View style={{ position: "absolute", top: 10, right: 10, backgroundColor: "rgba(34,197,94,0.9)", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 3 }}>
+              <Ionicons name="checkmark-circle" size={12} color="#fff" />
+              <Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>Seen</Text>
+            </View>
+            <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
+              <Text className="text-[#1C1208] text-lg font-semibold" numberOfLines={1}>{fullName}</Text>
+            </View>
+          </View>
+        )}
+      </Pressable>
+    );
+  };
+
   return (
-    <View className="flex-1 bg-black pt-20 px-4 pb-16">
+    <View className="flex-1 bg-[#FDFAF5] pt-20 px-4 pb-16">
+      {/* Tabs */}
       <View className="flex-row rounded-full px-1 py-1.5 mb-6">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.key;
@@ -402,664 +307,93 @@ export default function LikesScreen() {
             <Pressable
               key={tab.key}
               onPress={() => setActiveTab(tab.key)}
-              className={`flex-1 py-2 rounded-full items-center justify-center ${isActive ? "bg-[#B8860B]" : "bg-transparent"
-                }`}
+              className={`flex-1 py-2 rounded-full items-center justify-center ${isActive ? "bg-[#B8860B]" : "bg-transparent"}`}
             >
-              <Text
-                className={`text-sm font-semibold ${isActive ? "text-black" : "text-white/70"
-                  }`}
-              >
-                {tab.label}
-                {tab.count > 0 ? ` (${tab.count})` : ""}
+              <Text className={`text-sm font-semibold ${isActive ? "text-black" : "text-[#9E8E7E]"}`}>
+                {tab.label}{tab.count > 0 ? ` (${tab.count})` : ""}
               </Text>
             </Pressable>
           );
         })}
       </View>
 
-      {/* Content per tab */}
-      {activeTab === "myLikes" && (
-        myLikes.length === 0 ? (
-          <View className="flex-1 items-center justify-center px-16">
-            <Text className="text-4xl mb-4">✨</Text>
-            <Text className="text-white text-lg font-semibold mb-2">No likes yet</Text>
-            <Text className="text-white/60 text-center text-sm mb-5">
-              Keep swiping to find your perfect match. Your likes will show up here.
+      {/* Received Tab */}
+      {activeTab === "received" && (
+        received.length === 0 ? (
+          <View className="flex-1 items-center justify-center px-10">
+            <Text className="text-4xl mb-4">💌</Text>
+            <Text className="text-[#1C1208] text-lg font-semibold mb-2">No interests yet</Text>
+            <Text className="text-[#6B5D4F] text-center text-sm mb-5">
+              When someone answers your questions and expresses interest, they'll appear here.
             </Text>
-            <Pressable
-              className="bg-[#B8860B] px-6 py-3 rounded-full"
-              onPress={() => router.push("/(main)/swipe")}
-            >
-              <Text className="text-black font-semibold text-sm">Go to swipe</Text>
+            <Pressable className="bg-[#B8860B] px-6 py-3 rounded-full" onPress={() => router.push("/(main)/swipe")}>
+              <Text className="text-white font-semibold text-sm">Go to Discover</Text>
             </Pressable>
           </View>
         ) : (
           <FlatList
-            data={myLikes}
+            data={received}
             numColumns={2}
             columnWrapperStyle={{ gap: 14 }}
             contentContainerStyle={{ gap: 16, paddingBottom: 80, paddingTop: 4 }}
-            keyExtractor={(item, index) => item.id || `my-like-${index}`}
-            refreshControl={
-              <RefreshControl refreshing={loading} onRefresh={loadMyLikes} tintColor="#fff" />
-            }
-            renderItem={({ item }) => {
-              // Clean and get the first valid photo
-              let mainPhoto: string | null = null;
-              if (item.photos && Array.isArray(item.photos) && item.photos.length > 0) {
-                for (const photo of item.photos) {
-                  const cleaned = cleanPhotoUrl(photo);
-                  if (cleaned) {
-                    mainPhoto = cleaned;
-                    break;
-                  }
-                }
-              }
-
-              const fullName = item.first_name && item.last_name
-                ? `${item.first_name} ${item.last_name}`
-                : item.name || "Unknown";
-
-              return (
-                <Pressable
-                  className="bg-white/5 rounded-3xl overflow-hidden"
-                  style={{
-                    width: CARD_WIDTH,
-                    height: CARD_WIDTH * 1.45,
-                    borderWidth: 1,
-                    borderColor: "rgba(184,134,11,0.7)",
-                    shadowColor: "#000",
-                    shadowOpacity: 0.4,
-                    shadowRadius: 18,
-                    shadowOffset: { width: 0, height: 12 },
-                    elevation: 16,
-                  }}
-                  onPress={async () => {
-                    // Track profile view when tapping from my likes tab
-                    try {
-                      await supabase.functions.invoke("create-profile-view", {
-                        body: { viewed_id: item.id },
-                      });
-                    } catch (error) {
-                      console.error("Error recording profile view from my likes tab:", error);
-                      // Continue with navigation even if view tracking fails
-                    }
-                    router.push(`/(main)/swipe?userId=${item.id}&source=myLikes`);
-                  }}
-                >
-                  {mainPhoto ? (
-                    <View style={{ width: '100%', height: '100%', position: 'relative' }}>
-                      <Image
-                        source={{ uri: mainPhoto }}
-                        style={{ width: '100%', height: '100%' }}
-                        contentFit="cover"
-                        transition={200}
-                        cachePolicy="memory-disk"
-                        priority="normal"
-                      />
-                      <View
-                        style={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: 80,
-                          backgroundColor: 'rgba(0,0,0,0.6)'
-                        }}
-                      />
-                      <View style={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
-                        <Text className="text-white text-lg font-semibold" numberOfLines={1}>
-                          {fullName}
-                        </Text>
-                        <View className="flex-row mt-2">
-                          <View className="px-2.5 py-1.5 rounded-full bg-white/10">
-                            <Text className="text-[11px] text-white/90 font-semibold">
-                              You liked
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  ) : (
-                    <View className="w-full h-full bg-white/5 items-center justify-center" style={{ position: 'relative' }}>
-                      <Text className="text-white/60 text-4xl">👤</Text>
-                      <View
-                        style={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: 80,
-                          backgroundColor: 'rgba(0,0,0,0.6)'
-                        }}
-                      />
-                      <View style={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
-                        <Text className="text-white text-lg font-semibold" numberOfLines={1}>
-                          {fullName}
-                        </Text>
-                        <View className="flex-row mt-2">
-                          <View className="px-2.5 py-1.5 rounded-full bg-white/10">
-                            <Text className="text-[11px] text-white/90 font-semibold">
-                              You liked
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  )}
-                </Pressable>
-              );
-            }}
+            keyExtractor={(item) => item.id}
+            refreshControl={<RefreshControl refreshing={loading} onRefresh={loadReceived} tintColor="#B8860B" />}
+            renderItem={renderReceivedItem}
           />
         )
       )}
 
-      {activeTab === "viewers" && (
-        viewers.length === 0 ? (
+      {/* Sent Tab */}
+      {activeTab === "sent" && (
+        sent.length === 0 ? (
+          <View className="flex-1 items-center justify-center px-10">
+            <Text className="text-4xl mb-4">📤</Text>
+            <Text className="text-[#1C1208] text-lg font-semibold mb-2">No sent interests</Text>
+            <Text className="text-[#6B5D4F] text-center text-sm mb-5">
+              Express interest in someone by answering their questions.
+            </Text>
+            <Pressable className="bg-[#B8860B] px-6 py-3 rounded-full" onPress={() => router.push("/(main)/swipe")}>
+              <Text className="text-white font-semibold text-sm">Go to Discover</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <FlatList
+            data={sent}
+            numColumns={2}
+            columnWrapperStyle={{ gap: 14 }}
+            contentContainerStyle={{ gap: 16, paddingBottom: 80, paddingTop: 4 }}
+            keyExtractor={(item) => item.id}
+            refreshControl={<RefreshControl refreshing={loading} onRefresh={loadSent} tintColor="#B8860B" />}
+            renderItem={renderSentItem}
+          />
+        )
+      )}
+
+      {/* Already Seen Tab */}
+      {activeTab === "seen" && (
+        seen.length === 0 ? (
           <View className="flex-1 items-center justify-center px-10">
             <Text className="text-4xl mb-4">👀</Text>
-            <Text className="text-white text-lg font-semibold mb-2">No viewers yet</Text>
-            <Text className="text-white/60 text-center text-sm">
-              People who check your profile will appear here.
+            <Text className="text-[#1C1208] text-lg font-semibold mb-2">No seen profiles yet</Text>
+            <Text className="text-[#6B5D4F] text-center text-sm mb-5">
+              Profiles you mark as seen will appear here so you can revisit them.
             </Text>
-          </View>
-        ) : (
-          <FlatList
-            data={viewers}
-            numColumns={2}
-            columnWrapperStyle={{ gap: 14 }}
-            contentContainerStyle={{ gap: 16, paddingBottom: 80, paddingTop: 4 }}
-            keyExtractor={(item, index) => item.id || `viewer-${index}`}
-            refreshControl={
-              <RefreshControl refreshing={loading} onRefresh={loadViewers} tintColor="#fff" />
-            }
-            renderItem={({ item }) => {
-              // Clean and get the first valid photo
-              let mainPhoto: string | null = null;
-              if (item.photos && Array.isArray(item.photos) && item.photos.length > 0) {
-                for (const photo of item.photos) {
-                  const cleaned = cleanPhotoUrl(photo);
-                  if (cleaned) {
-                    mainPhoto = cleaned;
-                    break;
-                  }
-                }
-              }
-
-              const fullName = item.first_name && item.last_name
-                ? `${item.first_name} ${item.last_name}`
-                : item.name || "Unknown";
-
-              const viewCount = item.viewCount || 1;
-
-              return (
-                <Pressable
-                  className="bg-white/5 rounded-3xl overflow-hidden"
-                  style={{
-                    width: CARD_WIDTH,
-                    height: CARD_WIDTH * 1.45,
-                    borderWidth: 1,
-                    borderColor: "rgba(184,134,11,0.7)",
-                    shadowColor: "#000",
-                    shadowOpacity: 0.4,
-                    shadowRadius: 18,
-                    shadowOffset: { width: 0, height: 12 },
-                    elevation: 16,
-                  }}
-                  onPress={async () => {
-                    // Track profile view when tapping from viewers tab
-                    try {
-                      await supabase.functions.invoke("create-profile-view", {
-                        body: { viewed_id: item.id },
-                      });
-                    } catch (error) {
-                      console.error("Error recording profile view from viewers tab:", error);
-                      // Continue with navigation even if view tracking fails
-                    }
-                    // Navigate to swipe screen with this user's profile
-                    router.push(`/(main)/swipe?userId=${item.id}&source=viewers`);
-                  }}
-                >
-                  {mainPhoto ? (
-                    <View style={{ width: '100%', height: '100%', position: 'relative' }}>
-                      <Image
-                        source={{ uri: mainPhoto }}
-                        style={{ width: '100%', height: '100%' }}
-                        contentFit="cover"
-                        transition={200}
-                        cachePolicy="memory-disk"
-                        priority="normal"
-                      />
-                      <View
-                        style={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: 80,
-                          backgroundColor: 'rgba(0,0,0,0.6)'
-                        }}
-                      />
-                      <View style={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
-                        <Text className="text-white text-lg font-semibold" numberOfLines={1}>
-                          {fullName}
-                        </Text>
-                        <View className="flex-row mt-2">
-                          <View className="px-2.5 py-1.5 rounded-full bg-white/10">
-                            <Text className="text-[11px] text-white/90 font-semibold">
-                              {viewCount > 1 ? `Viewed ${viewCount} times` : "Viewed you"}
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  ) : (
-                    <View className="w-full h-full bg-white/5 items-center justify-center" style={{ position: 'relative' }}>
-                      <Text className="text-white/60 text-4xl">👤</Text>
-                      <View
-                        style={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: 80,
-                          backgroundColor: 'rgba(0,0,0,0.6)'
-                        }}
-                      />
-                      <View style={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
-                        <Text className="text-white text-lg font-semibold" numberOfLines={1}>
-                          {fullName}
-                        </Text>
-                        <View className="flex-row mt-2">
-                          <View className="px-2.5 py-1.5 rounded-full bg-white/10">
-                            <Text className="text-[11px] text-white/90 font-semibold">
-                              {viewCount > 1 ? `Viewed ${viewCount} times` : "Viewed you"}
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  )}
-                </Pressable>
-              );
-            }}
-          />
-        )
-      )}
-
-      {activeTab === "passedOn" && (
-        passedOn.length === 0 ? (
-          <View className="flex-1 items-center justify-center px-10">
-            <Text className="text-4xl mb-4">⏳</Text>
-            <Text className="text-white text-lg font-semibold mb-2">No passed profiles yet</Text>
-            <Text className="text-white/60 text-center text-sm">
-              Profiles you skip will show up here.
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            data={passedOn}
-            numColumns={2}
-            columnWrapperStyle={{ gap: 14 }}
-            contentContainerStyle={{ gap: 16, paddingBottom: 80, paddingTop: 4 }}
-            keyExtractor={(item, index) => item.id || `passed-${index}`}
-            refreshControl={
-              <RefreshControl refreshing={loading} onRefresh={loadPassedOn} tintColor="#fff" />
-            }
-            renderItem={({ item }) => {
-              // Clean and get the first valid photo
-              let mainPhoto: string | null = null;
-              if (item.photos && Array.isArray(item.photos) && item.photos.length > 0) {
-                for (const photo of item.photos) {
-                  const cleaned = cleanPhotoUrl(photo);
-                  if (cleaned) {
-                    mainPhoto = cleaned;
-                    break;
-                  }
-                }
-              }
-
-              const fullName = item.first_name && item.last_name
-                ? `${item.first_name} ${item.last_name}`
-                : item.name || "Unknown";
-
-              return (
-                <Pressable
-                  className="bg-white/5 rounded-3xl overflow-hidden"
-                  style={{
-                    width: CARD_WIDTH,
-                    height: CARD_WIDTH * 1.45,
-                    borderWidth: 1,
-                    borderColor: "rgba(184,134,11,0.7)",
-                    shadowColor: "#000",
-                    shadowOpacity: 0.4,
-                    shadowRadius: 18,
-                    shadowOffset: { width: 0, height: 12 },
-                    elevation: 16,
-                  }}
-                  onPress={async () => {
-                    // Navigate to swipe screen with this user's profile
-                    // From passed on, user can change their mind and like them
-                    router.push(`/(main)/swipe?userId=${item.id}&source=passedOn`);
-                  }}
-                >
-                  {mainPhoto ? (
-                    <View style={{ width: '100%', height: '100%', position: 'relative' }}>
-                      <Image
-                        source={{ uri: mainPhoto }}
-                        style={{ width: '100%', height: '100%' }}
-                        contentFit="cover"
-                        transition={200}
-                        cachePolicy="memory-disk"
-                        priority="normal"
-                      />
-                      <View
-                        style={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: 80,
-                          backgroundColor: 'rgba(0,0,0,0.6)'
-                        }}
-                      />
-                      <View style={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
-                        <Text className="text-white text-lg font-semibold" numberOfLines={1}>
-                          {fullName}
-                        </Text>
-                        <View className="flex-row mt-2">
-                          <View className="px-2.5 py-1.5 rounded-full bg-white/10">
-                            <Text className="text-[11px] text-white/90 font-semibold">
-                              You passed
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  ) : (
-                    <View className="w-full h-full bg-white/5 items-center justify-center" style={{ position: 'relative' }}>
-                      <Text className="text-white/60 text-4xl">👤</Text>
-                      <View
-                        style={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: 80,
-                          backgroundColor: 'rgba(0,0,0,0.6)'
-                        }}
-                      />
-                      <View style={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
-                        <Text className="text-white text-lg font-semibold" numberOfLines={1}>
-                          {fullName}
-                        </Text>
-                        <View className="flex-row mt-2">
-                          <View className="px-2.5 py-1.5 rounded-full bg-white/10">
-                            <Text className="text-[11px] text-white/90 font-semibold">
-                              You passed
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  )}
-                </Pressable>
-              );
-            }}
-          />
-        )
-      )}
-
-      {activeTab === "likedMe" && (
-        likes.length === 0 ? (
-          <View className="flex-1 items-center justify-center px-10">
-            <Text className="text-4xl mb-4">💛</Text>
-            <Text className="text-white text-lg font-semibold mb-2">No likes yet</Text>
-            <Text className="text-white/60 text-center text-sm mb-5">
-              When someone likes you, they will appear here.
-            </Text>
-            <Pressable
-              className="bg-[#B8860B] px-6 py-3 rounded-full"
-              onPress={() => router.push("/(main)/swipe")}
-            >
-              <Text className="text-black font-semibold text-sm">Go to swipe</Text>
+            <Pressable className="bg-[#B8860B] px-6 py-3 rounded-full" onPress={() => router.push("/(main)/swipe")}>
+              <Text className="text-white font-semibold text-sm">Go to Discover</Text>
             </Pressable>
           </View>
         ) : (
           <FlatList
-            data={likes}
+            data={seen}
             numColumns={2}
             columnWrapperStyle={{ gap: 14 }}
             contentContainerStyle={{ gap: 16, paddingBottom: 80, paddingTop: 4 }}
-            keyExtractor={(item, index) => item.id || item.swipe_id || `like-${index}`}
-            refreshControl={
-              <RefreshControl refreshing={loading} onRefresh={loadLikes} tintColor="#fff" />
-            }
-            renderItem={({ item }) => {
-              // Clean and get the first valid photo
-              let mainPhoto: string | null = null;
-              if (item.photos && Array.isArray(item.photos) && item.photos.length > 0) {
-                // Try each photo until we find a valid one
-                for (const photo of item.photos) {
-                  const cleaned = cleanPhotoUrl(photo);
-                  if (cleaned) {
-                    mainPhoto = cleaned;
-                    break;
-                  }
-                }
-              }
-
-              const fullName = item.first_name && item.last_name
-                ? `${item.first_name} ${item.last_name}`
-                : item.name || "Unknown";
-
-              return (
-                <Pressable
-                  className="bg-white/5 rounded-3xl overflow-hidden"
-                  style={{
-                    width: CARD_WIDTH,
-                    height: CARD_WIDTH * 1.45,
-                    borderWidth: 1,
-                    borderColor: "rgba(184,134,11,0.7)",
-                    shadowColor: "#000",
-                    shadowOpacity: 0.4,
-                    shadowRadius: 18,
-                    shadowOffset: { width: 0, height: 12 },
-                    elevation: 16,
-                  }}
-                  onPress={async () => {
-                    // Track profile view when tapping from likes tab
-                    try {
-                      await supabase.functions.invoke("create-profile-view", {
-                        body: { viewed_id: item.id },
-                      });
-                    } catch (error) {
-                      console.error("Error recording profile view from likes tab:", error);
-                      // Continue with navigation even if view tracking fails
-                    }
-                    // Navigate to swipe screen with this user's profile
-                    router.push(`/(main)/swipe?userId=${item.id}&source=likedMe`);
-                  }}
-                >
-                  {mainPhoto ? (
-                    <View style={{ width: '100%', height: '100%', position: 'relative' }}>
-                      <Image
-                        source={{ uri: mainPhoto }}
-                        style={{ width: '100%', height: '100%' }}
-                        contentFit="cover"
-                        transition={200}
-                        cachePolicy="memory-disk"
-                        priority="normal"
-                      />
-                      <View
-                        style={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: 80,
-                          backgroundColor: 'rgba(0,0,0,0.6)'
-                        }}
-                      />
-                      <View style={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
-                        <Text className="text-white text-lg font-semibold" numberOfLines={1}>
-                          {fullName}
-                        </Text>
-                        <View className="flex-row mt-2">
-                          <View className="px-2.5 py-1.5 rounded-full bg-white/10">
-                            <Text className="text-[11px] text-white/90 font-semibold">
-                              Liked you
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  ) : (
-                    <View className="w-full h-full bg-white/5 items-center justify-center" style={{ position: 'relative' }}>
-                      <Text className="text-white/60 text-4xl">👤</Text>
-                      <View
-                        style={{
-                          position: 'absolute',
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          height: 80,
-                          backgroundColor: 'rgba(0,0,0,0.6)'
-                        }}
-                      />
-                      <View style={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
-                        <Text className="text-white text-lg font-semibold" numberOfLines={1}>
-                          {fullName}
-                        </Text>
-                        <View className="flex-row mt-2">
-                          <View className="px-2.5 py-1.5 rounded-full bg-white/10">
-                            <Text className="text-[11px] text-white/90 font-semibold">
-                              Liked you
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  )}
-                </Pressable>
-              );
-            }}
+            keyExtractor={(item) => item.id}
+            refreshControl={<RefreshControl refreshing={loading} onRefresh={loadSeen} tintColor="#B8860B" />}
+            renderItem={renderSeenItem}
           />
-        ))}
-
-      {/* Compliment Modal */}
-      <Modal
-        visible={complimentModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => {
-          setComplimentModalVisible(false);
-          setComplimentMessage("");
-          setSelectedUser(null);
-        }}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1"
-        >
-          <View className="flex-1 bg-black/80 justify-end">
-            <Pressable
-              className="flex-1"
-              onPress={() => {
-                setComplimentModalVisible(false);
-                setComplimentMessage("");
-                setSelectedUser(null);
-              }}
-            />
-            <View className="bg-black border-t border-white/20 rounded-t-3xl p-6">
-              <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-white text-xl font-bold">
-                  Send Compliment 💬
-                </Text>
-                <Pressable
-                  onPress={() => {
-                    setComplimentModalVisible(false);
-                    setComplimentMessage("");
-                    setSelectedUser(null);
-                  }}
-                >
-                  <Text className="text-white/70 text-lg">✕</Text>
-                </Pressable>
-              </View>
-
-              {selectedUser && (
-                <>
-                  <Text className="text-white/80 text-sm mb-4">
-                    Send a message to {selectedUser.first_name || selectedUser.name || "this user"} before matching
-                  </Text>
-
-                  <TextInput
-                    className="bg-white/10 text-white rounded-2xl p-4 mb-4 min-h-[120px] text-base"
-                    placeholder="Write your compliment (max 200 characters)..."
-                    placeholderTextColor="#FFFFFF60"
-                    multiline
-                    numberOfLines={5}
-                    maxLength={200}
-                    value={complimentMessage}
-                    onChangeText={setComplimentMessage}
-                    style={{ textAlignVertical: "top" }}
-                  />
-
-                  <Text className="text-white/50 text-xs mb-4 text-right">
-                    {complimentMessage.length}/200
-                  </Text>
-
-                  <Pressable
-                    className={`bg-[#B8860B] rounded-2xl py-4 items-center ${sendingCompliment || !complimentMessage.trim() ? "opacity-50" : ""}`}
-                    disabled={sendingCompliment || !complimentMessage.trim()}
-                    onPress={async () => {
-                      if (!complimentMessage.trim() || !selectedUser) return;
-
-                      setSendingCompliment(true);
-                      try {
-                        const { error, data } = await supabase.functions.invoke("send-compliment", {
-                          body: {
-                            recipientId: selectedUser.id,
-                            message: complimentMessage.trim(),
-                          },
-                        });
-
-                        if (error) {
-                          Alert.alert("Error", error.message || "Failed to send compliment. Please try again.");
-                          setSendingCompliment(false);
-                          return;
-                        }
-
-                        Alert.alert("Success", "Compliment sent! They'll see it in their chat list.", [
-                          {
-                            text: "OK",
-                            onPress: () => {
-                              setComplimentModalVisible(false);
-                              setComplimentMessage("");
-                              setSelectedUser(null);
-                              setSendingCompliment(false);
-                              // Refresh the likes list
-                              loadMyLikes();
-                            },
-                          },
-                        ]);
-                      } catch (error: any) {
-                        console.error("Error sending compliment:", error);
-                        Alert.alert("Error", error.message || "Failed to send compliment. Please try again.");
-                        setSendingCompliment(false);
-                      }
-                    }}
-                  >
-                    <Text className="text-white text-base font-bold">
-                      {sendingCompliment ? "Sending..." : "Send Compliment"}
-                    </Text>
-                  </Pressable>
-                </>
-              )}
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        )
+      )}
     </View>
   );
 }

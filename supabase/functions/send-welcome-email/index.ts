@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://habibiswipe.com",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtari.com",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
@@ -12,8 +12,8 @@ const corsHeaders = {
 const EMAIL_SERVICE = Deno.env.get("EMAIL_SERVICE") || "resend"; // "resend" or "sendgrid"
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
-const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "welcome@habibiswipe.com";
-const FROM_NAME = Deno.env.get("FROM_NAME") || "Habibi Swipe";
+const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "welcome@ikhtari.com";
+const FROM_NAME = Deno.env.get("FROM_NAME") || "Ikhtari";
 
 // Send email using Resend
 async function sendEmailWithResend(email: string, name: string) {
@@ -24,7 +24,7 @@ async function sendEmailWithResend(email: string, name: string) {
   const emailContent = {
     from: `${FROM_NAME} <${FROM_EMAIL}>`,
     to: email,
-    subject: "Welcome to Habibi Swipe! 🎉",
+    subject: "Welcome to Ikhtari! 🎉",
     html: `
       <!DOCTYPE html>
       <html>
@@ -34,12 +34,12 @@ async function sendEmailWithResend(email: string, name: string) {
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
           <div style="background-color: #0A0A0A; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: #B8860B; margin: 0; font-size: 28px;">Habibi Swipe</h1>
+            <h1 style="color: #B8860B; margin: 0; font-size: 28px;">Ikhtari</h1>
           </div>
           <div style="background-color: #ffffff; padding: 40px; border-radius: 0 0 10px 10px;">
             <h2 style="color: #0A0A0A; margin-top: 0;">Welcome, ${name}! 🎉</h2>
             <p style="color: #666; font-size: 16px;">
-              Thank you for joining Habibi Swipe! We're thrilled to have you on this journey.
+              Thank you for joining Ikhtari! We're thrilled to have you on this journey.
             </p>
             <p style="color: #666; font-size: 16px;">
               Your profile is now complete and you're ready to start connecting with amazing people who share your values.
@@ -57,23 +57,23 @@ async function sendEmailWithResend(email: string, name: string) {
             </p>
             <p style="color: #666; font-size: 16px; margin-top: 30px;">
               Best regards,<br>
-              <strong style="color: #B8860B;">The Habibi Swipe Team</strong>
+              <strong style="color: #B8860B;">The Ikhtari Team</strong>
             </p>
           </div>
           <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-            <p>© ${new Date().getFullYear()} Habibi Swipe. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} Ikhtari. All rights reserved.</p>
             <p>
-              <a href="https://habibiswipe.com" style="color: #B8860B; text-decoration: none;">Visit our website</a> | 
-              <a href="https://habibiswipe.com/support" style="color: #B8860B; text-decoration: none;">Support</a>
+              <a href="https://ikhtari.com" style="color: #B8860B; text-decoration: none;">Visit our website</a> | 
+              <a href="https://ikhtari.com/support" style="color: #B8860B; text-decoration: none;">Support</a>
             </p>
           </div>
         </body>
       </html>
     `,
     text: `
-Welcome to Habibi Swipe! 🎉
+Welcome to Ikhtari! 🎉
 
-Thank you for joining Habibi Swipe, ${name}! We're thrilled to have you on this journey.
+Thank you for joining Ikhtari, ${name}! We're thrilled to have you on this journey.
 
 Your profile is now complete and you're ready to start connecting with amazing people who share your values.
 
@@ -85,10 +85,10 @@ What's next?
 We're here to help you find meaningful connections. If you have any questions or need support, don't hesitate to reach out.
 
 Best regards,
-The Habibi Swipe Team
+The Ikhtari Team
 
-© ${new Date().getFullYear()} Habibi Swipe. All rights reserved.
-Visit us at https://habibiswipe.com
+© ${new Date().getFullYear()} Ikhtari. All rights reserved.
+Visit us at https://ikhtari.com
     `.trim(),
   };
 
@@ -119,7 +119,7 @@ async function sendEmailWithSendGrid(email: string, name: string) {
     personalizations: [
       {
         to: [{ email }],
-        subject: "Welcome to Habibi Swipe! 🎉",
+        subject: "Welcome to Ikhtari! 🎉",
       },
     ],
     from: { email: FROM_EMAIL, name: FROM_NAME },
@@ -135,12 +135,12 @@ async function sendEmailWithSendGrid(email: string, name: string) {
             </head>
             <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
               <div style="background-color: #0A0A0A; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-                <h1 style="color: #B8860B; margin: 0; font-size: 28px;">Habibi Swipe</h1>
+                <h1 style="color: #B8860B; margin: 0; font-size: 28px;">Ikhtari</h1>
               </div>
               <div style="background-color: #ffffff; padding: 40px; border-radius: 0 0 10px 10px;">
                 <h2 style="color: #0A0A0A; margin-top: 0;">Welcome, ${name}! 🎉</h2>
                 <p style="color: #666; font-size: 16px;">
-                  Thank you for joining Habibi Swipe! We're thrilled to have you on this journey.
+                  Thank you for joining Ikhtari! We're thrilled to have you on this journey.
                 </p>
                 <p style="color: #666; font-size: 16px;">
                   Your profile is now complete and you're ready to start connecting with amazing people who share your values.
@@ -158,14 +158,14 @@ async function sendEmailWithSendGrid(email: string, name: string) {
                 </p>
                 <p style="color: #666; font-size: 16px; margin-top: 30px;">
                   Best regards,<br>
-                  <strong style="color: #B8860B;">The Habibi Swipe Team</strong>
+                  <strong style="color: #B8860B;">The Ikhtari Team</strong>
                 </p>
               </div>
               <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-                <p>© ${new Date().getFullYear()} Habibi Swipe. All rights reserved.</p>
+                <p>© ${new Date().getFullYear()} Ikhtari. All rights reserved.</p>
                 <p>
-                  <a href="https://habibiswipe.com" style="color: #B8860B; text-decoration: none;">Visit our website</a> | 
-                  <a href="https://habibiswipe.com/support" style="color: #B8860B; text-decoration: none;">Support</a>
+                  <a href="https://ikhtari.com" style="color: #B8860B; text-decoration: none;">Visit our website</a> | 
+                  <a href="https://ikhtari.com/support" style="color: #B8860B; text-decoration: none;">Support</a>
                 </p>
               </div>
             </body>
