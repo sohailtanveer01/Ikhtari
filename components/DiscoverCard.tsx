@@ -2,9 +2,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useEffect, useRef } from "react";
 import { Animated, Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
+import { formatLastActive } from "../lib/utils/timeUtils";
 
 const { width } = Dimensions.get("window");
-const CARD_WIDTH = (width - 54) / 2;
+const CARD_WIDTH = (width - 32) / 2;
 
 function cleanPhotoUrl(url: string | null | undefined): string | null {
   if (!url || typeof url !== "string") return null;
@@ -95,6 +96,7 @@ export default function DiscoverCard({
 
   const age = calculateAge(profile.dob);
   const city = profile.city || "";
+  const activeInfo = formatLastActive(profile.last_active_at);
 
   return (
     <Animated.View style={{
@@ -105,7 +107,7 @@ export default function DiscoverCard({
       className="bg-white rounded-3xl overflow-hidden"
       style={{
         width: CARD_WIDTH,
-        height: CARD_WIDTH * 1.45,
+        height: CARD_WIDTH * 1.65,
         borderWidth: 1,
         borderColor: "rgba(184,134,11,0.7)",
         shadowColor: "#B8860B",
@@ -134,6 +136,12 @@ export default function DiscoverCard({
             {city ? (
               <Text className="text-white/70 text-xs mt-1" numberOfLines={1}>{city}</Text>
             ) : null}
+            {activeInfo && (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
+                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: activeInfo.dotColor }} />
+                <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 10 }}>{activeInfo.label}</Text>
+              </View>
+            )}
             {(profile.is_boosted || profile.compatibility_score != null) && (
               <View className="flex-row mt-2 gap-1.5">
                 {profile.is_boosted && (

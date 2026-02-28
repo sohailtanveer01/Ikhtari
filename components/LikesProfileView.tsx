@@ -4,6 +4,7 @@ import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
 import CompatibilityCard from "./CompatibilityCard";
 import { getFlagByName } from "../lib/countries";
 import { supabase } from "../lib/supabase";
+import { formatLastActive } from "../lib/utils/timeUtils";
 
 const { width, height } = Dimensions.get("window");
 
@@ -29,6 +30,7 @@ export default function LikesProfileView({ profile }: any) {
       : profile.name || "Unknown";
 
   const age = calculateAge(profile.dob);
+  const activeInfo = formatLastActive(profile.last_active_at);
 
   // Extract profile data
   const height = profile.height || "";
@@ -36,14 +38,8 @@ export default function LikesProfileView({ profile }: any) {
   const hasChildren = profile.has_children ?? null;
   const education = profile.education || "";
   const profession = profile.profession || "";
-  const sect = profile.sect || "";
-  const bornMuslim = profile.born_muslim ?? null;
-  const religiousPractice = profile.religious_practice || "";
-  const alcoholHabit = profile.alcohol_habit || "";
-  const smokingHabit = profile.smoking_habit || "";
   const ethnicity = profile.ethnicity || "";
   const nationality = profile.nationality || "";
-  const hobbies = profile.hobbies || [];
   const bio = profile.bio || "";
   // Handle location - prioritize new city/country fields
   const location = profile.city || profile.country
@@ -70,8 +66,7 @@ export default function LikesProfileView({ profile }: any) {
 
   // Check if sections should be shown
   const hasPersonalInfo = height || maritalStatus || hasChildren !== null || education || profession;
-  const hasReligiousInfo = sect || bornMuslim !== null || religiousPractice || alcoholHabit || smokingHabit;
-  const hasLifestyleInfo = (hobbies && hobbies.length > 0) || location;
+  const hasLifestyleInfo = Boolean(location);
   const hasBackgroundInfo = ethnicity || nationality;
   const hasPrompts = prompts && prompts.length > 0 && prompts.some((p: any) => p.question && p.answer);
 
@@ -99,12 +94,20 @@ export default function LikesProfileView({ profile }: any) {
           blurRadius={profile?.blur_photos && !profile?.is_liked_by_them ? 50 : 0}
         />
 
-        {/* Name and Age overlay on first image only */}
+        {/* Name, Age, and Active status overlay on first image only */}
         {isMainPhoto && (
           <View style={styles.nameOverlay}>
             <Text style={styles.nameOverlayText}>
               {fullName}{age !== null ? `, ${age}` : ''}
             </Text>
+            {activeInfo && (
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 }}>
+                <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: activeInfo.dotColor }} />
+                <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 12, fontWeight: "500" }}>
+                  {activeInfo.label}
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -171,53 +174,12 @@ export default function LikesProfileView({ profile }: any) {
     );
   }
 
-  // Religious
-  if (hasReligiousInfo) {
-    dataSections.push(
-      <View key="religious" style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Religious</Text>
-        <View style={styles.chipsContainer}>
-          {sect && (
-            <View style={styles.infoChip}>
-              <Text style={styles.infoChipText}>🕌 {sect}</Text>
-            </View>
-          )}
-          {bornMuslim !== null && (
-            <View style={styles.infoChip}>
-              <Text style={styles.infoChipText}>✨ {bornMuslim ? "Born Muslim" : "Convert"}</Text>
-            </View>
-          )}
-          {religiousPractice && (
-            <View style={styles.infoChip}>
-              <Text style={styles.infoChipText}>📿 {religiousPractice}</Text>
-            </View>
-          )}
-          {alcoholHabit && (
-            <View style={styles.infoChip}>
-              <Text style={styles.infoChipText}>🍷 {alcoholHabit}</Text>
-            </View>
-          )}
-          {smokingHabit && (
-            <View style={styles.infoChip}>
-              <Text style={styles.infoChipText}>🚬 {smokingHabit}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-    );
-  }
-
   // Lifestyle
   if (hasLifestyleInfo) {
     dataSections.push(
       <View key="lifestyle" style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>Lifestyle</Text>
         <View style={styles.chipsContainer}>
-          {hobbies && hobbies.length > 0 && hobbies.map((hobby: string, idx: number) => (
-            <View key={idx} style={styles.infoChip}>
-              <Text style={styles.infoChipText}>{hobby}</Text>
-            </View>
-          ))}
           {location && (
             <View style={styles.infoChip}>
               <Text style={styles.infoChipText}>
@@ -370,17 +332,17 @@ const getStyles = () => {
       color: '#FFFFFF',
     },
     sectionCard: {
-      backgroundColor: "#FFFFFF",
+      backgroundColor: "rgba(255,255,255,0.72)",
       borderRadius: 24,
       padding: 20,
       marginHorizontal: 20,
       marginTop: 24,
       borderWidth: 1,
-      borderColor: "#EDE5D5",
+      borderColor: "rgba(184,134,11,0.28)",
       shadowColor: "#B8860B",
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.18,
-      shadowRadius: 14,
+      shadowOpacity: 0.14,
+      shadowRadius: 16,
       elevation: 5,
     },
     sectionTitle: {
@@ -423,15 +385,15 @@ const getStyles = () => {
       gap: 16,
     },
     promptCard: {
-      backgroundColor: "#FFFFFF",
+      backgroundColor: "rgba(255,255,255,0.72)",
       borderRadius: 24,
       padding: 24,
       borderWidth: 1,
-      borderColor: "#EDE5D5",
+      borderColor: "rgba(184,134,11,0.28)",
       shadowColor: "#B8860B",
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.18,
-      shadowRadius: 14,
+      shadowOpacity: 0.14,
+      shadowRadius: 16,
       elevation: 5,
     },
     promptQuestion: {

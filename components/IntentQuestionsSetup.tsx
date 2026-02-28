@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
   Alert,
@@ -115,7 +116,7 @@ export default function IntentQuestionsSetup({
       >
         {/* Header */}
         <View className="px-6 pt-2 pb-4">
-          <Text className="text-white text-3xl font-bold mb-2">
+          <Text className="text-[#1C1208] text-3xl font-bold mb-2">
             Your Intent Questions
           </Text>
           <Text className="text-[#6B5D4F] text-base">
@@ -186,26 +187,43 @@ export default function IntentQuestionsSetup({
       <View className="px-6 pb-8 pt-4">
         {onCancel && (
           <Pressable
-            className="bg-[#F5F0E8] p-4 rounded-2xl items-center mb-3"
+            className="bg-[#F5F0E8] p-4 rounded-2xl items-center mb-3 border border-[#EDE5D5]"
             onPress={onCancel}
           >
             <Text className="text-[#6B5D4F] text-lg font-semibold">Cancel</Text>
           </Pressable>
         )}
         <Pressable
-          className={`p-5 rounded-2xl items-center ${
-            canSave ? "bg-[#B8860B]" : "bg-[#F5F0E8]"
-          }`}
           onPress={handleSave}
           disabled={!canSave}
+          style={{
+            borderRadius: 18,
+            shadowColor: canSave ? "#B8860B" : "transparent",
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.5,
+            shadowRadius: 16,
+            elevation: canSave ? 10 : 0,
+          }}
         >
-          <Text
-            className={`text-lg font-bold ${
-              canSave ? "text-white" : "text-white/40"
-            }`}
-          >
-            Save Questions ({questions.length}/6)
-          </Text>
+          {canSave ? (
+            <LinearGradient
+              colors={["#D4A017", "#B8860B"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ paddingVertical: 20, borderRadius: 18, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}
+            >
+              <Ionicons name="checkmark-circle" size={22} color="#fff" />
+              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '800' }}>
+                Save Questions ({questions.length}/6)
+              </Text>
+            </LinearGradient>
+          ) : (
+            <View style={{ paddingVertical: 20, borderRadius: 18, alignItems: 'center', backgroundColor: 'rgba(184,134,11,0.08)', borderWidth: 1.5, borderColor: 'rgba(184,134,11,0.2)' }}>
+              <Text style={{ color: '#B8860B', opacity: 0.45, fontSize: 18, fontWeight: '800' }}>
+                Save Questions ({questions.length}/6)
+              </Text>
+            </View>
+          )}
         </Pressable>
       </View>
 
@@ -227,7 +245,7 @@ export default function IntentQuestionsSetup({
               setShowCustomInput(false);
             }}
           />
-          <View className="bg-[#111] border-t border-white/20 rounded-t-3xl max-h-[80%]">
+          <View className="bg-[#FDFAF5] border-t border-[#EDE5D5] rounded-t-3xl max-h-[80%]">
             <View className="flex-row items-center justify-between px-6 pt-6 pb-4">
               <Text className="text-[#1C1208] text-xl font-bold">Add Question</Text>
               <Pressable
@@ -254,13 +272,13 @@ export default function IntentQuestionsSetup({
                 />
                 <View className="flex-row gap-3">
                   <Pressable
-                    className="flex-1 bg-[#F5F0E8] p-3 rounded-xl items-center"
+                    className="flex-1 bg-[#F5F0E8] p-3 rounded-xl items-center border border-[#EDE5D5]"
                     onPress={() => {
                       setShowCustomInput(false);
                       setCustomQuestion("");
                     }}
                   >
-                    <Text className="text-white/70 font-semibold">Back</Text>
+                    <Text className="text-[#6B5D4F] font-semibold">Back</Text>
                   </Pressable>
                   <Pressable
                     className={`flex-1 p-3 rounded-xl items-center ${
@@ -306,7 +324,7 @@ export default function IntentQuestionsSetup({
                   >
                     <Text
                       className={`text-sm font-medium ${
-                        !selectedCategory ? "text-black" : "text-white/70"
+                        !selectedCategory ? "text-black" : "text-[#6B5D4F]"
                       }`}
                     >
                       All
@@ -322,7 +340,7 @@ export default function IntentQuestionsSetup({
                     >
                       <Text
                         className={`text-sm font-medium ${
-                          selectedCategory === cat ? "text-black" : "text-white/70"
+                          selectedCategory === cat ? "text-black" : "text-[#6B5D4F]"
                         }`}
                       >
                         {cat}
@@ -338,7 +356,7 @@ export default function IntentQuestionsSetup({
                     return (
                       <Pressable
                         key={item.id}
-                        className={`p-4 border-b border-white/5 ${
+                        className={`p-4 border-b border-[#EDE5D5] ${
                           isUsed ? "opacity-40" : ""
                         }`}
                         onPress={() => addFromLibrary(item)}

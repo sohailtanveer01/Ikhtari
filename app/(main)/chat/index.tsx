@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { BlurView } from "expo-blur";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Animated, FlatList, Image, Pressable, RefreshControl, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Animated, FlatList, Image, Platform, Pressable, RefreshControl, Text, View } from "react-native";
 import { RectButton, Swipeable } from "react-native-gesture-handler";
 import DiamondIcon from "../../../components/DiamondIcon";
 import Logo from "../../../components/Logo";
@@ -288,15 +289,32 @@ export default function ChatListScreen() {
     <View className="flex-1 bg-[#FDFAF5] pt-12">
       <View className="px-4 mb-4 flex-row items-center justify-between">
         <Text className="text-[#1C1208] text-2xl font-bold">Chats</Text>
-        <Pressable
-          onPress={() => router.push("/(main)/chat/unmatches")}
-          className="px-4 py-2 bg-[#FDF3DC] rounded-full border border-[#B8860B]/30 relative"
-        >
-          <Text className="text-[#B8860B] text-sm font-semibold">Unmatches</Text>
+        <View style={{ position: 'relative' }}>
+          <Pressable
+            onPress={() => router.push("/(main)/chat/unmatches")}
+            style={{
+              borderRadius: 20,
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: 'rgba(184,134,11,0.35)',
+            }}
+          >
+            <BlurView
+              intensity={Platform.OS === "ios" ? 28 : 0}
+              tint="light"
+              style={{
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                backgroundColor: Platform.OS === "android" ? "rgba(253,243,220,0.95)" : "rgba(253,243,220,0.6)",
+              }}
+            >
+              <Text style={{ color: '#B8860B', fontSize: 14, fontWeight: '600' }}>Unmatches</Text>
+            </BlurView>
+          </Pressable>
           {unmatchesNotificationCount > 0 && (
-            <View className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-black" />
+            <View style={{ position: 'absolute', top: -4, right: -4, width: 12, height: 12, backgroundColor: '#EF4444', borderRadius: 6, borderWidth: 1.5, borderColor: 'white' }} />
           )}
-        </Pressable>
+        </View>
       </View>
 
   

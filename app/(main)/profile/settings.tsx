@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { supabase } from "../../../lib/supabase";
 import { useCertification } from "../../../lib/hooks/useCertification";
+import { useDiscoverStore } from "../../../lib/stores/discoverStore";
 
 interface ChaperoneStatus {
   my_chaperone: {
@@ -189,6 +190,7 @@ export default function SettingsScreen() {
   const performLogout = async () => {
     setLoggingOut(true);
     try {
+      useDiscoverStore.getState().resetFeed();
       await supabase.auth.signOut();
       router.replace("/");
     } catch (error) {
@@ -239,6 +241,7 @@ export default function SettingsScreen() {
               if (data?.error) throw new Error(data.error);
 
               // Sign out locally
+              useDiscoverStore.getState().resetFeed();
               await supabase.auth.signOut();
 
               Alert.alert(

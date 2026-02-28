@@ -53,7 +53,7 @@ serve(async (req) => {
     const senderIds = requests.map((r: any) => r.sender_id);
     const { data: senderProfiles } = await supabase
       .from("users")
-      .select("id, first_name, last_name, name, photos, dob, city, country, profession, height, marital_status, has_children, education, sect, born_muslim, religious_practice, alcohol_habit, smoking_habit, ethnicity, nationality, hobbies, bio, location")
+      .select("id, first_name, last_name, name, photos, dob, city, country, profession, height, marital_status, has_children, education, ethnicity, nationality, bio, location")
       .in("id", senderIds);
 
     const profileMap = new Map<string, any>();

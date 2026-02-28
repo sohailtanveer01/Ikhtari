@@ -1,6 +1,7 @@
+import { BlurView } from "expo-blur";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
+import { Dimensions, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { MarriageFoundationsBadge } from "./MarriageFoundationsBadge";
 
 const { width, height } = Dimensions.get("window");
@@ -73,9 +74,13 @@ export default function SwipeCard({ profile, onTap }: SwipeCardProps) {
         pointerEvents="none"
       />
 
-      {/* Name, Age, and optional profession */}
+      {/* Glass info pill */}
       <View style={styles.infoContainer} pointerEvents="none">
-        <View style={styles.nameContainer}>
+        <BlurView
+          intensity={Platform.OS === "ios" ? 48 : 0}
+          tint="dark"
+          style={styles.glassPill}
+        >
           <View style={styles.nameRow}>
             <Text style={styles.nameText}>
               {fullName}
@@ -92,12 +97,12 @@ export default function SwipeCard({ profile, onTap }: SwipeCardProps) {
               <Text style={styles.likedBadgeText}>Liked you</Text>
             </View>
           )}
-        </View>
-        {!!profession && (
-          <Text style={styles.subText} numberOfLines={1}>
-            {profession}
-          </Text>
-        )}
+          {!!profession && (
+            <Text style={styles.subText} numberOfLines={1}>
+              {profession}
+            </Text>
+          )}
+        </BlurView>
       </View>
     </View>
   );
@@ -140,32 +145,32 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 220, // Slightly above the action buttons (avoid overlap)
+    bottom: 220,
     paddingHorizontal: 24,
     alignItems: "center",
   },
+  glassPill: {
+    borderRadius: 28,
+    overflow: "hidden",
+    paddingHorizontal: 28,
+    paddingVertical: 16,
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    backgroundColor: "rgba(0,0,0,0.32)", // Android fallback
+  },
   nameText: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "800",
     color: "#FFFFFF",
     textAlign: "center",
-    textShadowColor: "rgba(0,0,0,0.5)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
   },
   subText: {
-    marginTop: 6,
-    fontSize: 16,
-    fontWeight: "600",
-    color: "rgba(255,255,255,0.85)",
+    fontSize: 14,
+    fontWeight: "500",
+    color: "rgba(255,255,255,0.80)",
     textAlign: "center",
-    textShadowColor: "rgba(0,0,0,0.5)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  nameContainer: {
-    alignItems: "center",
-    gap: 8,
   },
   nameRow: {
     flexDirection: "row",

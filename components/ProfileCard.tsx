@@ -179,16 +179,6 @@ export default function ProfileCard({
               </View>
             )}
 
-            {/* Religiosity */}
-            {(profile.sect || profile.religious_practice) && (
-              <View className="flex-row items-center gap-2">
-                <Text className="text-white/70 text-base">🕌</Text>
-                <Text className="text-white/90 text-base">
-                  {[profile.sect, profile.religious_practice].filter(Boolean).join(" • ")}
-                </Text>
-              </View>
-            )}
-
             {/* Ethnicity & Nationality */}
             {(profile.ethnicity || profile.nationality) && (
               <View className="flex-row items-center gap-2">
@@ -201,24 +191,6 @@ export default function ProfileCard({
               </View>
             )}
 
-            {/* Hobbies */}
-            {profile.hobbies && profile.hobbies.length > 0 && (
-              <View className="flex-row items-start gap-2">
-                <Text className="text-white/70 text-base">🎯</Text>
-                <View className="flex-1 flex-row flex-wrap gap-2">
-                  {profile.hobbies.slice(0, 5).map((hobby: string, index: number) => (
-                    <View key={index} className="bg-white/10 px-3 py-1 rounded-full">
-                      <Text className="text-white/90 text-sm">{hobby}</Text>
-                    </View>
-                  ))}
-                  {profile.hobbies.length > 5 && (
-                    <View className="bg-white/10 px-3 py-1 rounded-full">
-                      <Text className="text-white/90 text-sm">+{profile.hobbies.length - 5} more</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            )}
 
           </View>
         </View>

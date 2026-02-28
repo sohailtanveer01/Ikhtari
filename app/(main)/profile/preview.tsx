@@ -2,7 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { BlurView } from "expo-blur";
+import { ActivityIndicator, Dimensions, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { getFlagByName } from "../../../lib/countries";
 import { supabase } from "../../../lib/supabase";
 
@@ -35,17 +36,11 @@ export default function ProfilePreviewScreen() {
   const [dob, setDob] = useState("");
   const [education, setEducation] = useState("");
   const [profession, setProfession] = useState("");
-  const [sect, setSect] = useState("");
-  const [religiousPractice, setReligiousPractice] = useState("");
   const [ethnicity, setEthnicity] = useState("");
   const [nationality, setNationality] = useState("");
-  const [hobbies, setHobbies] = useState<string[]>([]);
   const [bio, setBio] = useState("");
   const [prompts, setPrompts] = useState<any[]>([]);
   const [location, setLocation] = useState<string | null>(null);
-  const [bornMuslim, setBornMuslim] = useState<boolean | null>(null);
-  const [alcoholHabit, setAlcoholHabit] = useState("");
-  const [smokingHabit, setSmokingHabit] = useState("");
 
   const loadProfile = useCallback(async () => {
     try {
@@ -99,16 +94,10 @@ export default function ProfilePreviewScreen() {
       setDob(data.dob || "");
       setEducation(data.education || "");
       setProfession(data.profession || "");
-      setSect(data.sect || "");
-      setReligiousPractice(data.religious_practice || "");
       setEthnicity(data.ethnicity || "");
       setNationality(data.nationality || "");
-      setHobbies(data.hobbies || []);
       setBio(data.bio || "");
       setPhotos(data.photos || []);
-      setBornMuslim(data.born_muslim ?? null);
-      setAlcoholHabit(data.alcohol_habit || "");
-      setSmokingHabit(data.smoking_habit || "");
 
       // Handle location data - prioritize city and country fields
       if (data.city || data.country) {
@@ -175,8 +164,7 @@ export default function ProfilePreviewScreen() {
 
   // Helper functions to check if sections should be shown
   const hasPersonalInfo = height || maritalStatus || hasChildren !== null || education || profession;
-  const hasReligiousInfo = sect || bornMuslim !== null || religiousPractice || alcoholHabit || smokingHabit;
-  const hasLifestyleInfo = (hobbies && hobbies.length > 0) || location;
+  const hasLifestyleInfo = Boolean(location);
   const hasBackgroundInfo = ethnicity || nationality;
   const hasPrompts = prompts && prompts.length > 0 && prompts.some((p: any) => p.question && p.answer);
 
@@ -221,8 +209,6 @@ export default function ProfilePreviewScreen() {
       <View style={styles.topBar}>
         <Pressable
           onPress={() => {
-            // If viewing own profile, navigate back to profile page
-            // Otherwise, use router.back() to go to previous screen
             if (isViewingOwnProfile) {
               router.push("/(main)/profile");
             } else {
@@ -231,6 +217,11 @@ export default function ProfilePreviewScreen() {
           }}
           style={styles.backButton}
         >
+          <BlurView
+            intensity={Platform.OS === "ios" ? 55 : 0}
+            tint="dark"
+            style={StyleSheet.absoluteFill}
+          />
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </Pressable>
       </View>
@@ -291,51 +282,11 @@ export default function ProfilePreviewScreen() {
             );
           }
 
-          if (hasReligiousInfo) {
-            dataSections.push(
-              <View key="religious" style={styles.sectionCard}>
-                <Text style={styles.sectionTitle}>Religious</Text>
-                <View style={styles.chipsContainer}>
-                  {sect && (
-                    <View style={styles.infoChip}>
-                      <Text style={styles.infoChipText}>🕌 {sect.charAt(0).toUpperCase() + sect.slice(1)}</Text>
-                    </View>
-                  )}
-                  {bornMuslim !== null && (
-                    <View style={styles.infoChip}>
-                      <Text style={styles.infoChipText}>{bornMuslim ? "⭐ Born Muslim" : "⭐ Converted to Islam"}</Text>
-                    </View>
-                  )}
-                  {religiousPractice && (
-                    <View style={styles.infoChip}>
-                      <Text style={styles.infoChipText}>📿 {religiousPractice.charAt(0).toUpperCase() + religiousPractice.slice(1)}</Text>
-                    </View>
-                  )}
-                  {alcoholHabit && (
-                    <View style={styles.infoChip}>
-                      <Text style={styles.infoChipText}>🍷 Alcohol: {alcoholHabit.charAt(0).toUpperCase() + alcoholHabit.slice(1)}</Text>
-                    </View>
-                  )}
-                  {smokingHabit && (
-                    <View style={styles.infoChip}>
-                      <Text style={styles.infoChipText}>🚬 Smoking: {smokingHabit.charAt(0).toUpperCase() + smokingHabit.slice(1)}</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            );
-          }
-
           if (hasLifestyleInfo) {
             dataSections.push(
               <View key="lifestyle" style={styles.sectionCard}>
-                <Text style={styles.sectionTitle}>Lifestyle</Text>
+                <Text style={styles.sectionTitle}>Location</Text>
                 <View style={styles.chipsContainer}>
-                  {hobbies && hobbies.length > 0 && hobbies.map((hobby: string, index: number) => (
-                    <View key={index} style={styles.infoChip}>
-                      <Text style={styles.infoChipText}>🎯 {hobby}</Text>
-                    </View>
-                  ))}
                   {location && (
                     <View style={styles.infoChip}>
                       <Text style={styles.infoChipText}>
@@ -432,12 +383,15 @@ const getStyles = () => {
       backgroundColor: 'transparent',
     },
     backButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: 'rgba(0, 0, 0, 0.35)',
       alignItems: 'center',
       justifyContent: 'center',
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.2)',
     },
     mainImageContainer: {
       marginHorizontal: 20,
@@ -479,23 +433,24 @@ const getStyles = () => {
       color: '#FFFFFF',
     },
     sectionCard: {
-      backgroundColor: "rgba(255, 255, 255, 0.08)",
+      backgroundColor: "rgba(255,255,255,0.72)",
       borderRadius: 24,
       padding: 20,
       marginHorizontal: 20,
+      marginTop: 8,
       marginBottom: 16,
       borderWidth: 1,
-      borderColor: "rgba(255, 255, 255, 0.12)",
-      shadowColor: "#000",
+      borderColor: "rgba(184,134,11,0.28)",
+      shadowColor: "#B8860B",
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 12,
+      shadowOpacity: 0.14,
+      shadowRadius: 16,
       elevation: 5,
     },
     sectionTitle: {
       fontSize: 12,
       fontWeight: "800",
-      color: "rgba(255, 255, 255, 0.5)",
+      color: "#9E8E7E",
       marginBottom: 16,
       textTransform: "uppercase",
       letterSpacing: 2,
@@ -520,36 +475,36 @@ const getStyles = () => {
       paddingVertical: 10,
       borderRadius: 20,
       borderWidth: 1.5,
-      borderColor: "rgba(184, 134, 11, 0.5)",
-      backgroundColor: "rgba(184, 134, 11, 0.05)",
+      borderColor: "rgba(184, 134, 11, 0.4)",
+      backgroundColor: "rgba(184, 134, 11, 0.07)",
     },
     infoChipText: {
       fontSize: 14,
-      color: '#FFFFFF',
+      color: '#1C1208',
       fontWeight: '600',
     },
     bioText: {
       fontSize: 17,
       lineHeight: 26,
-      color: "rgba(255, 255, 255, 0.95)",
+      color: "#6B5D4F",
       fontWeight: "500",
     },
     promptsContainer: {
       paddingHorizontal: 20,
-      marginTop: 24,
+      marginTop: 8,
       gap: 16,
     },
     promptCard: {
-      backgroundColor: "rgba(184, 134, 11, 0.08)",
+      backgroundColor: "rgba(255,255,255,0.72)",
       borderRadius: 24,
       padding: 24,
       borderWidth: 1,
-      borderColor: "rgba(184, 134, 11, 0.25)",
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.4,
+      borderColor: "rgba(184,134,11,0.28)",
+      shadowColor: "#B8860B",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.14,
       shadowRadius: 16,
-      elevation: 8,
+      elevation: 5,
     },
     promptQuestion: {
       fontSize: 13,
@@ -562,7 +517,7 @@ const getStyles = () => {
     promptAnswer: {
       fontSize: 22,
       lineHeight: 30,
-      color: "#FFFFFF",
+      color: "#1C1208",
       fontWeight: "800",
     },
   });

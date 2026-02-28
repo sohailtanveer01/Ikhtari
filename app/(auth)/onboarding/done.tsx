@@ -1,5 +1,6 @@
 import OnboardingBackground from "@/components/OnboardingBackground";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Modal, Pressable, Text, View } from "react-native";
@@ -228,58 +229,118 @@ export default function OnboardingDone() {
     <OnboardingBackground>
       <View className="flex-1 items-center justify-center px-6">
         {/* Card */}
-        <View className="bg-white border border-[#B8860B]/30 rounded-3xl p-8 w-full">
-          {/* Icon */}
-          <View className="items-center mb-6">
-            <View className="w-20 h-20 rounded-full bg-[#B8860B]/20 items-center justify-center">
-              <Ionicons name="heart" size={40} color="#B8860B" />
+        <View style={{
+          width: '100%',
+          borderRadius: 28,
+          shadowColor: "#B8860B",
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.35,
+          shadowRadius: 30,
+          elevation: 20,
+        }}>
+          <LinearGradient
+            colors={["rgba(212,160,23,0.5)", "rgba(184,134,11,0.2)", "rgba(150,112,10,0.5)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ borderRadius: 28, padding: 1.5 }}
+          >
+            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 26.5, overflow: 'hidden' }}>
+              {/* Top decorative line */}
+              <LinearGradient
+                colors={["transparent", "#D4A017", "transparent"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ height: 2 }}
+              />
+
+              <View style={{ padding: 32 }}>
+                {/* Icon */}
+                <View style={{ alignItems: 'center', marginBottom: 24 }}>
+                  <View style={{
+                    shadowColor: '#D4A017',
+                    shadowOffset: { width: 0, height: 0 },
+                    shadowOpacity: 0.7,
+                    shadowRadius: 25,
+                    elevation: 12,
+                  }}>
+                    <LinearGradient
+                      colors={["#D4A017", "#B8860B"]}
+                      style={{ width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Ionicons name="heart" size={42} color="#fff" />
+                    </LinearGradient>
+                  </View>
+                </View>
+
+                {/* Title */}
+                <Text style={{ color: '#1C1208', fontSize: 28, fontWeight: '900', textAlign: 'center', marginBottom: 16, letterSpacing: -0.5 }}>
+                  Welcome to Ikhtari
+                </Text>
+
+                {/* Divider */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+                  <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(184,134,11,0.25)' }} />
+                  <Text style={{ color: '#B8860B', fontSize: 11, fontWeight: '700', letterSpacing: 3, marginHorizontal: 12 }}>YOUR JOURNEY BEGINS</Text>
+                  <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(184,134,11,0.25)' }} />
+                </View>
+
+                {/* Message */}
+                <Text style={{ color: '#6B5D4F', fontSize: 15, textAlign: 'center', lineHeight: 23, marginBottom: 28 }}>
+                  Ikhtari is focused on getting you married and it is all free. Go through the following small series of modules to set your requirements and your obligations for your prospective spouse & learn the Islamic significance of marriage.
+                </Text>
+
+                {/* Primary Button */}
+                <Pressable
+                  onPress={handleGoToModules}
+                  style={({ pressed }) => ({
+                    borderRadius: 18,
+                    shadowColor: '#B8860B',
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: pressed ? 0.3 : 0.55,
+                    shadowRadius: 18,
+                    elevation: 12,
+                    marginBottom: 16,
+                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                  })}
+                >
+                  <LinearGradient
+                    colors={["#D4A017", "#B8860B"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{ paddingVertical: 19, borderRadius: 18, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}
+                  >
+                    <Ionicons name="school-outline" size={22} color="#fff" />
+                    <Text style={{ color: '#fff', fontSize: 17, fontWeight: '800', letterSpacing: 0.4 }}>
+                      Go through modules
+                    </Text>
+                  </LinearGradient>
+                </Pressable>
+
+                {/* Secondary Button */}
+                <Pressable
+                  onPress={handleDeleteProfile}
+                  disabled={deleting}
+                  style={{ padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#EDE5D5', alignItems: 'center' }}
+                >
+                  {deleting ? (
+                    <ActivityIndicator color="#EF4444" />
+                  ) : (
+                    <Text style={{ color: '#EF4444', fontSize: 13, textAlign: 'center' }}>
+                      Delete my profile, I will go to some swiping dating app
+                    </Text>
+                  )}
+                </Pressable>
+              </View>
+
+              {/* Bottom decorative line */}
+              <LinearGradient
+                colors={["transparent", "rgba(212,160,23,0.3)", "transparent"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ height: 1 }}
+              />
             </View>
-          </View>
-
-          {/* Title */}
-          <Text className="text-[#1C1208] text-2xl font-bold text-center mb-4">
-            Welcome to Ikhtari
-          </Text>
-
-          {/* Message */}
-          <Text className="text-[#6B5D4F] text-base text-center leading-6 mb-8">
-            Ikhtari is focused on getting you married and it is all free. Go
-            through the following small series of modules to set your
-            requirements and your obligations for your prospective spouse &
-            learn the Islamic significance of marriage.
-          </Text>
-
-          {/* Primary Button */}
-          <Pressable
-            onPress={handleGoToModules}
-            className="bg-[#B8860B] p-5 rounded-2xl items-center mb-4"
-            style={{
-              shadowColor: "#B8860B",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 8,
-            }}
-          >
-            <Text className="text-white text-lg font-bold text-center">
-              Go through modules & get ready for marriage
-            </Text>
-          </Pressable>
-
-          {/* Secondary Button */}
-          <Pressable
-            onPress={handleDeleteProfile}
-            disabled={deleting}
-            className="p-4 rounded-2xl items-center border border-[#EDE5D5]"
-          >
-            {deleting ? (
-              <ActivityIndicator color="#EF4444" />
-            ) : (
-              <Text className="text-red-400 text-sm font-medium text-center">
-                Delete my profile, I will go to some swiping dating app
-              </Text>
-            )}
-          </Pressable>
+          </LinearGradient>
         </View>
       </View>
     </OnboardingBackground>

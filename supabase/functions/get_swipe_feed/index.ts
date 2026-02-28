@@ -418,15 +418,6 @@ serve(async (req) => {
         }
       }
 
-      // Religiosity filter
-      if (preferences && preferences.religiosity_preferences &&
-        Array.isArray(preferences.religiosity_preferences) &&
-        preferences.religiosity_preferences.length > 0) {
-        if (!profile.religious_practice || !preferences.religiosity_preferences.includes(profile.religious_practice)) {
-          return false;
-        }
-      }
-
       return true;
     });
 

@@ -213,7 +213,7 @@ export default function MainLayout() {
         tabBarBackground: () =>
           Platform.OS === "ios" ? (
             <BlurView
-              intensity={20}
+              intensity={72}
               tint="light"
               style={[StyleSheet.absoluteFill, { borderRadius: 33.5, overflow: "hidden" }]}
             >
@@ -404,7 +404,7 @@ export default function MainLayout() {
 const styles = StyleSheet.create({
   tabBarBackground: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(253, 250, 245, 0.95)",
+    backgroundColor: "rgba(253, 250, 245, 0.58)",
     borderRadius: 33.5,
   },
   iconContainer: {

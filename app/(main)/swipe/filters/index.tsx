@@ -63,7 +63,6 @@ export default function FiltersListScreen() {
           ethnicity_preferences: null,
           marital_status_preferences: null,
           children_preferences: null,
-          religiosity_preferences: null,
           updated_at: new Date().toISOString(),
         }, {
           onConflict: "user_id",
@@ -138,14 +137,6 @@ export default function FiltersListScreen() {
     }
     const options: Record<string, string> = { no: "No children", yes: "Has children" };
     return preferences.children_preferences.map((c: string) => options[c] || c).join(", ");
-  };
-
-  const getReligiosityFilterValue = () => {
-    if (!preferences?.religiosity_preferences || preferences.religiosity_preferences.length === 0) {
-      return "Not set";
-    }
-    const count = preferences.religiosity_preferences.length;
-    return `${count} selected`;
   };
 
   const FilterItem = ({
@@ -285,16 +276,6 @@ export default function FiltersListScreen() {
           />
         </View>
 
-        {/* Religiosity Filter */}
-        <View style={styles.section}>
-          <FilterItem
-            icon="moon"
-            iconColor="#B8860B"
-            title="Religiosity"
-            value={getReligiosityFilterValue()}
-            onPress={() => router.push("/(main)/swipe/filters/religiosity")}
-          />
-        </View>
       </ScrollView>
     </View>
   );

@@ -11,7 +11,9 @@ import {
   Text,
   View,
 } from "react-native";
+import { useDiscoverStore } from "../../../lib/stores/discoverStore";
 import { supabase } from "../../../lib/supabase";
+import { formatLastActive } from "../../../lib/utils/timeUtils";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 54) / 2;
@@ -39,6 +41,7 @@ function calculateAge(dob: string | null): number | null {
 
 export default function InterestsScreen() {
   const router = useRouter();
+  const sessionSeenIds = useDiscoverStore((s) => s.sessionSeenIds);
   const [received, setReceived] = useState<any[]>([]);
   const [sent, setSent] = useState<any[]>([]);
   const [seen, setSeen] = useState<any[]>([]);
@@ -76,7 +79,9 @@ export default function InterestsScreen() {
   const loadSeen = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("get-seen-profiles");
+      const { data, error } = await supabase.functions.invoke("get-seen-profiles", {
+        body: { session_ids: sessionSeenIds },
+      });
       if (error) { console.error("Error fetching seen profiles:", error); return; }
       const parsed = typeof data === "string" ? JSON.parse(data) : data;
       setSeen(parsed?.profiles || []);
@@ -92,6 +97,13 @@ export default function InterestsScreen() {
     else if (activeTab === "sent") loadSent();
     else loadSeen();
   }, [activeTab]);
+
+  // Refresh seen tab when session seen IDs grow (user marks more profiles)
+  useEffect(() => {
+    if (activeTab === "seen" && sessionSeenIds.length > 0) {
+      loadSeen();
+    }
+  }, [sessionSeenIds.length]);
 
   // Realtime subscription for interest requests
   useEffect(() => {
@@ -254,6 +266,8 @@ export default function InterestsScreen() {
       ? `${item.first_name} ${item.last_name}`
       : item.name || "Unknown";
     const age = calculateAge(item.dob);
+    const hasBadges = item.is_boosted || item.compatibility_score != null;
+    const activeInfo = formatLastActive(item.last_active_at);
 
     return (
       <Pressable
@@ -264,7 +278,6 @@ export default function InterestsScreen() {
         {mainPhoto ? (
           <View style={{ width: "100%", height: "100%", position: "relative" }}>
             <Image source={{ uri: mainPhoto }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
-            {/* Slight desaturated overlay to indicate "already seen" */}
             <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.15)" }} />
             <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 90, backgroundColor: "rgba(0,0,0,0.6)" }} />
             {/* Seen badge */}
@@ -279,6 +292,28 @@ export default function InterestsScreen() {
               {item.city ? (
                 <Text className="text-white/70 text-xs mt-1" numberOfLines={1}>{item.city}</Text>
               ) : null}
+              {activeInfo && (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: activeInfo.dotColor }} />
+                  <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 10 }}>{activeInfo.label}</Text>
+                </View>
+              )}
+              {hasBadges && (
+                <View style={{ flexDirection: "row", marginTop: 6, gap: 5, flexWrap: "wrap" }}>
+                  {item.is_boosted && (
+                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, backgroundColor: "rgba(184,134,11,0.35)" }}>
+                      <Text style={{ fontSize: 10, color: "#FFD700", fontWeight: "700" }}>Boosted</Text>
+                    </View>
+                  )}
+                  {item.compatibility_score != null && (
+                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, backgroundColor: "rgba(184,134,11,0.35)" }}>
+                      <Text style={{ fontSize: 10, color: "#FFD700", fontWeight: "700" }}>
+                        {item.compatibility_score}% Match
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
             </View>
           </View>
         ) : (
@@ -290,6 +325,22 @@ export default function InterestsScreen() {
             </View>
             <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
               <Text className="text-[#1C1208] text-lg font-semibold" numberOfLines={1}>{fullName}</Text>
+              {hasBadges && (
+                <View style={{ flexDirection: "row", marginTop: 6, gap: 5, flexWrap: "wrap" }}>
+                  {item.is_boosted && (
+                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, backgroundColor: "rgba(184,134,11,0.2)" }}>
+                      <Text style={{ fontSize: 10, color: "#B8860B", fontWeight: "700" }}>Boosted</Text>
+                    </View>
+                  )}
+                  {item.compatibility_score != null && (
+                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, backgroundColor: "rgba(184,134,11,0.2)" }}>
+                      <Text style={{ fontSize: 10, color: "#B8860B", fontWeight: "700" }}>
+                        {item.compatibility_score}% Match
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
             </View>
           </View>
         )}

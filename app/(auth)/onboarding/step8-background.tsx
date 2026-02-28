@@ -132,7 +132,7 @@ export default function Step8Background() {
             <Ionicons name="chevron-back" size={20} color="#1C1208" />
           </Pressable>
 
-          <View className="flex-row items-center gap-2 flex-1 justify-center px-4">
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'center', marginHorizontal: 16, backgroundColor: 'rgba(184,134,11,0.07)', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(184,134,11,0.18)' }}>
             {Array.from({ length: 5 }, (_, i) => i + 1).map((indicator) => {
               const getIndicatorForStep = (step: number) => {
                 if (step <= 5) return step;

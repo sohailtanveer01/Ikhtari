@@ -188,7 +188,7 @@ export default function DraggablePhoto({
             onPress={onPress}
             onLongPress={onLongPress}
             disabled={Boolean(uploading || isDragging || (photo && photo.trim() !== ""))}
-            className="aspect-square rounded-2xl border-2 border-dashed border-[#EDE5D5] bg-[#F5F0E8] items-center justify-center overflow-hidden"
+            className="aspect-square rounded-2xl border-2 border-dashed border-[#B8860B]/30 bg-[#FDFAF5] items-center justify-center overflow-hidden"
           >
             {photo && photo.trim() !== "" ? (
               <View className="w-full h-full relative">
@@ -216,13 +216,13 @@ export default function DraggablePhoto({
                 </Pressable>
               </View>
             ) : (
-              <View className="items-center">
+              <View className="items-center gap-1">
                 {uploading ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color="#B8860B" size="small" />
                 ) : (
                   <>
-                    <Text className="text-white/50 text-4xl mb-2">+</Text>
-                    <Text className="text-white/50 text-xs text-center">
+                    <Text className="text-[#B8860B] text-3xl font-light">+</Text>
+                    <Text className="text-[#9E8E7E] text-xs text-center px-2">
                       {index === 0 ? "Main Photo" : `Photo ${index + 1}`}
                     </Text>
                   </>

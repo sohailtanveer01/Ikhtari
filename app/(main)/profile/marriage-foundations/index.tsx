@@ -97,7 +97,11 @@ export default function MarriageFoundationsCourseScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+      >
         {/* Progress Section */}
         <View className="px-4 py-6">
           <View className="bg-white rounded-2xl p-6 mb-4">

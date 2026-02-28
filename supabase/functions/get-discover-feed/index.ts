@@ -41,7 +41,7 @@ serve(async (req) => {
       );
     }
 
-    const { limit = 4, mark_seen_ids = [], exclude_ids = [] } = await req.json();
+    const { limit = 4, mark_seen_ids = [], exclude_ids = [], feed_mode = 'compatible' } = await req.json();
 
     // Persist seen profiles to DB (best-effort — failures don't block the response)
     if (mark_seen_ids.length > 0) {
@@ -245,60 +245,58 @@ serve(async (req) => {
       if (matchedUserIds.has(profile.id)) return false;
       if (!profile.photos || profile.photos.length === 0) return false;
 
-      // Location filter
-      if (preferences?.location_enabled) {
-        if (preferences.location_filter_type === "distance") {
-          if (searchLat !== null && searchLon !== null && searchRadiusMeters !== null && profile.location) {
-            const profileMatch = profile.location.match(/POINT\(([\d.-]+)\s+([\d.-]+)\)/);
-            if (profileMatch) {
-              const distance = calculateDistance(searchLat, searchLon, parseFloat(profileMatch[2]), parseFloat(profileMatch[1]));
-              if (distance > searchRadiusMeters) return false;
-            } else {
+      // Preference filters — only applied in 'filters' mode
+      if (feed_mode === 'filters') {
+        // Location filter
+        if (preferences?.location_enabled) {
+          if (preferences.location_filter_type === "distance") {
+            if (searchLat !== null && searchLon !== null && searchRadiusMeters !== null && profile.location) {
+              const profileMatch = profile.location.match(/POINT\(([\d.-]+)\s+([\d.-]+)\)/);
+              if (profileMatch) {
+                const distance = calculateDistance(searchLat, searchLon, parseFloat(profileMatch[2]), parseFloat(profileMatch[1]));
+                if (distance > searchRadiusMeters) return false;
+              } else {
+                return false;
+              }
+            } else if (!profile.location) {
               return false;
             }
-          } else if (!profile.location) {
-            return false;
-          }
-        } else if (preferences.location_filter_type === "country" && searchCountry) {
-          if (!profile.nationality || !profile.nationality.toLowerCase().includes(searchCountry.toLowerCase())) {
-            return false;
+          } else if (preferences.location_filter_type === "country" && searchCountry) {
+            if (!profile.nationality || !profile.nationality.toLowerCase().includes(searchCountry.toLowerCase())) {
+              return false;
+            }
           }
         }
-      }
 
-      // Age filter
-      if (preferences && (preferences.age_min !== null || preferences.age_max !== null) && profile.dob) {
-        const age = calculateAge(profile.dob);
-        if (age === null) return false;
-        if (preferences.age_min !== null && age < preferences.age_min) return false;
-        if (preferences.age_max !== null && age > preferences.age_max) return false;
-      }
+        // Age filter
+        if (preferences && (preferences.age_min !== null || preferences.age_max !== null) && profile.dob) {
+          const age = calculateAge(profile.dob);
+          if (age === null) return false;
+          if (preferences.age_min !== null && age < preferences.age_min) return false;
+          if (preferences.age_max !== null && age > preferences.age_max) return false;
+        }
 
-      // Height filter
-      if (preferences && preferences.height_min_cm !== null && profile.height) {
-        const heightCm = parseHeightToCm(profile.height);
-        if (heightCm === null || heightCm < preferences.height_min_cm) return false;
-      }
+        // Height filter
+        if (preferences && preferences.height_min_cm !== null && profile.height) {
+          const heightCm = parseHeightToCm(profile.height);
+          if (heightCm === null || heightCm < preferences.height_min_cm) return false;
+        }
 
-      // Ethnicity filter
-      if (preferences?.ethnicity_preferences?.length > 0) {
-        if (!profile.ethnicity || !preferences.ethnicity_preferences.includes(profile.ethnicity)) return false;
-      }
+        // Ethnicity filter
+        if (preferences?.ethnicity_preferences?.length > 0) {
+          if (!profile.ethnicity || !preferences.ethnicity_preferences.includes(profile.ethnicity)) return false;
+        }
 
-      // Marital status filter
-      if (preferences?.marital_status_preferences?.length > 0) {
-        if (!profile.marital_status || !preferences.marital_status_preferences.includes(profile.marital_status)) return false;
-      }
+        // Marital status filter
+        if (preferences?.marital_status_preferences?.length > 0) {
+          if (!profile.marital_status || !preferences.marital_status_preferences.includes(profile.marital_status)) return false;
+        }
 
-      // Children filter
-      if (preferences?.children_preferences?.length > 0) {
-        const profileHasChildren = profile.has_children === true ? "yes" : profile.has_children === false ? "no" : null;
-        if (profileHasChildren === null || !preferences.children_preferences.includes(profileHasChildren)) return false;
-      }
-
-      // Religiosity filter
-      if (preferences?.religiosity_preferences?.length > 0) {
-        if (!profile.religious_practice || !preferences.religiosity_preferences.includes(profile.religious_practice)) return false;
+        // Children filter
+        if (preferences?.children_preferences?.length > 0) {
+          const profileHasChildren = profile.has_children === true ? "yes" : profile.has_children === false ? "no" : null;
+          if (profileHasChildren === null || !preferences.children_preferences.includes(profileHasChildren)) return false;
+        }
       }
 
       return true;
@@ -360,11 +358,11 @@ serve(async (req) => {
     const computeScore = (mine: any, theirs: any): number | null => {
       if (!mine || !theirs) return null;
       const categories = [
-        { key: "religious_expectations", weight: 0.3 },
-        { key: "financial_expectations", weight: 0.2 },
-        { key: "lifestyle_expectations", weight: 0.2 },
-        { key: "family_expectations", weight: 0.2 },
-        { key: "mahr_expectations", weight: 0.1 },
+        { key: "religious_expectations", weight: 0.30 },
+        { key: "financial_expectations", weight: 0.20 },
+        { key: "lifestyle_expectations", weight: 0.20 },
+        { key: "dress_code_expectations", weight: 0.20 },
+        { key: "mahr_expectations",       weight: 0.10 },
       ];
       let overall = 0;
       for (const cat of categories) {

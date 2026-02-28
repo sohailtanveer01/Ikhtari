@@ -189,7 +189,7 @@ serve(async (req) => {
     // Fetch full user profiles for the users who liked (excluding matched users)
     const { data: likerProfiles, error: profilesError } = await supabaseClient
       .from("users")
-      .select("id, first_name, last_name, name, photos, blur_photos, dob, height, marital_status, has_children, education, profession, sect, born_muslim, religious_practice, alcohol_habit, smoking_habit, ethnicity, nationality, hobbies, bio, location")
+      .select("id, first_name, last_name, name, photos, blur_photos, dob, height, marital_status, has_children, education, profession, ethnicity, nationality, bio, location, city, country, last_active_at")
       .in("id", unmatchedLikerIds)
       .eq("account_active", true);
 

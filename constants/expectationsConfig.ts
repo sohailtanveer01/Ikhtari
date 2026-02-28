@@ -1,12 +1,16 @@
 export const EXPECTATIONS_CONFIG = {
   financial: {
     title: "Financial Expectations",
+    male_title: "Your Financial Obligations",
+    female_title: "Financial Expectations",
     icon: "cash-outline" as const,
     description: "Set your financial expectations for marriage",
+    male_description: "As the provider, set what you commit to financially for your family",
+    female_description: "Set what you expect from your husband financially",
     fields: {
       primary_provider: {
         label: "Who should be the primary provider?",
-        male_label: "How do you plan to provide financially?",
+        male_label: "How do you plan to fulfil your role as provider?",
         female_label: "What do you expect from your husband as a provider?",
         options: [
           { value: "husband", label: "Husband" },
@@ -16,7 +20,7 @@ export const EXPECTATIONS_CONFIG = {
       },
       expected_income_range: {
         label: "What income range do you expect?",
-        male_label: "What income range do you aim for?",
+        male_label: "What income range do you aim to provide?",
         female_label: "What household income range do you expect?",
         options: [
           { value: "low", label: "Modest" },
@@ -27,6 +31,8 @@ export const EXPECTATIONS_CONFIG = {
       },
       financial_transparency: {
         label: "Should finances be fully transparent?",
+        male_label: "Will you be fully transparent with your finances?",
+        female_label: "Do you expect full financial transparency?",
         type: "boolean" as const,
         options: [
           { value: "true", label: "Yes, full transparency" },
@@ -35,6 +41,8 @@ export const EXPECTATIONS_CONFIG = {
       },
       savings_expectations: {
         label: "What are your savings expectations?",
+        male_label: "What savings approach will you commit to?",
+        female_label: "What savings approach do you expect from the household?",
         options: [
           { value: "high", label: "Aggressive saving" },
           { value: "medium", label: "Moderate saving" },
@@ -57,8 +65,12 @@ export const EXPECTATIONS_CONFIG = {
   },
   lifestyle: {
     title: "Lifestyle Expectations",
+    male_title: "The Life You'll Build",
+    female_title: "Your Lifestyle Expectations",
     icon: "home-outline" as const,
     description: "Define your lifestyle preferences",
+    male_description: "Define the home and lifestyle you plan to build for your family",
+    female_description: "Define the lifestyle and home environment you expect in your marriage",
     fields: {
       living_arrangement: {
         label: "Preferred living arrangement?",
@@ -72,16 +84,18 @@ export const EXPECTATIONS_CONFIG = {
       },
       work_life_balance: {
         label: "Approach to work-life balance?",
-        male_label: "What household role dynamic do you prefer?",
+        male_label: "What household role dynamic will you uphold?",
         female_label: "What household role dynamic do you prefer?",
         options: [
           { value: "traditional", label: "Traditional roles" },
-          { value: "modern", label: "Both work equally" },
+          { value: "modern", label: "Both contribute equally" },
           { value: "flexible", label: "Flexible" },
         ],
       },
       social_activities: {
         label: "Social activity level?",
+        male_label: "What social lifestyle will you maintain as a family?",
+        female_label: "What social lifestyle do you expect as a couple?",
         options: [
           { value: "conservative", label: "Private / minimal" },
           { value: "moderate", label: "Moderate" },
@@ -90,6 +104,8 @@ export const EXPECTATIONS_CONFIG = {
       },
       technology_usage: {
         label: "Technology & social media usage?",
+        male_label: "What are your boundaries on personal social media at home?",
+        female_label: "What do you expect around social media use in marriage?",
         options: [
           { value: "limited", label: "Limited" },
           { value: "moderate", label: "Moderate" },
@@ -98,6 +114,8 @@ export const EXPECTATIONS_CONFIG = {
       },
       travel_expectations: {
         label: "Travel expectations?",
+        male_label: "How much do you plan to travel with your family?",
+        female_label: "How much do you expect to travel as a couple/family?",
         options: [
           { value: "frequent", label: "Frequent travel" },
           { value: "occasional", label: "Occasional trips" },
@@ -108,10 +126,12 @@ export const EXPECTATIONS_CONFIG = {
     },
   },
   mahr: {
-    title: "Mahr Expectations",
+    title: "Mahr",
+    male_title: "Your Mahr Offer",
+    female_title: "Your Mahr Expectations",
     icon: "gift-outline" as const,
     description: "Set your mahr preferences",
-    male_description: "What mahr are you willing to offer?",
+    male_description: "What mahr are you committed to offering?",
     female_description: "What mahr do you expect to receive?",
     fields: {
       mahr_type: {
@@ -140,6 +160,8 @@ export const EXPECTATIONS_CONFIG = {
       },
       payment_timeline: {
         label: "Payment timeline?",
+        male_label: "When are you prepared to pay the mahr?",
+        female_label: "When do you expect to receive the mahr?",
         options: [
           { value: "immediate", label: "Immediate (at nikah)" },
           { value: "deferred", label: "Deferred" },
@@ -148,6 +170,8 @@ export const EXPECTATIONS_CONFIG = {
       },
       flexibility: {
         label: "How flexible are you on mahr?",
+        male_label: "How flexible are you on what you offer?",
+        female_label: "How flexible are you on your mahr expectations?",
         options: [
           { value: "strict", label: "Firm expectations" },
           { value: "moderate", label: "Somewhat flexible" },
@@ -156,59 +180,19 @@ export const EXPECTATIONS_CONFIG = {
       },
     },
   },
-  family: {
-    title: "Family Expectations",
-    icon: "people-outline" as const,
-    description: "Define your family involvement preferences",
-    fields: {
-      family_involvement: {
-        label: "Family involvement in marriage?",
-        male_label: "How involved should your family be?",
-        female_label: "How involved should his family be?",
-        options: [
-          { value: "high", label: "Very involved" },
-          { value: "moderate", label: "Moderate" },
-          { value: "low", label: "Minimal" },
-          { value: "none", label: "Independent" },
-        ],
-      },
-      living_with_inlaws: {
-        label: "Living with in-laws?",
-        male_label: "Would you want your wife to live with your family?",
-        female_label: "Would you be open to living with his family?",
-        options: [
-          { value: "yes", label: "Yes, happily" },
-          { value: "temporary", label: "Temporarily" },
-          { value: "no", label: "Prefer not" },
-          { value: "flexible", label: "Flexible" },
-        ],
-      },
-      family_visits: {
-        label: "How often to visit family?",
-        options: [
-          { value: "frequent", label: "Weekly+" },
-          { value: "moderate", label: "Monthly" },
-          { value: "occasional", label: "Few times a year" },
-          { value: "rare", label: "Rarely" },
-        ],
-      },
-      cultural_priorities: {
-        label: "Cultural vs. Islamic priorities?",
-        options: [
-          { value: "islamic_first", label: "Islamic values first" },
-          { value: "balanced", label: "Balanced" },
-          { value: "cultural_first", label: "Cultural traditions first" },
-        ],
-      },
-    },
-  },
   religious: {
-    title: "Religious Expectations",
+    title: "Religious Life",
+    male_title: "Your Religious Commitments",
+    female_title: "Your Religious Expectations",
     icon: "moon-outline" as const,
     description: "Set your religious expectations for the marriage",
+    male_description: "Set your commitments around faith and worship as a husband",
+    female_description: "Set your expectations for religious life in your marriage",
     fields: {
       prayer_together: {
         label: "Praying together as a couple?",
+        male_label: "Will you establish congregational prayer at home with your wife?",
+        female_label: "Do you want to pray together with your husband?",
         options: [
           { value: "always", label: "Always" },
           { value: "often", label: "Often" },
@@ -218,6 +202,8 @@ export const EXPECTATIONS_CONFIG = {
       },
       religious_education_children: {
         label: "Religious education for children?",
+        male_label: "How important is Islamic education for your children?",
+        female_label: "How important is Islamic education for your children?",
         options: [
           { value: "essential", label: "Essential" },
           { value: "important", label: "Important" },
@@ -226,6 +212,8 @@ export const EXPECTATIONS_CONFIG = {
       },
       religious_activities: {
         label: "Involvement in religious activities?",
+        male_label: "How active will you be in the Muslim community?",
+        female_label: "How active do you want to be in the Muslim community?",
         options: [
           { value: "very_active", label: "Very active" },
           { value: "active", label: "Active" },
@@ -235,10 +223,66 @@ export const EXPECTATIONS_CONFIG = {
       },
       madhhab_compatibility: {
         label: "How important is madhhab compatibility?",
+        male_label: "How important is it that your wife follows the same madhhab?",
+        female_label: "How important is it that your husband follows the same madhhab?",
         options: [
           { value: "essential", label: "Essential" },
           { value: "important", label: "Important" },
           { value: "preferred", label: "Preferred" },
+          { value: "flexible", label: "Flexible" },
+        ],
+      },
+    },
+  },
+  dress_code: {
+    title: "Hijab & Modesty",
+    male_title: "Modesty Expectations",
+    female_title: "Your Hijab Practice",
+    icon: "shirt-outline" as const,
+    description: "Set expectations around hijab and modest dress",
+    male_description: "Share what you expect from your wife in terms of hijab and modest dress",
+    female_description: "Share your hijab practice and what you are committed to",
+    fields: {
+      hijab_level: {
+        label: "Expected hijab level?",
+        male_label: "What level of hijab do you expect your wife to maintain?",
+        female_label: "What level of hijab do you currently maintain?",
+        options: [
+          { value: "hijab", label: "Hijab (headscarf)" },
+          { value: "abaya_hijab", label: "Abaya + hijab" },
+          { value: "niqab", label: "Niqab (face veil)" },
+          { value: "flexible", label: "Flexible / her choice" },
+        ],
+      },
+      abaya_outside: {
+        label: "Wearing abaya outside the home?",
+        male_label: "Do you expect your wife to wear abaya outside?",
+        female_label: "Do you wear abaya outside the home?",
+        options: [
+          { value: "always", label: "Always" },
+          { value: "most_settings", label: "In most settings" },
+          { value: "flexible", label: "Flexible" },
+          { value: "not_required", label: "Not required" },
+        ],
+      },
+      dress_code_flexibility: {
+        label: "How flexible are you on dress code?",
+        male_label: "How flexible are you on your wife's dress code?",
+        female_label: "Are you open to adjusting your dress code after marriage?",
+        options: [
+          { value: "firm", label: "Firm expectations" },
+          { value: "open_discussion", label: "Open to discussion" },
+          { value: "her_choice", label: "Fully her choice" },
+        ],
+      },
+      mixed_gatherings: {
+        label: "Dress code at mixed-gender gatherings?",
+        male_label: "What do you expect at mixed-gender gatherings?",
+        female_label: "How do you dress at mixed-gender gatherings?",
+        options: [
+          { value: "niqab", label: "Full niqab" },
+          { value: "abaya_hijab", label: "Abaya + hijab" },
+          { value: "modest_hijab", label: "Modest dress + hijab" },
           { value: "flexible", label: "Flexible" },
         ],
       },
@@ -249,9 +293,9 @@ export const EXPECTATIONS_CONFIG = {
     icon: "shield-checkmark-outline" as const,
     description: "Commitments expected from the husband",
     male_title: "Your Obligations as a Husband",
-    male_description: "Select the obligations you commit to:",
+    male_description: "Acknowledge the obligations you commit to fulfilling:",
     female_title: "What You Expect From Your Husband",
-    female_description: "Select what you expect him to commit to:",
+    female_description: "Select the obligations you expect him to uphold:",
     fields: {
       provision: { label: "Financial provision for the family" },
       protection: { label: "Protection and safety of the family" },
@@ -268,9 +312,9 @@ export const EXPECTATIONS_CONFIG = {
     icon: "heart-outline" as const,
     description: "Commitments expected from the wife",
     male_title: "What You Expect From Your Wife",
-    male_description: "Select what you expect her to commit to:",
+    male_description: "Select the obligations you expect her to uphold:",
     female_title: "Your Obligations as a Wife",
-    female_description: "Select the obligations you commit to:",
+    female_description: "Acknowledge the obligations you commit to fulfilling:",
     fields: {
       cooperation: { label: "Cooperation in building the home" },
       respect: { label: "Mutual respect" },

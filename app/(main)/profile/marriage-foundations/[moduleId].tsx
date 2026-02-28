@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -172,7 +173,7 @@ export default function ModuleDetailScreen() {
   const handleSaveAndContinue = () => {
     if (!category) return;
 
-    const isLastModule = module?.module_number === 7;
+    const isLastModule = !nextModule;
 
     const expectations: any = {};
     if (category === "obligations") {
@@ -349,7 +350,11 @@ export default function ModuleDetailScreen() {
         </Text>
       </View>
       <Text className="text-[#9E8E7E] text-sm mb-6">
-        Add any additional expectations or clarifications
+        {gender === "male"
+          ? "Add any additional commitments, boundaries, or important notes for a prospective wife"
+          : gender === "female"
+          ? "Add any additional expectations, deal-breakers, or important notes for a prospective husband"
+          : "Add any additional expectations or clarifications"}
       </Text>
       <TextInput
         value={additionalNotes}
@@ -382,10 +387,15 @@ export default function ModuleDetailScreen() {
     if (!("options" in firstField)) return null;
 
     const isMale = gender === "male";
-    const description = isMale && config.male_description
-      ? config.male_description
-      : !isMale && config.female_description
-      ? config.female_description
+    const title = isMale && (config as any).male_title
+      ? (config as any).male_title
+      : !isMale && (config as any).female_title
+      ? (config as any).female_title
+      : config.title;
+    const description = isMale && (config as any).male_description
+      ? (config as any).male_description
+      : !isMale && (config as any).female_description
+      ? (config as any).female_description
       : config.description;
 
     return (
@@ -393,7 +403,7 @@ export default function ModuleDetailScreen() {
         <View className="flex-row items-center mb-2">
           <Ionicons name={config.icon as any} size={24} color="#B8860B" />
           <Text className="text-[#1C1208] text-xl font-bold ml-3">
-            {config.title}
+            {title}
           </Text>
         </View>
         <Text className="text-[#9E8E7E] text-sm mb-6">{description}</Text>
@@ -445,7 +455,7 @@ export default function ModuleDetailScreen() {
     );
   }
 
-  const isLastModule = module.module_number === 7;
+  const isLastModule = !nextModule;
 
   return (
     <KeyboardAvoidingView
@@ -458,7 +468,7 @@ export default function ModuleDetailScreen() {
           <Ionicons name="arrow-back" size={24} color="#1C1208" />
         </Pressable>
         <Text className="text-[#1C1208] text-base font-semibold" numberOfLines={1}>
-          Module {module.module_number} of 7
+          Module {module.module_number} of {allModules?.length ?? 8}
         </Text>
         <View style={{ width: 24 }} />
       </View>
@@ -543,20 +553,40 @@ export default function ModuleDetailScreen() {
           <Pressable
             onPress={handleSaveAndContinue}
             disabled={!isFormValid || isSaving}
-            className={`rounded-xl py-4 px-6 ${
-              isFormValid ? "bg-[#B8860B]" : "bg-[#F5F0E8]"
-            }`}
+            style={({ pressed }) => ({
+              borderRadius: 18,
+              shadowColor: isFormValid ? "#B8860B" : "transparent",
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.5,
+              shadowRadius: 16,
+              elevation: isFormValid ? 10 : 0,
+              opacity: pressed ? 0.88 : 1,
+            })}
           >
-            {isSaving ? (
-              <ActivityIndicator size="small" color="#000" />
-            ) : (
-              <Text
-                className={`text-center font-bold text-base ${
-                  isFormValid ? "text-black" : "text-white/30"
-                }`}
+            {isFormValid ? (
+              <LinearGradient
+                colors={["#D4A017", "#B8860B"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ paddingVertical: 18, paddingHorizontal: 24, borderRadius: 18, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}
               >
-                {isLastModule ? "Complete & Get Certified" : "Save & Continue"}
-              </Text>
+                {isSaving ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name={isLastModule ? "ribbon-outline" : "arrow-forward-circle-outline"} size={22} color="#fff" />
+                    <Text style={{ color: '#fff', fontSize: 17, fontWeight: '800', letterSpacing: 0.4 }}>
+                      {isLastModule ? "Complete & Get Certified" : "Save & Continue"}
+                    </Text>
+                  </>
+                )}
+              </LinearGradient>
+            ) : (
+              <View style={{ paddingVertical: 18, paddingHorizontal: 24, borderRadius: 18, alignItems: 'center', backgroundColor: 'rgba(184,134,11,0.08)', borderWidth: 1.5, borderColor: 'rgba(184,134,11,0.2)' }}>
+                <Text style={{ color: '#B8860B', opacity: 0.4, fontSize: 17, fontWeight: '800' }}>
+                  {isLastModule ? "Complete & Get Certified" : "Save & Continue"}
+                </Text>
+              </View>
             )}
           </Pressable>
         </View>

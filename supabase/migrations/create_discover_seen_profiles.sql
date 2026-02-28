@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS discover_seen_profiles (
   user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  profile_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  profile_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   seen_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (user_id, profile_id)
 );

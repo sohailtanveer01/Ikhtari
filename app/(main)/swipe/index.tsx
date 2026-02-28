@@ -5,8 +5,10 @@ import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   FlatList,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -14,8 +16,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import DiscoverCard from "../../../components/DiscoverCard";
-// @ts-ignore
-import Logo from "../../../components/Logo";
 import { useCertification } from "../../../lib/hooks/useCertification";
 import { useDiscoverStore } from "../../../lib/stores/discoverStore";
 import { supabase } from "../../../lib/supabase";
@@ -30,6 +30,8 @@ export default function DiscoverScreen() {
   const hasMarkedSeen = useDiscoverStore((s) => s.hasMarkedSeen);
   const loadInitial = useDiscoverStore((s) => s.loadInitial);
   const markAsSeen = useDiscoverStore((s) => s.markAsSeen);
+  const feedMode = useDiscoverStore((s) => s.feedMode);
+  const setFeedMode = useDiscoverStore((s) => s.setFeedMode);
 
   const [showTicks, setShowTicks] = useState(false);
   const [isNewBatch, setIsNewBatch] = useState(false);
@@ -47,8 +49,22 @@ export default function DiscoverScreen() {
     boolean | null
   >(null);
   const [checkingQuestions, setCheckingQuestions] = useState(true);
+  const [userPrefs, setUserPrefs] = useState<any>(null);
 
   const flatListRef = useRef<FlatList>(null);
+
+  const hasAnyFilter = (prefs: any) => {
+    if (!prefs) return false;
+    return (
+      prefs.location_enabled ||
+      prefs.age_min != null ||
+      prefs.age_max != null ||
+      prefs.height_min_cm != null ||
+      (prefs.ethnicity_preferences?.length > 0) ||
+      (prefs.marital_status_preferences?.length > 0) ||
+      (prefs.children_preferences?.length > 0)
+    );
+  };
 
   // Check if user has set intent questions
   const checkIntentQuestions = useCallback(async () => {
@@ -58,13 +74,13 @@ export default function DiscoverScreen() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile } = await supabase
-        .from("users")
-        .select("intent_questions_set")
-        .eq("id", user.id)
-        .single();
+      const [profileResult, prefsResult] = await Promise.all([
+        supabase.from("users").select("intent_questions_set").eq("id", user.id).single(),
+        supabase.from("user_preferences").select("*").eq("user_id", user.id).single(),
+      ]);
 
-      setIntentQuestionsSet(profile?.intent_questions_set ?? false);
+      setIntentQuestionsSet(profileResult.data?.intent_questions_set ?? false);
+      setUserPrefs(prefsResult.data ?? null);
     } catch (e) {
       console.error("Error checking intent questions:", e);
       setIntentQuestionsSet(false);
@@ -72,6 +88,25 @@ export default function DiscoverScreen() {
       setCheckingQuestions(false);
     }
   }, []);
+
+  const handleFilterFitPress = useCallback(() => {
+    if (feedMode === 'filters') return;
+    if (!hasAnyFilter(userPrefs)) {
+      Alert.alert(
+        "No Filters Set",
+        "Add at least one filter to discover profiles that match your preferences.",
+        [
+          { text: "Not Now", style: "cancel" },
+          {
+            text: "Set Filters",
+            onPress: () => router.push("/(main)/swipe/filters"),
+          },
+        ]
+      );
+      return;
+    }
+    setFeedMode('filters');
+  }, [feedMode, userPrefs, setFeedMode, router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -139,16 +174,90 @@ export default function DiscoverScreen() {
   return (
     <View className="flex-1 bg-[#FDFAF5]" style={{ paddingTop: insets.top }}>
       {/* Top Bar */}
-      <View className="flex-row items-center justify-between px-5 py-3">
-        <Logo variant="transparent" width={160} />
-        {isCertified && (
-          <Pressable
-            className="w-10 h-10 rounded-full bg-[#F5F0E8] items-center justify-center"
-            onPress={() => router.push("/(main)/swipe/filters")}
-          >
-            <Ionicons name="options-outline" size={22} color="#B8860B" />
-          </Pressable>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10 }}>
+
+        {/* Left: feed mode toggle (certified only) */}
+        {isCertified ? (
+          <View style={{
+            flexDirection: 'row',
+            backgroundColor: '#F5F0E8',
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: 'rgba(184,134,11,0.2)',
+            padding: 3,
+          }}>
+            <Pressable
+              onPress={() => feedMode !== 'compatible' && setFeedMode('compatible')}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 9,
+                gap: 5,
+                backgroundColor: feedMode === 'compatible' ? '#fff' : 'transparent',
+                shadowColor: '#B8860B',
+                shadowOpacity: feedMode === 'compatible' ? 0.12 : 0,
+                shadowRadius: 4,
+                shadowOffset: { width: 0, height: 1 },
+                elevation: feedMode === 'compatible' ? 2 : 0,
+              }}
+            >
+              <Ionicons name="sparkles" size={12} color={feedMode === 'compatible' ? '#B8860B' : '#B0A090'} />
+              <Text style={{ fontSize: 12, fontWeight: feedMode === 'compatible' ? '700' : '500', color: feedMode === 'compatible' ? '#B8860B' : '#B0A090' }}>
+                Compatible
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={handleFilterFitPress}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 9,
+                gap: 5,
+                backgroundColor: feedMode === 'filters' ? '#fff' : 'transparent',
+                shadowColor: '#B8860B',
+                shadowOpacity: feedMode === 'filters' ? 0.12 : 0,
+                shadowRadius: 4,
+                shadowOffset: { width: 0, height: 1 },
+                elevation: feedMode === 'filters' ? 2 : 0,
+              }}
+            >
+              <Ionicons name="options-outline" size={12} color={feedMode === 'filters' ? '#B8860B' : '#B0A090'} />
+              <Text style={{ fontSize: 12, fontWeight: feedMode === 'filters' ? '700' : '500', color: feedMode === 'filters' ? '#B8860B' : '#B0A090' }}>
+                Filter Fit
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={{ width: 38 }} />
         )}
+
+        {/* Right: filter icon (certified only) */}
+        <View style={{ marginLeft: 'auto' }}>
+          {isCertified ? (
+            <Pressable
+              onPress={() => router.push("/(main)/swipe/filters")}
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 19,
+                backgroundColor: '#F5F0E8',
+                borderWidth: 1,
+                borderColor: 'rgba(184,134,11,0.2)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Ionicons name="options-outline" size={20} color="#B8860B" />
+            </Pressable>
+          ) : (
+            <View style={{ width: 38 }} />
+          )}
+        </View>
+
       </View>
 
       {/* Profile Grid - always rendered */}
@@ -158,97 +267,110 @@ export default function DiscoverScreen() {
         </View>
       ) : profiles.length === 0 && !isLoading && hasMarkedSeen ? (
         /* All compatible profiles seen — come back tomorrow */
-        <View className="flex-1 items-center justify-center px-8">
-          <LinearGradient
-            colors={["rgba(184,134,11,0.08)", "rgba(184,134,11,0.03)"]}
+        <View className="flex-1 items-center justify-center px-6">
+          {/* Stars decoration */}
+          <View style={{ position: "absolute", top: "15%", left: "12%", opacity: 0.25 }}>
+            <Ionicons name="star" size={10} color="#B8860B" />
+          </View>
+          <View style={{ position: "absolute", top: "22%", right: "18%", opacity: 0.18 }}>
+            <Ionicons name="star" size={7} color="#B8860B" />
+          </View>
+          <View style={{ position: "absolute", top: "28%", left: "28%", opacity: 0.2 }}>
+            <Ionicons name="star" size={5} color="#B8860B" />
+          </View>
+
+          {/* Moon icon */}
+          <View
             style={{
-              width: "100%",
-              borderRadius: 28,
-              borderWidth: 1,
+              width: 96,
+              height: 96,
+              borderRadius: 48,
+              backgroundColor: "rgba(184,134,11,0.08)",
+              borderWidth: 1.5,
               borderColor: "rgba(184,134,11,0.2)",
-              padding: 32,
               alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 28,
             }}
           >
-            <View
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: 40,
-                backgroundColor: "rgba(184,134,11,0.12)",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 20,
-              }}
-            >
-              <Text style={{ fontSize: 36 }}>🌙</Text>
-            </View>
-            <Text
-              style={{
-                color: "#1C1208",
-                fontSize: 22,
-                fontWeight: "800",
-                textAlign: "center",
-                marginBottom: 10,
-                letterSpacing: -0.3,
-              }}
-            >
-              You've seen everyone
+            <Text style={{ fontSize: 44, lineHeight: 52 }}>🌙</Text>
+          </View>
+
+          {/* Heading */}
+          <Text
+            style={{
+              color: "#1C1208",
+              fontSize: 26,
+              fontWeight: "800",
+              textAlign: "center",
+              letterSpacing: -0.5,
+              marginBottom: 12,
+            }}
+          >
+            You've seen everyone
+          </Text>
+
+          {/* Divider */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16, paddingHorizontal: 16 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: "rgba(184,134,11,0.2)" }} />
+            <Ionicons name="sparkles" size={13} color="#B8860B" style={{ opacity: 0.6 }} />
+            <View style={{ flex: 1, height: 1, backgroundColor: "rgba(184,134,11,0.2)" }} />
+          </View>
+
+          {/* Body */}
+          <Text
+            style={{
+              color: "#6B5D4F",
+              fontSize: 14,
+              textAlign: "center",
+              lineHeight: 23,
+              marginBottom: 32,
+              paddingHorizontal: 8,
+            }}
+          >
+            You've reviewed all your compatible matches for now. New profiles are added daily — come back tomorrow for fresh discoveries.
+          </Text>
+
+          {/* Refresh pill */}
+          <LinearGradient
+            colors={["rgba(184,134,11,0.12)", "rgba(184,134,11,0.06)"]}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              paddingHorizontal: 20,
+              paddingVertical: 12,
+              borderRadius: 24,
+              borderWidth: 1,
+              borderColor: "rgba(184,134,11,0.25)",
+              marginBottom: 28,
+            }}
+          >
+            <Ionicons name="time-outline" size={16} color="#B8860B" />
+            <Text style={{ color: "#B8860B", fontSize: 13, fontWeight: "700", letterSpacing: 0.2 }}>
+              New matches tomorrow
             </Text>
-            <View
-              style={{
-                width: 40,
-                height: 2,
-                backgroundColor: "#B8860B",
-                borderRadius: 1,
-                marginBottom: 14,
-                opacity: 0.5,
-              }}
-            />
-            <Text
-              style={{
-                color: "#6B5D4F",
-                fontSize: 14,
-                textAlign: "center",
-                lineHeight: 22,
-                marginBottom: 24,
-              }}
-            >
-              You've reviewed all compatible profiles for now.{"\n"}
-              New profiles refresh daily — check back tomorrow for fresh matches.
-            </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: "rgba(184,134,11,0.1)",
-                borderRadius: 20,
-                paddingHorizontal: 16,
-                paddingVertical: 10,
-                gap: 8,
-                marginBottom: 24,
-              }}
-            >
-              <Ionicons name="time-outline" size={16} color="#B8860B" />
-              <Text style={{ color: "#B8860B", fontSize: 13, fontWeight: "600" }}>
-                Refreshes tomorrow
-              </Text>
-            </View>
-            <Pressable
-              onPress={() => router.push("/(main)/likes?tab=seen")}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.7 : 1,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 6,
-              })}
-            >
-              <Ionicons name="eye-outline" size={16} color="#9E8E7E" />
-              <Text style={{ color: "#9E8E7E", fontSize: 13, fontWeight: "500" }}>
-                Review already seen profiles
-              </Text>
-            </Pressable>
           </LinearGradient>
+
+          {/* Review seen link */}
+          <Pressable
+            onPress={() => router.push("/(main)/likes")}
+            style={({ pressed }) => ({
+              opacity: pressed ? 0.6 : 1,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              borderRadius: 20,
+              backgroundColor: "rgba(0,0,0,0.04)",
+            })}
+          >
+            <Ionicons name="eye-outline" size={15} color="#9E8E7E" />
+            <Text style={{ color: "#9E8E7E", fontSize: 13, fontWeight: "500" }}>
+              Review already seen profiles
+            </Text>
+          </Pressable>
         </View>
       ) : profiles.length === 0 && !isLoading ? (
         /* No profiles at all — filters too strict or new user */
@@ -282,7 +404,7 @@ export default function DiscoverScreen() {
               ref={flatListRef}
               data={profiles}
               numColumns={2}
-              columnWrapperStyle={{ gap: 14, paddingHorizontal: 20 }}
+              columnWrapperStyle={{ gap: 8, paddingHorizontal: 12 }}
               contentContainerStyle={{
                 gap: 16,
                 paddingTop: 4,
@@ -303,34 +425,48 @@ export default function DiscoverScreen() {
             />
           </Animated.View>
 
-          {/* Mark as Seen button - only when certified */}
+          {/* Mark as Seen — bottom */}
           {!showCertGate && !showIntentGate && (
-            <View style={{ paddingBottom: insets.bottom + 90 }} className="px-6 pt-3">
+            <View style={{ paddingBottom: insets.bottom + 90, paddingHorizontal: 14, paddingTop: 8 }}>
               <Pressable
                 onPress={handleMarkAsSeen}
                 disabled={isLoading || showTicks || profiles.length === 0}
                 style={({ pressed }) => ({
-                  opacity: isLoading || showTicks || profiles.length === 0 ? 0.5 : pressed ? 0.8 : 1,
+                  opacity: isLoading || showTicks || profiles.length === 0 ? 0.45 : pressed ? 0.8 : 1,
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                  borderWidth: 1,
+                  borderColor: 'rgba(34,197,94,0.3)',
+                  shadowColor: '#22C55E',
+                  shadowOpacity: 0.12,
+                  shadowRadius: 8,
+                  shadowOffset: { width: 0, height: 2 },
+                  elevation: 3,
                 })}
-                className="flex-row items-center justify-center bg-white border border-[#EDE5D5] rounded-2xl py-3.5 gap-2"
               >
-                {isLoading && !showTicks ? (
-                  <ActivityIndicator size="small" color="#B8860B" />
-                ) : (
-                  <>
-                    <Ionicons
-                      name="checkmark-circle-outline"
-                      size={20}
-                      color={hasMore ? "#22C55E" : "#9CA3AF"}
-                    />
-                    <Text
-                      className="font-semibold text-sm"
-                      style={{ color: hasMore ? "#16A34A" : "#9CA3AF" }}
-                    >
-                      {hasMore ? "Mark as Seen" : "No more profiles"}
-                    </Text>
-                  </>
-                )}
+                <BlurView
+                  intensity={Platform.OS === "ios" ? 28 : 0}
+                  tint="light"
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingVertical: 15,
+                    gap: 9,
+                    backgroundColor: Platform.OS === "android" ? "rgba(240,253,244,0.95)" : "rgba(240,253,244,0.6)",
+                  }}
+                >
+                  {isLoading && !showTicks ? (
+                    <ActivityIndicator size="small" color="#16A34A" />
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark-circle-outline" size={20} color="#16A34A" />
+                      <Text style={{ color: "#16A34A", fontWeight: '700', fontSize: 15 }}>
+                        Mark as Seen
+                      </Text>
+                    </>
+                  )}
+                </BlurView>
               </Pressable>
             </View>
           )}
@@ -457,9 +593,9 @@ export default function DiscoverScreen() {
                     >
                       <Ionicons
                         name="school-outline"
-                        size={22}
+                        size={20}
                         color="#fff"
-                        style={{ marginRight: 10 }}
+                        style={{ marginRight: 8 }}
                       />
                       <Text style={styles.ctaText}>Complete Modules</Text>
                     </LinearGradient>
@@ -701,23 +837,26 @@ const styles = StyleSheet.create({
   ctaWrapper: {
     marginHorizontal: 24,
     marginBottom: 28,
+    borderRadius: 18,
+    shadowColor: "#B8860B",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.55,
+    shadowRadius: 18,
+    elevation: 12,
   },
   ctaButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 18,
-    borderRadius: 16,
-    shadowColor: "#B8860B",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 10,
+    paddingVertical: 19,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
   },
   ctaText: {
     color: "#fff",
     fontSize: 17,
     fontWeight: "800",
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
 });

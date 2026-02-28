@@ -40,9 +40,11 @@ interface DiscoverState {
   isMarkingAsSeen: boolean;
   hasMarkedSeen: boolean;
   sessionSeenIds: string[]; // all IDs seen this session — sent on every request as exclusion list
+  feedMode: 'compatible' | 'filters';
 
-  loadInitial: () => Promise<void>;
+  loadInitial: (mode?: 'compatible' | 'filters') => Promise<void>;
   markAsSeen: () => Promise<void>;
+  setFeedMode: (mode: 'compatible' | 'filters') => void;
   removeProfile: (profileId: string) => void;
   resetFeed: () => void;
 }
@@ -54,17 +56,26 @@ export const useDiscoverStore = create<DiscoverState>((set, get) => ({
   isMarkingAsSeen: false,
   hasMarkedSeen: false,
   sessionSeenIds: [],
+  feedMode: 'compatible',
 
-  loadInitial: async () => {
+  setFeedMode: (mode) => {
+    set({ feedMode: mode, profiles: [], sessionSeenIds: [], hasMarkedSeen: false });
+    get().loadInitial(mode);
+  },
+
+  loadInitial: async (modeOverride) => {
+    // Capture state synchronously BEFORE any await so we always use the
+    // mode that was current when this call was initiated.
+    const { sessionSeenIds, feedMode } = get();
+    const effectiveMode = modeOverride ?? feedMode;
+
     set({ isLoading: true });
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { set({ isLoading: false }); return; }
 
-      const { sessionSeenIds } = get();
-
       const { data, error } = await supabase.functions.invoke("get-discover-feed", {
-        body: { limit: PAGE_SIZE, mark_seen_ids: [], exclude_ids: sessionSeenIds },
+        body: { limit: PAGE_SIZE, mark_seen_ids: [], exclude_ids: sessionSeenIds, feed_mode: effectiveMode },
       });
 
       if (error) {
@@ -96,9 +107,11 @@ export const useDiscoverStore = create<DiscoverState>((set, get) => ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { set({ isMarkingAsSeen: false, isLoading: false }); return; }
 
+      const { feedMode } = get();
+
       const { data, error } = await supabase.functions.invoke("get-discover-feed", {
         // mark_seen_ids → persisted to DB; exclude_ids → in-memory exclusion (belt & suspenders)
-        body: { limit: PAGE_SIZE, mark_seen_ids: currentIds, exclude_ids: updatedSeenIds },
+        body: { limit: PAGE_SIZE, mark_seen_ids: currentIds, exclude_ids: updatedSeenIds, feed_mode: feedMode },
       });
 
       if (error) {
