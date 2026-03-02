@@ -129,9 +129,9 @@ export default function InterestsScreen() {
   }, [activeTab]);
 
   const tabs = [
-    { key: "received" as const, label: "Received", count: received.length },
-    { key: "sent" as const, label: "Sent", count: sent.length },
-    { key: "seen" as const, label: "Seen", count: seen.length },
+    { key: "received" as const, label: "Interested in Me", count: received.length },
+    { key: "sent" as const, label: "My Interests", count: sent.length },
+    { key: "seen" as const, label: "Passed On", count: seen.length },
   ];
 
   if (loading && !received.length && !sent.length && !seen.length) {

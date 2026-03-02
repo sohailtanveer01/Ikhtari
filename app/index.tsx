@@ -22,21 +22,14 @@ export default function Home() {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       const session = data?.session;
-
-      if (session) {
-        // user already logged in → go to swipe page
-        setHasSession(true);
-      }
-
+      if (session) setHasSession(true);
       setCheckingSession(false);
     };
-
     checkSession();
   }, []);
 
   const handlePostOAuthSignIn = useCallback(async (user: any) => {
     try {
-      // Check if user is deactivated
       const { data: statusData, error: statusError } = await supabase.functions.invoke("check-user-status", {
         body: { email: user.email }
       });
@@ -45,38 +38,23 @@ export default function Home() {
         console.error("Error checking user status:", statusError);
       } else if (statusData && statusData.exists && statusData.account_active === false) {
         setGoogleLoading(false);
-        // User is deactivated - reactivate account
         const { error: activeError } = await supabase
           .from("users")
           .update({ account_active: true })
           .eq("id", user.id);
-
-        if (activeError) {
-          console.error("Error reactivating account:", activeError);
-        }
+        if (activeError) console.error("Error reactivating account:", activeError);
       }
 
-      // Check if user has completed onboarding
       const { data: profile } = await supabase
         .from("users")
         .select("id, name, photos, email")
         .eq("id", user.id)
         .maybeSingle();
 
-      // If profile doesn't exist, create a basic one with Google info
-      if (!profile) {
-        // Don't create profile here - let user complete onboarding
-        // This prevents errors with required fields like gender
-        // User will be redirected to onboarding where they can fill all required fields
-      } else if (profile.email !== user.email) {
-        // Update email if it changed
-        await supabase
-          .from("users")
-          .update({ email: user.email })
-          .eq("id", user.id);
+      if (profile && profile.email !== user.email) {
+        await supabase.from("users").update({ email: user.email }).eq("id", user.id);
       }
 
-      // Re-fetch profile to check onboarding status
       const { data: updatedProfile } = await supabase
         .from("users")
         .select("id, name, photos, gender, first_name, last_name")
@@ -85,66 +63,46 @@ export default function Home() {
 
       setGoogleLoading(false);
 
-      // Check if user has completed onboarding (has required fields filled)
-      if (updatedProfile && 
-          updatedProfile.first_name && 
-          updatedProfile.last_name && 
-          updatedProfile.gender && 
+      if (updatedProfile &&
+          updatedProfile.first_name &&
+          updatedProfile.last_name &&
+          updatedProfile.gender &&
           updatedProfile.photos?.length > 0) {
-        // User has completed onboarding - go to main app
         router.replace("/(main)/swipe");
       } else {
-        // User needs to complete onboarding (new user or incomplete profile)
         router.replace("/(auth)/onboarding/step1-basic");
       }
     } catch (error: any) {
-      console.error("Error in post-Google sign-in:", error);
+      console.error("Error in post-OAuth sign-in:", error);
       Alert.alert("Error", "An error occurred. Please try again.");
       setGoogleLoading(false);
     }
   }, [router]);
 
-  // Handle OAuth callback from deep links
   useEffect(() => {
     const handleDeepLink = async (event: { url: string }) => {
       try {
         const url = new URL(event.url);
-        
-        // Supabase OAuth redirects use hash fragments
-        const hash = url.hash.substring(1); // Remove #
+        const hash = url.hash.substring(1);
         const hashParams = new URLSearchParams(hash);
         let accessToken = hashParams.get("access_token");
         let refreshToken = hashParams.get("refresh_token");
 
-        // Fallback to query params
         if (!accessToken || !refreshToken) {
           accessToken = url.searchParams.get("access_token");
           refreshToken = url.searchParams.get("refresh_token");
         }
 
         if (accessToken && refreshToken) {
-          // Set the session
           const { data: { session }, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
-
-          if (error) {
-            Alert.alert("Error", "Failed to sign in with Google. Please try again.");
-            setGoogleLoading(false);
-            return;
-          }
-
-          if (session?.user) {
-            await handlePostOAuthSignIn(session.user);
-          }
+          if (error) { Alert.alert("Error", "Failed to sign in. Please try again."); setGoogleLoading(false); return; }
+          if (session?.user) await handlePostOAuthSignIn(session.user);
         } else {
-          // If no tokens in URL, check if Supabase already set the session
           const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-          
-          if (!sessionError && session?.user) {
-            await handlePostOAuthSignIn(session.user);
-          }
+          if (!sessionError && session?.user) await handlePostOAuthSignIn(session.user);
         }
       } catch (error) {
         console.error("Error handling deep link:", error);
@@ -152,102 +110,50 @@ export default function Home() {
       }
     };
 
-    // Listen for deep links
     const subscription = Linking.addEventListener("url", handleDeepLink);
-
-    // Check if app was opened with a deep link
     Linking.getInitialURL().then((url) => {
-      if (url && url.includes("auth/callback")) {
-        handleDeepLink({ url });
-      }
+      if (url && url.includes("auth/callback")) handleDeepLink({ url });
     });
-
-    return () => {
-      subscription.remove();
-    };
+    return () => subscription.remove();
   }, [handlePostOAuthSignIn]);
 
-  const continueWithEmail = () => {
-    // Navigate to email input screen
-    router.push("/(auth)/login");
-  };
+  const continueWithEmail = () => router.push("/(auth)/login");
 
   const continueWithGoogle = async () => {
     try {
       setGoogleLoading(true);
-
       const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-      if (!supabaseUrl) {
-        throw new Error("Supabase URL not configured");
-      }
+      if (!supabaseUrl) throw new Error("Supabase URL not configured");
 
-      // Use a simple deep link format that Supabase can handle
       const redirectUrl = "ikhtari://auth/callback";
-
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: "offline",
-            // Removed prompt: "consent" to avoid showing consent screen every time
-            // This will use Google's default behavior (only show consent if needed)
-          },
-        },
+        options: { redirectTo: redirectUrl, queryParams: { access_type: "offline" } },
       });
-
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       if (data?.url) {
-        // Open the OAuth URL in browser
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          redirectUrl
-        );
-
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
         if (result.type === "success" && result.url) {
-          // Supabase redirects with hash fragments, not query params
           const url = new URL(result.url);
-          
-          // Check hash fragment first (Supabase uses this)
           const hash = url.hash.substring(1);
           const hashParams = new URLSearchParams(hash);
           let accessToken = hashParams.get("access_token");
           let refreshToken = hashParams.get("refresh_token");
-
-          // Fallback to query params if hash doesn't have tokens
           if (!accessToken || !refreshToken) {
             accessToken = url.searchParams.get("access_token");
             refreshToken = url.searchParams.get("refresh_token");
           }
-
           if (accessToken && refreshToken) {
-            // Set the session
-            const { data: { session }, error: sessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-
-            if (sessionError) {
-              throw sessionError;
-            }
-
-          if (session?.user) {
-            await handlePostOAuthSignIn(session.user);
-          }
-        } else {
-          // If no tokens in URL, try to get session from Supabase
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-          
-          if (!sessionError && session?.user) {
-            await handlePostOAuthSignIn(session.user);
+            const { data: { session }, error: sessionError } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+            if (sessionError) throw sessionError;
+            if (session?.user) await handlePostOAuthSignIn(session.user);
           } else {
-            throw new Error("Failed to get authentication tokens");
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            if (!sessionError && session?.user) await handlePostOAuthSignIn(session.user);
+            else throw new Error("Failed to get authentication tokens");
           }
-        }
-        } else if (result.type === "cancel") {
+        } else if (result.type !== "cancel") {
           setGoogleLoading(false);
         } else {
           setGoogleLoading(false);
@@ -255,97 +161,50 @@ export default function Home() {
       }
     } catch (error: any) {
       console.error("Google sign-in error:", error);
-      const errorMessage = error.message || "Failed to sign in with Google";
-      
-      if (errorMessage.includes("redirect_uri_mismatch")) {
-        Alert.alert(
-          "Configuration Error",
-          `Please add this URL to Supabase Dashboard > Authentication > URL Configuration > Redirect URLs:\n\nikhtari://auth/callback`
-        );
-      } else {
-        Alert.alert("Error", errorMessage);
-      }
+      Alert.alert("Error", error.message || "Failed to sign in with Google");
       setGoogleLoading(false);
     }
   };
 
   const continueWithApple = async () => {
-    // Apple Sign-In is only available on iOS
     if (Platform.OS !== "ios") {
       Alert.alert("Not Available", "Sign in with Apple is only available on iOS devices.");
       return;
     }
-
     try {
       setAppleLoading(true);
-
       const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-      if (!supabaseUrl) {
-        throw new Error("Supabase URL not configured");
-      }
+      if (!supabaseUrl) throw new Error("Supabase URL not configured");
 
-      // Use OAuth flow (same as Google) to avoid bundle identifier issues
       const redirectUrl = "ikhtari://auth/callback";
-
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "apple",
-        options: {
-          redirectTo: redirectUrl,
-        },
+        options: { redirectTo: redirectUrl },
       });
-
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       if (data?.url) {
-        // Open the OAuth URL in browser
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          redirectUrl
-        );
-
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
         if (result.type === "success" && result.url) {
-          // Supabase redirects with hash fragments, not query params
           const url = new URL(result.url);
-          
-          // Check hash fragment first (Supabase uses this)
           const hash = url.hash.substring(1);
           const hashParams = new URLSearchParams(hash);
           let accessToken = hashParams.get("access_token");
           let refreshToken = hashParams.get("refresh_token");
-
-          // Fallback to query params if hash doesn't have tokens
           if (!accessToken || !refreshToken) {
             accessToken = url.searchParams.get("access_token");
             refreshToken = url.searchParams.get("refresh_token");
           }
-
           if (accessToken && refreshToken) {
-            // Set the session
-            const { data: { session }, error: sessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-            });
-
-            if (sessionError) {
-              throw sessionError;
-            }
-
-            if (session?.user) {
-              await handlePostOAuthSignIn(session.user);
-            }
+            const { data: { session }, error: sessionError } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+            if (sessionError) throw sessionError;
+            if (session?.user) await handlePostOAuthSignIn(session.user);
           } else {
-            // If no tokens in URL, try to get session from Supabase
             const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            
-            if (!sessionError && session?.user) {
-              await handlePostOAuthSignIn(session.user);
-            } else {
-              throw new Error("Failed to get authentication tokens");
-            }
+            if (!sessionError && session?.user) await handlePostOAuthSignIn(session.user);
+            else throw new Error("Failed to get authentication tokens");
           }
-        } else if (result.type === "cancel") {
+        } else if (result.type !== "cancel") {
           setAppleLoading(false);
         } else {
           setAppleLoading(false);
@@ -353,128 +212,110 @@ export default function Home() {
       }
     } catch (error: any) {
       console.error("Apple sign-in error:", error);
-      const errorMessage = error.message || "Failed to sign in with Apple";
-      
-      if (errorMessage.includes("redirect_uri_mismatch")) {
-        Alert.alert(
-          "Configuration Error",
-          `Please add this URL to Supabase Dashboard > Authentication > URL Configuration > Redirect URLs:\n\nikhtari://auth/callback`
-        );
-      } else {
-        Alert.alert("Error", errorMessage);
-      }
+      Alert.alert("Error", error.message || "Failed to sign in with Apple");
       setAppleLoading(false);
     }
   };
 
   if (checkingSession) return null;
-
-  if (hasSession) {
-    return <Redirect href="/swipe" />;
-  }
+  if (hasSession) return <Redirect href="/swipe" />;
 
   return (
     <View style={styles.container}>
-      {/* Gradient Backgrounds */}
+      {/* Background gradient — warm gold strip at top fading to clean cream */}
       <LinearGradient
-        colors={["rgba(184,134,11,0.18)", "rgba(253,250,245,0)"]}
-        style={[styles.gradientBase, styles.gradientTopLeft]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        colors={["#F5E6C0", "#FDFAF5", "#F5E6C0"]}
+        style={styles.bgGradient}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
         pointerEvents="none"
       />
-      <LinearGradient
-        colors={["rgba(253,250,245,0)", "rgba(184,134,11,0.12)"]}
-        style={[styles.gradientBase, styles.gradientBottomRight]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        pointerEvents="none"
-      />
-      
 
       {/* Logo at top */}
       <View style={styles.logoContainer}>
-        <Logo variant="transparent" width={150} height={150} style="" />
+        <Logo variant="transparent" width={220} height={220} style="" />
         <Text style={styles.tagline}>
           <Text style={styles.taglineGold}>From a Swipe to </Text>
-          <Text style={styles.taglineWhite}>Niqah</Text>
+          <Text style={styles.taglineDark}>Niqah</Text>
         </Text>
       </View>
 
-      {/* Content - Buttons at bottom */}
+      {/* Content - bottom */}
       <View style={styles.content}>
         {/* Feature highlights */}
         <View style={styles.featuresContainer}>
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
-              <Ionicons name="heart" size={24} color="#B8860B" />
+              <Ionicons name="heart" size={22} color="#B8860B" />
             </View>
             <Text style={styles.featureText}>Find Your Better Half</Text>
           </View>
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
-              <Ionicons name="shield-checkmark" size={24} color="#B8860B" />
+              <Ionicons name="shield-checkmark" size={22} color="#B8860B" />
             </View>
             <Text style={styles.featureText}>Safe & Secure</Text>
           </View>
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
-              <Ionicons name="people" size={24} color="#B8860B" />
+              <Ionicons name="people" size={22} color="#B8860B" />
             </View>
             <Text style={styles.featureText}>Muslim Community</Text>
           </View>
         </View>
 
-        <View style={styles.buttonsContainer}>
+        {/* Buttons */}
+        <View>
           {/* Email Button */}
           <Pressable
-            style={[styles.button, (googleLoading || appleLoading) && styles.buttonDisabled]}
+            style={[styles.emailButtonWrapper, (googleLoading || appleLoading) && styles.buttonDisabled]}
             onPress={continueWithEmail}
             disabled={googleLoading || appleLoading}
           >
-            <Ionicons name="mail" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-            <Text style={styles.buttonText}>
-              Continue with Email
-            </Text>
+            <LinearGradient
+              colors={["#D4A017", "#B8860B"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.emailButton}
+            >
+              <Ionicons name="mail" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+              <Text style={styles.emailButtonText}>Continue with Email</Text>
+            </LinearGradient>
           </Pressable>
 
-          {/* Google Sign-In Button */}
+          {/* Google Button */}
           <Pressable
-            style={[styles.googleButton, (googleLoading || appleLoading) && styles.buttonDisabled]}
+            style={[styles.socialButton, (googleLoading || appleLoading) && styles.buttonDisabled]}
             onPress={continueWithGoogle}
             disabled={googleLoading || appleLoading}
           >
             {googleLoading ? (
-              <ActivityIndicator color="#1C1208" size="small" />
+              <ActivityIndicator color="#B8860B" size="small" />
             ) : (
               <>
                 <Image
                   source={{ uri: "https://www.google.com/favicon.ico" }}
-                  style={styles.googleLogo}
+                  style={styles.socialLogo}
                   resizeMode="contain"
                 />
-                <Text style={styles.googleButtonText}>
-                  Continue with Google
-                </Text>
+                <Text style={styles.socialButtonText}>Continue with Google</Text>
               </>
             )}
           </Pressable>
 
-          {/* Apple Sign-In Button (iOS only) */}
+          {/* Apple Button (iOS only) */}
           {Platform.OS === "ios" && (
             <Pressable
-              style={[styles.appleButton, (googleLoading || appleLoading) && styles.buttonDisabled]}
+              style={[styles.socialButton, { marginBottom: 0 }, (googleLoading || appleLoading) && styles.buttonDisabled]}
               onPress={continueWithApple}
               disabled={googleLoading || appleLoading}
             >
               {appleLoading ? (
-                <ActivityIndicator color="#1C1208" size="small" />
+                <ActivityIndicator color="#B8860B" size="small" />
               ) : (
                 <>
-                  <Ionicons name="logo-apple" size={20} color="#1C1208" style={styles.appleIcon} />
-                  <Text style={styles.appleButtonText}>
-                    Continue with Apple
-                  </Text>
+                  <Ionicons name="logo-apple" size={20} color="#1C1208" style={styles.buttonIcon} />
+                  <Text style={styles.socialButtonText}>Continue with Apple</Text>
                 </>
               )}
             </Pressable>
@@ -489,57 +330,46 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FDFAF5",
-    position: "relative",
   },
-  gradientBase: {
+  bgGradient: {
     position: "absolute",
-    width: 620,
-    height: 620,
-    borderRadius: 310,
-    opacity: 0.9,
-    transform: [{ scale: 1.3 }],
-  },
-  gradientTopLeft: {
-    top: -260,
-    left: -220,
-  },
-  gradientBottomRight: {
-    bottom: -260,
-    right: -220,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   logoContainer: {
     position: "absolute",
-    top: 60,
+    top: 80,
     left: 0,
     right: 0,
     alignItems: "center",
     zIndex: 10,
   },
   tagline: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700",
-    marginTop: 16,
+    marginTop: 12,
     textAlign: "center",
-    letterSpacing: 0.5,
-    fontFamily: "System",
+    letterSpacing: 0.4,
   },
   taglineGold: {
     color: "#B8860B",
   },
-  taglineWhite: {
+  taglineDark: {
     color: "#1C1208",
   },
   content: {
     flex: 1,
     justifyContent: "flex-end",
     paddingHorizontal: 24,
-    paddingBottom: 60,
+    paddingBottom: 50,
     zIndex: 10,
   },
   featuresContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginBottom: 40,
+    marginBottom: 28,
     paddingHorizontal: 8,
   },
   featureItem: {
@@ -547,15 +377,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   featureIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "rgba(184, 134, 11, 0.15)",
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: "rgba(184,134,11,0.1)",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: "rgba(184, 134, 11, 0.3)",
+    borderColor: "rgba(184,134,11,0.2)",
   },
   featureText: {
     fontSize: 12,
@@ -563,97 +393,54 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     textAlign: "center",
   },
-  buttonsContainer: {
-    width: "100%",
+  emailButtonWrapper: {
+    borderRadius: 14,
+    overflow: "hidden",
+    marginBottom: 14,
+    shadowColor: "#B8860B",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  button: {
-    backgroundColor: "#B8860B",
-    borderRadius: 16,
+  emailButton: {
     paddingVertical: 16,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
-    shadowColor: "#B8860B",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
   },
   buttonIcon: {
     marginRight: 8,
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    fontSize: 18,
-    fontWeight: "600",
+  emailButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
     color: "#FFFFFF",
+    letterSpacing: 0.3,
   },
-  helperText: {
-    fontSize: 13,
-    color: "#9E8E7E",
-    textAlign: "center",
-    lineHeight: 18,
-    marginBottom: 16,
-  },
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#EDE5D5",
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    fontSize: 14,
-    color: "#9E8E7E",
-    fontWeight: "500",
-  },
-  googleButton: {
-    backgroundColor: "#F5F0E8",
+  socialButton: {
+    backgroundColor: "#F9F5EE",
     borderWidth: 1,
     borderColor: "#EDE5D5",
-    borderRadius: 16,
-    paddingVertical: 16,
+    borderRadius: 14,
+    paddingVertical: 15,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
-    marginBottom: 16,
+    gap: 10,
+    marginBottom: 14,
   },
-  googleLogo: {
+  socialLogo: {
     width: 20,
     height: 20,
     marginRight: 8,
   },
-  googleButtonText: {
+  socialButtonText: {
     fontSize: 16,
     fontWeight: "600",
     color: "#1C1208",
   },
-  appleButton: {
-    backgroundColor: "#F5F0E8",
-    borderWidth: 1,
-    borderColor: "#EDE5D5",
-    borderRadius: 16,
-    paddingVertical: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    marginBottom: 16,
-  },
-  appleIcon: {
-    marginRight: 8,
-  },
-  appleButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1C1208",
+  buttonDisabled: {
+    opacity: 0.6,
   },
 });

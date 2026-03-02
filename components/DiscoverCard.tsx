@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef } from "react";
 import { Animated, Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import { formatLastActive } from "../lib/utils/timeUtils";
@@ -47,7 +48,6 @@ export default function DiscoverCard({
   const entryTranslateY = useRef(new Animated.Value(playEntry ? 60 : 0)).current;
   const entryOpacity = useRef(new Animated.Value(playEntry ? 0 : 1)).current;
 
-  // Play staggered spring entry when card mounts as part of a new batch
   useEffect(() => {
     if (!playEntry) return;
     const delay = entryIndex * 75;
@@ -89,116 +89,175 @@ export default function DiscoverCard({
     }
   }
 
-  const fullName =
-    profile.first_name && profile.last_name
-      ? `${profile.first_name} ${profile.last_name}`
-      : profile.name || "Unknown";
-
+  const firstName = profile.first_name || profile.name?.split(" ")[0] || "Unknown";
   const age = calculateAge(profile.dob);
   const city = profile.city || "";
+  const country = profile.country || "";
+  const location = [city, country].filter(Boolean).join(", ");
+
   const activeInfo = formatLastActive(profile.last_active_at);
+  const isOnline = activeInfo?.dotColor === "#22C55E" || activeInfo?.label?.toLowerCase() === "online";
+
+  const rawScore = profile.compatibility_score;
+  const compatibilityScore = rawScore != null
+    ? (rawScore > 1 ? Math.round(rawScore) : Math.round(rawScore * 100))
+    : null;
 
   return (
     <Animated.View style={{
       opacity: entryOpacity,
       transform: [{ translateY: entryTranslateY }],
     }}>
-    <Pressable
-      className="bg-white rounded-3xl overflow-hidden"
-      style={{
-        width: CARD_WIDTH,
-        height: CARD_WIDTH * 1.65,
-        borderWidth: 1,
-        borderColor: "rgba(184,134,11,0.7)",
-        shadowColor: "#B8860B",
-        shadowOpacity: 0.22,
-        shadowRadius: 18,
-        shadowOffset: { width: 0, height: 6 },
-        elevation: 8,
-      }}
-      onPress={onPress}
-    >
-      {mainPhoto ? (
-        <View style={{ width: "100%", height: "100%", position: "relative" }}>
+      <Pressable
+        style={styles.card}
+        onPress={onPress}
+      >
+        {mainPhoto ? (
           <Image
             source={{ uri: mainPhoto }}
-            style={{ width: "100%", height: "100%" }}
+            style={StyleSheet.absoluteFill}
             contentFit="cover"
             transition={200}
             cachePolicy="memory-disk"
             priority="normal"
           />
-          <View style={styles.gradient} />
-          <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
-            <Text className="text-white text-lg font-semibold" numberOfLines={1}>
-              {fullName}{age !== null ? `, ${age}` : ""}
-            </Text>
-            {city ? (
-              <Text className="text-white/70 text-xs mt-1" numberOfLines={1}>{city}</Text>
-            ) : null}
-            {activeInfo && (
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
-                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: activeInfo.dotColor }} />
-                <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 10 }}>{activeInfo.label}</Text>
-              </View>
-            )}
-            {(profile.is_boosted || profile.compatibility_score != null) && (
-              <View className="flex-row mt-2 gap-1.5">
-                {profile.is_boosted && (
-                  <View className="px-2.5 py-1 rounded-full bg-[#B8860B]/30">
-                    <Text className="text-[11px] text-[#B8860B] font-semibold">Boosted</Text>
-                  </View>
-                )}
-                {profile.compatibility_score != null && (
-                  <View className="px-2.5 py-1 rounded-full bg-[#B8860B]/30">
-                    <Text className="text-[11px] text-[#B8860B] font-semibold">
-                      {profile.compatibility_score}% Compatible
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-        </View>
-      ) : (
-        <View className="w-full h-full bg-[#F5F0E8] items-center justify-center" style={{ position: "relative" }}>
-          <Text className="text-white/60 text-4xl">👤</Text>
-          <View style={styles.gradient} />
-          <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
-            <Text className="text-white text-lg font-semibold" numberOfLines={1}>
-              {fullName}{age !== null ? `, ${age}` : ""}
-            </Text>
-          </View>
-        </View>
-      )}
+        ) : (
+          <View style={[StyleSheet.absoluteFill, styles.placeholder]} />
+        )}
 
-      {/* Green tick overlay */}
-      <Animated.View
-        style={[styles.tickOverlay, { opacity: tickOpacity }]}
-        pointerEvents="none"
-      >
-        <View style={styles.tickCircle}>
-          <Ionicons name="checkmark" size={40} color="#fff" />
+        {/* Bottom gradient */}
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.25)", "rgba(0,0,0,0.72)"]}
+          style={styles.gradient}
+          pointerEvents="none"
+        />
+
+        {/* Top row — Online + Compatibility */}
+        <View style={styles.topRow}>
+          {isOnline ? (
+            <View style={styles.onlineBadge}>
+              <Text style={styles.onlineBadgeText}>Online</Text>
+            </View>
+          ) : <View />}
+          {compatibilityScore !== null && (
+            <View style={styles.scoreBadge}>
+              <Text style={styles.scoreBadgeText}>{compatibilityScore}%</Text>
+            </View>
+          )}
         </View>
-      </Animated.View>
-    </Pressable>
+
+        {/* Bottom info */}
+        <View style={styles.infoContainer}>
+          <Text style={styles.nameText} numberOfLines={1}>
+            {firstName}{age !== null ? `, ${age}` : ""}
+          </Text>
+          {!!location && (
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={11} color="rgba(255,255,255,0.85)" />
+              <Text style={styles.locationText} numberOfLines={1}>{location}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Green tick overlay */}
+        <Animated.View
+          style={[styles.tickOverlay, { opacity: tickOpacity }]}
+          pointerEvents="none"
+        >
+          <View style={styles.tickCircle}>
+            <Ionicons name="checkmark" size={40} color="#fff" />
+          </View>
+        </Animated.View>
+      </Pressable>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  card: {
+    width: CARD_WIDTH,
+    height: CARD_WIDTH * 1.65,
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: "#F5F0E8",
+    borderWidth: 1,
+    borderColor: "rgba(184,134,11,0.7)",
+    shadowColor: "#B8860B",
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
+  },
+  placeholder: {
+    backgroundColor: "#F5F0E8",
+  },
   gradient: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    height: 90,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    height: "55%",
+  },
+  topRow: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    right: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  onlineBadge: {
+    backgroundColor: "rgba(0,0,0,0.42)",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.18)",
+  },
+  onlineBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  scoreBadge: {
+    backgroundColor: "#C9980A",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  scoreBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  infoContainer: {
+    position: "absolute",
+    bottom: 12,
+    left: 12,
+    right: 12,
+    gap: 3,
+  },
+  nameText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 0.1,
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+  },
+  locationText: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 11,
+    fontWeight: "500",
   },
   tickOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(34, 197, 94, 0.75)",
-    borderRadius: 24,
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -149,7 +149,7 @@ export default function UnmatchesScreen() {
         {unmatches.length === 0 ? (
           <View className="flex-1 items-center justify-center">
             <View className="mb-6">
-              <Logo variant="colored" width={120} />
+              <Logo variant="transparent" width={120} />
             </View>
             <Text className="text-[#9E8E7E] text-base">No unmatches yet</Text>
             <Text className="text-[#9E8E7E] text-sm mt-2">All your connections are active</Text>

@@ -30,7 +30,7 @@ export default function Onboarding() {
     <View className="flex-1 bg-[#FDFAF5] px-6 pt-20">
       {/* Logo at top */}
       <View className="items-center mb-6">
-        <Logo variant="colored" width={120} />
+        <Logo variant="transparent" width={120} />
       </View>
 
       <Text className="text-[#1C1208] text-2xl font-bold mb-6">Create Profile</Text>

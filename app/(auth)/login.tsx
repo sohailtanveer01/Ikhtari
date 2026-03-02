@@ -11,7 +11,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-
   const loginWithEmail = async () => {
     const trimmed = email.trim().toLowerCase();
     if (!trimmed) {
@@ -21,25 +20,21 @@ export default function Login() {
 
     setLoading(true);
     try {
-      // 1. Check if user is deactivated
       const { data: statusData, error: statusError } = await supabase.functions.invoke("check-user-status", {
         body: { email: trimmed }
       });
-
 
       if (statusError) {
         // Fallback: proceed to login if check fails
       } else if (statusData && statusData.exists && statusData.account_active === false) {
         setLoading(false);
-        // User is deactivated - go to reactivation screen
         router.push({ pathname: "/(auth)/reactivate", params: { email: trimmed } });
         return;
       }
 
-      // 2. Proceed with OTP - allow both login and signup
       const { error } = await supabase.auth.signInWithOtp({
         email: trimmed,
-        options: { shouldCreateUser: true }, // Allow creating new users
+        options: { shouldCreateUser: true },
       });
 
       if (error) {
@@ -47,7 +42,6 @@ export default function Login() {
         return;
       }
 
-      // 3. Navigate to email OTP verification screen
       router.push({ pathname: "/(auth)/email-otp", params: { email: trimmed } });
     } catch {
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
@@ -56,47 +50,38 @@ export default function Login() {
     }
   };
 
-
-
   return (
-      <View style={styles.container}>
-        {/* Gradient Backgrounds - matching onboarding */}
-        <LinearGradient
-          colors={["rgba(238,189,43,0.65)", "rgba(10,10,10,0)"]}
-          style={[styles.gradientBase, styles.gradientTopLeft]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          pointerEvents="none"
-        />
-        <LinearGradient
-          colors={["rgba(10,10,10,0)", "rgba(238,189,43,0.55)"]}
-          style={[styles.gradientBase, styles.gradientBottomRight]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          pointerEvents="none"
-        />
+    <View style={styles.container}>
+      {/* Background gradient — top warm gold strip fading to clean cream */}
+      <LinearGradient
+        colors={["#F5E6C0", "#FDFAF5", "#F5E6C0"]}
+        style={styles.bgGradient}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        pointerEvents="none"
+      />
 
-        {/* Back Button */}
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-        </Pressable>
+      {/* Back Button */}
+      <Pressable style={styles.backButton} onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={22} color="#6B5D4F" />
+      </Pressable>
 
-        {/* Logo at top */}
-        <View style={styles.logoContainer}>
-          <Logo variant="transparent" width={150} height={150} style="" />
-        </View>
+      {/* Logo */}
+      <View style={styles.logoContainer}>
+        <Logo variant="transparent" width={130} height={130} style="" />
+      </View>
 
       {/* Content */}
       <View style={styles.content}>
-        <View style={styles.formContainer}>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Welcome Back</Text>
+          <Text style={styles.cardSubtitle}>Enter your email to continue</Text>
+
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email</Text>
             <TextInput
               placeholder="Enter your email"
-              placeholderTextColor="#666"
+              placeholderTextColor="#B0A090"
               style={styles.input}
               onChangeText={setEmail}
               value={email}
@@ -108,13 +93,20 @@ export default function Login() {
           </View>
 
           <Pressable
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.buttonWrapper, loading && styles.buttonDisabled]}
             onPress={loginWithEmail}
             disabled={loading}
           >
-            <Text style={styles.buttonText}>
-              {loading ? "Sending code..." : "Continue with Email"}
-            </Text>
+            <LinearGradient
+              colors={["#D4A017", "#B8860B"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? "Sending code..." : "Continue with Email"}
+              </Text>
+            </LinearGradient>
           </Pressable>
 
           <Text style={styles.helperText}>
@@ -122,7 +114,7 @@ export default function Login() {
           </Text>
         </View>
       </View>
-      </View>
+    </View>
   );
 }
 
@@ -130,23 +122,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FDFAF5",
-    position: "relative",
   },
-  gradientBase: {
+  bgGradient: {
     position: "absolute",
-    width: 620,
-    height: 620,
-    borderRadius: 310,
-    opacity: 0.9,
-    transform: [{ scale: 1.3 }],
-  },
-  gradientTopLeft: {
-    top: -260,
-    left: -220,
-  },
-  gradientBottomRight: {
-    bottom: -260,
-    right: -220,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   backButton: {
     position: "absolute",
@@ -156,13 +138,20 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#EDE5D5",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 2,
   },
   logoContainer: {
     position: "absolute",
-    top: 60,
+    top: 48,
     left: 0,
     right: 0,
     alignItems: "center",
@@ -173,79 +162,81 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 24,
   },
-  title: {
-    fontSize: 36,
-    fontWeight: "bold",
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 28,
+    borderWidth: 1,
+    borderColor: "#EDE5D5",
+    shadowColor: "#B8860B",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 5,
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: "700",
     color: "#1C1208",
-    marginBottom: 8,
     textAlign: "center",
+    marginBottom: 6,
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#9CA3AF",
-    marginBottom: 48,
+  cardSubtitle: {
+    fontSize: 14,
+    color: "#9E8E7E",
     textAlign: "center",
-  },
-  formContainer: {
-    width: "100%",
+    marginBottom: 28,
   },
   inputContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600",
-    color: "#E5E7EB",
+    color: "#6B5D4F",
     marginBottom: 8,
-    paddingLeft: 4,
+    paddingLeft: 2,
+    letterSpacing: 0.7,
+    textTransform: "uppercase",
   },
   input: {
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    backgroundColor: "#F9F5EE",
     borderWidth: 1,
-    borderColor: "rgba(238, 189, 43, 0.3)",
-    borderRadius: 16,
+    borderColor: "#EDE5D5",
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 14,
     fontSize: 16,
     color: "#1C1208",
   },
-  button: {
-    backgroundColor: "#B8860B",
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: "center",
-    justifyContent: "center",
+  buttonWrapper: {
+    borderRadius: 14,
+    overflow: "hidden",
     marginBottom: 16,
     shadowColor: "#B8860B",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  button: {
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   buttonText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1C1208",
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: 0.3,
   },
   helperText: {
     fontSize: 13,
-    color: "#9CA3AF",
+    color: "#9E8E7E",
     textAlign: "center",
     lineHeight: 18,
-  },
-  linkContainer: {
-    marginTop: 32,
-    alignItems: "center",
-  },
-  linkText: {
-    fontSize: 15,
-    color: "#9CA3AF",
-  },
-  linkHighlight: {
-    color: "#B8860B",
-    fontWeight: "600",
   },
 });

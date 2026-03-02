@@ -324,7 +324,7 @@ export default function ChatListScreen() {
         {matches.length === 0 ? (
           <View className="flex-1 items-center justify-center">
             <View className="mb-6">
-              <Logo variant="colored" width={120} height={120} style="" />
+              <Logo variant="transparent" width={120} height={120} style="" />
             </View>
             <Text className="text-[#6B5D4F] text-base">No matches yet</Text>
             <Text className="text-[#9E8E7E] text-sm mt-2 mb-6">Start discovering to find your match! 💕</Text>

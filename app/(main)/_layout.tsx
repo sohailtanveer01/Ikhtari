@@ -241,7 +241,7 @@ export default function MainLayout() {
             const isActive = !isViewingFromInterests && focused;
             return (
               <View style={[styles.iconContainer, isActive && styles.activeIconContainer]}>
-                <MaterialCommunityIcons name={isActive ? "view-grid" : "view-grid-outline"} size={36} color={isActive ? "#B8860B" : "#9CA3AF"} />
+                <MaterialCommunityIcons name={isActive ? "cards" : "cards-outline"} size={36} color={isActive ? "#B8860B" : "#9CA3AF"} />
               </View>
             );
           },

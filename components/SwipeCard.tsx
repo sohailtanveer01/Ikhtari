@@ -1,7 +1,7 @@
-import { BlurView } from "expo-blur";
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { Dimensions, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Dimensions, Pressable, StyleSheet, Text, View } from "react-native";
 import { MarriageFoundationsBadge } from "./MarriageFoundationsBadge";
 
 const { width, height } = Dimensions.get("window");
@@ -20,35 +20,29 @@ function calculateAge(dob: string | null): number | null {
 
 interface SwipeCardProps {
   profile: any;
-  onTap?: () => void; // Called when user taps on the card (opens modal)
+  onTap?: () => void;
 }
 
-/**
- * Minimal image-first swipe card.
- * Shows only the main photo with a subtle gradient + name/age overlay.
- * - Tap to open profile details modal (via onTap prop)
- * - Swipe up to open profile details modal (handled in parent gesture)
- */
 export default function SwipeCard({ profile, onTap }: SwipeCardProps) {
   const photos = profile?.photos || [];
   const mainPhoto = photos.length > 0 ? photos[0] : null;
 
-  const fullName =
-    profile?.first_name && profile?.last_name
-      ? `${profile.first_name} ${profile.last_name}`
-      : profile?.name || "Unknown";
-
+  const firstName = profile?.first_name || profile?.name?.split(" ")[0] || "Unknown";
   const age = calculateAge(profile?.dob);
-  const profession = profile?.profession || "";
+
+  const city = profile?.city || "";
+  const country = profile?.country || "";
+  const location = [city, country].filter(Boolean).join(", ");
+
+  const rawScore = profile?.compatibility_score;
+  const compatibilityScore = rawScore != null ? Math.round(rawScore * 100) : null;
+
+  const isOnline = profile?.is_online ?? false;
 
   return (
     <View style={styles.container}>
       {mainPhoto ? (
-        <Pressable
-          onPress={onTap}
-          style={styles.imageContainer}
-          disabled={!onTap}
-        >
+        <Pressable onPress={onTap} style={styles.imageContainer} disabled={!onTap}>
           <Image
             source={{ uri: mainPhoto }}
             style={styles.image}
@@ -67,42 +61,52 @@ export default function SwipeCard({ profile, onTap }: SwipeCardProps) {
         </View>
       )}
 
-      {/* Subtle gradient at bottom for readability */}
+      {/* Bottom gradient overlay */}
       <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.7)"]}
+        colors={["transparent", "rgba(0,0,0,0.28)", "rgba(0,0,0,0.78)"]}
         style={styles.gradient}
         pointerEvents="none"
       />
 
-      {/* Glass info pill */}
-      <View style={styles.infoContainer} pointerEvents="none">
-        <BlurView
-          intensity={Platform.OS === "ios" ? 48 : 0}
-          tint="dark"
-          style={styles.glassPill}
-        >
-          <View style={styles.nameRow}>
-            <Text style={styles.nameText}>
-              {fullName}
-              {age !== null ? `, ${age}` : ""}
-            </Text>
-            {profile?.is_certified && profile?.show_badge && (
-              <View style={styles.badgeContainer}>
-                <MarriageFoundationsBadge size="small" showText={false} />
-              </View>
-            )}
+      {/* Top badges row */}
+      <View style={styles.topRow} pointerEvents="none">
+        {isOnline ? (
+          <View style={styles.onlineBadge}>
+            <Text style={styles.onlineBadgeText}>Online</Text>
           </View>
-          {profile?.is_liked_by_them && (
-            <View style={styles.likedBadge}>
-              <Text style={styles.likedBadgeText}>Liked you</Text>
-            </View>
+        ) : (
+          <View />
+        )}
+        {compatibilityScore !== null && (
+          <View style={styles.scoreBadge}>
+            <Text style={styles.scoreBadgeText}>{compatibilityScore}%</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Bottom info — left aligned */}
+      <View style={styles.infoContainer} pointerEvents="none">
+        <View style={styles.nameRow}>
+          <Text style={styles.nameText}>
+            {firstName}{age !== null ? `, ${age}` : ""}
+          </Text>
+          {profile?.is_certified && profile?.show_badge && (
+            <MarriageFoundationsBadge size="small" showText={false} />
           )}
-          {!!profession && (
-            <Text style={styles.subText} numberOfLines={1}>
-              {profession}
-            </Text>
-          )}
-        </BlurView>
+        </View>
+
+        {!!location && (
+          <View style={styles.locationRow}>
+            <Ionicons name="location-outline" size={15} color="rgba(255,255,255,0.85)" />
+            <Text style={styles.locationText}>{location}</Text>
+          </View>
+        )}
+
+        {profile?.is_liked_by_them && (
+          <View style={styles.likedBadge}>
+            <Text style={styles.likedBadgeText}>Liked you</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -114,6 +118,7 @@ const styles = StyleSheet.create({
     height,
     backgroundColor: "#F5F0E8",
     position: "relative",
+    overflow: "hidden",
   },
   imageContainer: {
     width: "100%",
@@ -139,51 +144,80 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: height * 0.35,
+    height: height * 0.42,
+  },
+  topRow: {
+    position: "absolute",
+    top: 56,
+    left: 20,
+    right: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  onlineBadge: {
+    backgroundColor: "rgba(0,0,0,0.45)",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  onlineBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  scoreBadge: {
+    backgroundColor: "#C9980A",
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  scoreBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
   },
   infoContainer: {
     position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 220,
-    paddingHorizontal: 24,
-    alignItems: "center",
-  },
-  glassPill: {
-    borderRadius: 28,
-    overflow: "hidden",
-    paddingHorizontal: 28,
-    paddingVertical: 16,
-    alignItems: "center",
+    left: 24,
+    right: 24,
+    bottom: 200,
+    alignItems: "flex-start",
     gap: 6,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.22)",
-    backgroundColor: "rgba(0,0,0,0.32)", // Android fallback
-  },
-  nameText: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    textAlign: "center",
-  },
-  subText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "rgba(255,255,255,0.80)",
-    textAlign: "center",
   },
   nameRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
-  badgeContainer: {
-    marginLeft: 4,
+  nameText: {
+    fontSize: 30,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    letterSpacing: 0.2,
+    textShadowColor: "rgba(0,0,0,0.3)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  locationText: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "rgba(255,255,255,0.88)",
+    textShadowColor: "rgba(0,0,0,0.25)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   likedBadge: {
     backgroundColor: "#B8860B",
     paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 12,
     marginTop: 4,
     shadowColor: "#B8860B",
@@ -193,7 +227,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   likedBadgeText: {
-    color: "#000",
+    color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "700",
     textTransform: "uppercase",

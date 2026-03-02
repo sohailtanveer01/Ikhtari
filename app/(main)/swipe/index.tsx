@@ -425,7 +425,7 @@ export default function DiscoverScreen() {
             />
           </Animated.View>
 
-          {/* Mark as Seen — bottom */}
+          {/* Mark as Seen & Next — bottom */}
           {!showCertGate && !showIntentGate && (
             <View style={{ paddingBottom: insets.bottom + 90, paddingHorizontal: 14, paddingTop: 8 }}>
               <Pressable
@@ -462,7 +462,7 @@ export default function DiscoverScreen() {
                     <>
                       <Ionicons name="checkmark-circle-outline" size={20} color="#16A34A" />
                       <Text style={{ color: "#16A34A", fontWeight: '700', fontSize: 15 }}>
-                        Mark as Seen
+                        Mark as Seen & Next
                       </Text>
                     </>
                   )}
