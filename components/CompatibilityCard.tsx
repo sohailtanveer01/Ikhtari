@@ -201,6 +201,47 @@ export default function CompatibilityCard({
           </View>
         );
       })}
+
+      {/* Additional Notes */}
+      {!!theirExpectations.additional_notes && (
+        <View style={{ marginTop: 12 }}>
+          <View
+            style={{
+              height: 1,
+              backgroundColor: "rgba(184,134,11,0.15)",
+              marginBottom: 14,
+            }}
+          />
+          <View className="flex-row items-center mb-2">
+            <Ionicons name="document-text-outline" size={15} color="#B8860B" />
+            <Text
+              style={{
+                color: "#9E8E7E",
+                fontSize: 11,
+                fontWeight: "700",
+                textTransform: "uppercase",
+                letterSpacing: 1.5,
+                marginLeft: 6,
+              }}
+            >
+              {profileName}'s Notes
+            </Text>
+          </View>
+          <View
+            style={{
+              backgroundColor: "#F5F0E8",
+              borderRadius: 14,
+              padding: 14,
+              borderWidth: 1,
+              borderColor: "#EDE5D5",
+            }}
+          >
+            <Text style={{ color: "#1C1208", fontSize: 13.5, lineHeight: 20 }}>
+              {theirExpectations.additional_notes}
+            </Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }

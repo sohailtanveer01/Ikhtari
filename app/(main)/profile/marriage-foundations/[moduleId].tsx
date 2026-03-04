@@ -427,6 +427,115 @@ export default function ModuleDetailScreen() {
     }
   };
 
+  const renderReadOnlyAnswers = () => {
+    if (!category) return null;
+
+    // Notes
+    if (category === "notes") {
+      return (
+        <View>
+          <View className="flex-row items-center mb-3">
+            <Ionicons name="document-text-outline" size={18} color="#B8860B" />
+            <Text className="text-[#1C1208] text-base font-semibold ml-2">Additional Notes</Text>
+          </View>
+          {additionalNotes ? (
+            <View className="bg-[#F5F0E8] rounded-xl p-4 border border-[#EDE5D5]">
+              <Text className="text-[#1C1208] text-base leading-6">{additionalNotes}</Text>
+            </View>
+          ) : (
+            <Text className="text-[#9E8E7E] text-sm italic">No notes added</Text>
+          )}
+        </View>
+      );
+    }
+
+    // Obligations
+    if (category === "obligations") {
+      const isMale = gender === "male";
+      const ownKey = isMale ? "husband_obligations" : "wife_obligations";
+      const spouseKey = isMale ? "wife_obligations" : "husband_obligations";
+      const ownObl = isMale ? husbandObligations : wifeObligations;
+      const spouseObl = isMale ? wifeObligations : husbandObligations;
+
+      const renderOblReadOnly = (configKey: "husband_obligations" | "wife_obligations", obligations: Record<string, boolean>) => {
+        const config = EXPECTATIONS_CONFIG[configKey];
+        const isMaleGender = gender === "male";
+        const title = isMaleGender
+          ? (config as any).male_title || config.title
+          : (config as any).female_title || config.title;
+        const checked = Object.entries(config.fields).filter(([key]) => obligations[key] === true);
+        return (
+          <View className="mb-5">
+            <View className="flex-row items-center mb-3">
+              <Ionicons name={config.icon as any} size={18} color="#B8860B" />
+              <Text className="text-[#1C1208] text-base font-semibold ml-2">{title}</Text>
+            </View>
+            {checked.length > 0 ? (
+              checked.map(([key, field]) => (
+                <View key={key} className="flex-row items-center mb-2 pl-1">
+                  <Ionicons name="checkmark-circle" size={16} color="#B8860B" />
+                  <Text className="text-[#1C1208] text-sm ml-2">{(field as any).label}</Text>
+                </View>
+              ))
+            ) : (
+              <Text className="text-[#9E8E7E] text-sm italic pl-1">None selected</Text>
+            )}
+          </View>
+        );
+      };
+
+      return (
+        <View>
+          {renderOblReadOnly(ownKey as any, ownObl)}
+          <View className="h-px bg-[#EDE5D5] mb-5" />
+          {renderOblReadOnly(spouseKey as any, spouseObl)}
+        </View>
+      );
+    }
+
+    // Select-field categories (financial, lifestyle, etc.)
+    const config = EXPECTATIONS_CONFIG[category as keyof typeof EXPECTATIONS_CONFIG] as any;
+    if (!config || !("fields" in config)) return null;
+
+    const isMale = gender === "male";
+    const title = isMale && config.male_title
+      ? config.male_title
+      : !isMale && config.female_title
+      ? config.female_title
+      : config.title;
+
+    return (
+      <View>
+        <View className="flex-row items-center mb-4">
+          <Ionicons name={config.icon as any} size={20} color="#B8860B" />
+          <Text className="text-[#1C1208] text-base font-semibold ml-2">{title}</Text>
+        </View>
+        {Object.entries(config.fields).map(([fieldKey, field]: [string, any]) => {
+          const selectedValue = form[fieldKey];
+          const selectedOption = field.options?.find((opt: any) => opt.value === selectedValue);
+          const label = isMale && field.male_label
+            ? field.male_label
+            : !isMale && field.female_label
+            ? field.female_label
+            : field.label;
+          return (
+            <View key={fieldKey} className="mb-3 bg-[#F5F0E8] rounded-xl p-4 border border-[#EDE5D5]">
+              <Text className="text-[#9E8E7E] text-xs font-semibold mb-2 uppercase tracking-wider">{label}</Text>
+              {selectedOption ? (
+                <View className="flex-row items-center">
+                  <Ionicons name="checkmark-circle" size={16} color="#B8860B" style={{ marginRight: 6 }} />
+                  <Text className="text-[#1C1208] text-base font-semibold">{selectedOption.label}</Text>
+                </View>
+              ) : (
+                <Text className="text-[#9E8E7E] text-sm italic">Not answered</Text>
+              )}
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
   if (moduleLoading) {
     return (
       <View
@@ -537,6 +646,20 @@ export default function ModuleDetailScreen() {
               Your Expectations
             </Text>
             {renderExpectationsForm()}
+          </View>
+        )}
+
+        {/* Saved Answers (read-only when completed) */}
+        {isCompleted && category && (
+          <View className="px-4 mb-6">
+            <View className="h-px bg-[#EDE5D5] mb-6" />
+            <View className="flex-row items-center mb-4">
+              <Ionicons name="checkmark-circle" size={16} color="#B8860B" />
+              <Text className="text-[#B8860B] text-xs font-semibold uppercase tracking-wider ml-2">
+                Your Saved Answers
+              </Text>
+            </View>
+            {renderReadOnlyAnswers()}
           </View>
         )}
 

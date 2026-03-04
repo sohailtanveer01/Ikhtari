@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   },
   tickOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(34, 197, 94, 0.75)",
+    backgroundColor: "rgba(184, 134, 11, 0.55)",
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
@@ -290,10 +290,10 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "rgba(22, 163, 74, 0.9)",
+    backgroundColor: "rgba(184, 134, 11, 0.92)",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 3,
-    borderColor: "#fff",
+    borderColor: "rgba(255,220,100,0.8)",
   },
 });

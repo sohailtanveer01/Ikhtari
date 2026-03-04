@@ -1,5 +1,7 @@
 import OnboardingBackground from "@/components/OnboardingBackground";
+import Logo from "@/components/Logo";
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -253,83 +255,108 @@ export default function OnboardingDone() {
                 style={{ height: 2 }}
               />
 
-              <View style={{ padding: 32 }}>
-                {/* Icon */}
-                <View style={{ alignItems: 'center', marginBottom: 24 }}>
-                  <View style={{
-                    shadowColor: '#D4A017',
-                    shadowOffset: { width: 0, height: 0 },
-                    shadowOpacity: 0.7,
-                    shadowRadius: 25,
-                    elevation: 12,
-                  }}>
-                    <LinearGradient
-                      colors={["#D4A017", "#B8860B"]}
-                      style={{ width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      <Ionicons name="heart" size={42} color="#fff" />
-                    </LinearGradient>
-                  </View>
+              <View style={{ padding: 32, paddingTop: 28 }}>
+                {/* Logo */}
+                <View style={{ alignItems: 'center', marginBottom: 20 }}>
+                  <Logo variant="transparent" width={130} height={130} />
                 </View>
 
                 {/* Title */}
-                <Text style={{ color: '#1C1208', fontSize: 28, fontWeight: '900', textAlign: 'center', marginBottom: 16, letterSpacing: -0.5 }}>
-                  Welcome to Ikhtari
+                <Text style={{ color: '#1C1208', fontSize: 27, fontWeight: '900', textAlign: 'center', marginBottom: 6, letterSpacing: -0.5 }}>
+                  Welcome to Ikhtiar
                 </Text>
 
                 {/* Divider */}
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 18 }}>
                   <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(184,134,11,0.25)' }} />
-                  <Text style={{ color: '#B8860B', fontSize: 11, fontWeight: '700', letterSpacing: 3, marginHorizontal: 12 }}>YOUR JOURNEY BEGINS</Text>
+                  <Text style={{ color: '#B8860B', fontSize: 10, fontWeight: '700', letterSpacing: 2.5, marginHorizontal: 10 }}>YOUR JOURNEY BEGINS</Text>
                   <View style={{ flex: 1, height: 1, backgroundColor: 'rgba(184,134,11,0.25)' }} />
                 </View>
 
                 {/* Message */}
-                <Text style={{ color: '#6B5D4F', fontSize: 15, textAlign: 'center', lineHeight: 23, marginBottom: 28 }}>
-                  Ikhtari is focused on getting you married and it is all free. Go through the following small series of modules to set your requirements and your obligations for your prospective spouse & learn the Islamic significance of marriage.
+                <Text style={{ color: '#6B5D4F', fontSize: 14.5, textAlign: 'center', lineHeight: 22, marginBottom: 26 }}>
+                  Ikhtiar is focused on getting you married and it is all free. Go through the following small series of modules to set your requirements and obligations for your prospective spouse & learn the Islamic significance of marriage.
                 </Text>
 
-                {/* Primary Button */}
-                <Pressable
-                  onPress={handleGoToModules}
-                  style={({ pressed }) => ({
-                    borderRadius: 18,
-                    shadowColor: '#B8860B',
-                    shadowOffset: { width: 0, height: 8 },
-                    shadowOpacity: pressed ? 0.3 : 0.55,
-                    shadowRadius: 18,
-                    elevation: 12,
-                    marginBottom: 16,
-                    transform: [{ scale: pressed ? 0.98 : 1 }],
-                  })}
-                >
-                  <LinearGradient
-                    colors={["#D4A017", "#B8860B"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={{ paddingVertical: 19, borderRadius: 18, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}
-                  >
-                    <Ionicons name="school-outline" size={22} color="#fff" />
-                    <Text style={{ color: '#fff', fontSize: 17, fontWeight: '800', letterSpacing: 0.4 }}>
-                      Go through modules
-                    </Text>
-                  </LinearGradient>
-                </Pressable>
+                {/* Buttons */}
+                <View style={{ gap: 12, marginTop: 4 }}>
 
-                {/* Secondary Button */}
-                <Pressable
-                  onPress={handleDeleteProfile}
-                  disabled={deleting}
-                  style={{ padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#EDE5D5', alignItems: 'center' }}
-                >
-                  {deleting ? (
-                    <ActivityIndicator color="#EF4444" />
-                  ) : (
-                    <Text style={{ color: '#EF4444', fontSize: 13, textAlign: 'center' }}>
-                      Delete my profile, I will go to some swiping dating app
-                    </Text>
-                  )}
-                </Pressable>
+                  {/* Primary — Start My Journey */}
+                  <Pressable
+                    onPress={handleGoToModules}
+                    style={({ pressed }) => ({
+                      borderRadius: 999,
+                      overflow: 'hidden',
+                      shadowColor: '#C9980A',
+                      shadowOffset: { width: 0, height: 8 },
+                      shadowOpacity: pressed ? 0.25 : 0.5,
+                      shadowRadius: 18,
+                      elevation: 12,
+                      transform: [{ scale: pressed ? 0.97 : 1 }],
+                    })}
+                  >
+                    <BlurView intensity={70} tint="light" style={{ borderRadius: 999, overflow: 'hidden' }}>
+                      <LinearGradient
+                        colors={["rgba(232,184,32,0.82)", "rgba(184,134,11,0.88)", "rgba(140,98,6,0.82)"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={{
+                          paddingVertical: 18,
+                          paddingHorizontal: 24,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderWidth: 1,
+                          borderColor: 'rgba(255,240,180,0.45)',
+                        }}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: 0.4 }}>
+                          Start My Journey
+                        </Text>
+                      </LinearGradient>
+                    </BlurView>
+                  </Pressable>
+
+                  {/* Secondary — Delete */}
+                  <Pressable
+                    onPress={handleDeleteProfile}
+                    disabled={deleting}
+                    style={({ pressed }) => ({
+                      borderRadius: 999,
+                      overflow: 'hidden',
+                      shadowColor: '#C0392B',
+                      shadowOffset: { width: 0, height: 6 },
+                      shadowOpacity: pressed ? 0.15 : 0.3,
+                      shadowRadius: 14,
+                      elevation: 8,
+                      transform: [{ scale: pressed ? 0.97 : 1 }],
+                    })}
+                  >
+                    <BlurView intensity={60} tint="light" style={{ borderRadius: 999, overflow: 'hidden' }}>
+                      <LinearGradient
+                        colors={["rgba(220,80,70,0.78)", "rgba(180,42,34,0.88)", "rgba(145,30,24,0.82)"]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={{
+                          paddingVertical: 16,
+                          paddingHorizontal: 24,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderWidth: 1,
+                          borderColor: 'rgba(255,180,170,0.3)',
+                        }}
+                      >
+                        {deleting ? (
+                          <ActivityIndicator color="#fff" size="small" />
+                        ) : (
+                          <Text style={{ color: '#fff', fontSize: 13.5, fontWeight: '700', letterSpacing: 0.2, textAlign: 'center' }}>
+                            Delete my profile, I will go to some swiping app to date
+                          </Text>
+                        )}
+                      </LinearGradient>
+                    </BlurView>
+                  </Pressable>
+
+                </View>
               </View>
 
               {/* Bottom decorative line */}

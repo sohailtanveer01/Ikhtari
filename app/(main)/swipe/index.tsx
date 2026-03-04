@@ -33,6 +33,7 @@ export default function DiscoverScreen() {
   const feedMode = useDiscoverStore((s) => s.feedMode);
   const setFeedMode = useDiscoverStore((s) => s.setFeedMode);
 
+  const [showTicks, setShowTicks] = useState(false);
   const [isNewBatch, setIsNewBatch] = useState(false);
 
   const gridExitAnim = useRef(new Animated.Value(1)).current;
@@ -122,28 +123,33 @@ export default function DiscoverScreen() {
   }, [checkingQuestions, loadInitial]);
 
   const handleMarkAsSeen = useCallback(async () => {
-    if (isLoading || profiles.length === 0) return;
+    if (isLoading || showTicks || profiles.length === 0) return;
 
-    // Step 1: Cards scale + fade out together
+    // Step 1: Gold ticks appear on all cards
+    setShowTicks(true);
+    await new Promise((r) => setTimeout(r, 600));
+
+    // Step 2: Cards scale + fade out together
     await new Promise<void>((resolve) => {
       Animated.timing(gridExitAnim, {
         toValue: 0,
-        duration: 260,
+        duration: 280,
         useNativeDriver: true,
       }).start(() => resolve());
     });
 
-    // Step 2: Grid is invisible — load next batch
+    // Step 3: Grid is invisible — load next batch
+    setShowTicks(false);
     setIsNewBatch(true);
     flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
     await markAsSeen();
 
-    // Step 3: Show grid again — new cards will spring in from DiscoverCard
+    // Step 4: Show grid again — new cards spring in
     gridExitAnim.setValue(1);
 
-    // Step 4: Clear new batch flag after entry animations finish
+    // Step 5: Clear new batch flag after entry animations finish
     setTimeout(() => setIsNewBatch(false), 700);
-  }, [isLoading, profiles.length, markAsSeen, gridExitAnim]);
+  }, [isLoading, showTicks, profiles.length, markAsSeen, gridExitAnim]);
 
   const handleProfilePress = useCallback(
     (profile: any) => {
@@ -411,6 +417,7 @@ export default function DiscoverScreen() {
                 <DiscoverCard
                   profile={item}
                   onPress={() => handleProfilePress(item)}
+                  showTick={showTicks}
                   playEntry={isNewBatch}
                   entryIndex={index}
                 />
