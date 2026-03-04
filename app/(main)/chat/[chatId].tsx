@@ -429,6 +429,28 @@ export default function ChatScreen() {
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<any | null>(null); // Message being replied to
   const [showOptionsModal, setShowOptionsModal] = useState(false);
+
+  // Intent questions gate state
+  const [gateLoading, setGateLoading] = useState(true);
+  const [gateRequired, setGateRequired] = useState(false);
+  const [gateQuestions, setGateQuestions] = useState<any[]>([]);
+  const [gateOtherName, setGateOtherName] = useState("");
+  const [gateAnswers, setGateAnswers] = useState<Record<string, string>>({});
+  const [gateSubmitting, setGateSubmitting] = useState(false);
+  // Waiting state — acceptor waits for sender to answer questions
+  const [waitingForOther, setWaitingForOther] = useState(false);
+  const [waitingOtherName, setWaitingOtherName] = useState("");
+  const [waitingInitiatedById, setWaitingInitiatedById] = useState<string | null>(null);
+  const [waitingQuestions, setWaitingQuestions] = useState<any[]>([]);
+  // Awaiting approval state — initiator submitted answers, waiting for acceptor to approve
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
+  const [awaitingOtherName, setAwaitingOtherName] = useState("");
+  // Review state — acceptor sees initiator's answers and can approve
+  const [reviewRequired, setReviewRequired] = useState(false);
+  const [reviewAnswers, setReviewAnswers] = useState<any[]>([]);
+  const [reviewOtherName, setReviewOtherName] = useState("");
+  const [reviewApproving, setReviewApproving] = useState(false);
+
   const flatListRef = useRef<FlatList>(null);
   const queryClient = useQueryClient();
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -517,6 +539,154 @@ export default function ChatScreen() {
   const isComplimentSender = chatData?.isComplimentSender || false;
   const isComplimentRecipient = chatData?.isComplimentRecipient || false;
   const interestQA = chatData?.interestQA || null;
+
+  // Check intent questions gate on mount
+  useEffect(() => {
+    if (!chatId) return;
+    setGateLoading(true);
+    supabase.functions
+      .invoke("get-chat-gate", { body: { matchId: chatId } })
+      .then(({ data, error }) => {
+        if (!error && data) {
+          if (data.gateRequired) {
+            setGateRequired(true);
+            setGateQuestions(data.questions || []);
+            setGateOtherName(data.otherUserName || "them");
+          } else if (data.awaitingApproval) {
+            setAwaitingApproval(true);
+            setAwaitingOtherName(data.otherUserName || "them");
+          } else if (data.reviewRequired) {
+            setReviewRequired(true);
+            setReviewAnswers(data.answers || []);
+            setReviewOtherName(data.otherUserName || "them");
+          } else if (data.waitingForOther) {
+            setWaitingForOther(true);
+            setWaitingOtherName(data.otherUserName || "them");
+            setWaitingInitiatedById(data.initiatedById || null);
+            setWaitingQuestions(data.myQuestions || []);
+          } else {
+            setGateRequired(false);
+            setWaitingForOther(false);
+            setAwaitingApproval(false);
+            setReviewRequired(false);
+          }
+        }
+        setGateLoading(false);
+      })
+      .catch(() => setGateLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId]);
+
+  // Realtime subscription: when the initiator submits answers, auto-unlock waiting state
+  useEffect(() => {
+    if (!waitingForOther || !chatId || !waitingInitiatedById) return;
+
+    const channel = supabase
+      .channel(`gate-answers-${chatId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "match_intent_answers",
+          filter: `match_id=eq.${chatId}`,
+        },
+        () => {
+          // Re-check the gate when a new answer is inserted
+          supabase.functions
+            .invoke("get-chat-gate", { body: { matchId: chatId } })
+            .then(({ data, error }) => {
+              if (!error && data) {
+                if (data.reviewRequired) {
+                  setWaitingForOther(false);
+                  setReviewRequired(true);
+                  setReviewAnswers(data.answers || []);
+                  setReviewOtherName(data.otherUserName || "them");
+                } else if (!data.waitingForOther) {
+                  setWaitingForOther(false);
+                }
+              }
+            })
+            .catch(() => {});
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [waitingForOther, chatId, waitingInitiatedById]);
+
+  // Realtime subscription: when acceptor approves, unlock initiator's awaiting screen
+  useEffect(() => {
+    if (!awaitingApproval || !chatId) return;
+
+    const channel = supabase
+      .channel(`gate-approval-${chatId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "matches", filter: `id=eq.${chatId}` },
+        (payload: any) => {
+          if (payload.new?.gate_approved_at) {
+            setAwaitingApproval(false);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [awaitingApproval, chatId]);
+
+  const approveGate = useCallback(async () => {
+    setReviewApproving(true);
+    try {
+      const { error } = await supabase.functions.invoke("approve-chat-gate", {
+        body: { matchId: chatId },
+      });
+      if (error) {
+        Alert.alert("Error", "Failed to approve. Please try again.");
+        return;
+      }
+      setReviewRequired(false);
+    } catch {
+      Alert.alert("Error", "Failed to approve. Please try again.");
+    } finally {
+      setReviewApproving(false);
+    }
+  }, [chatId]);
+
+  const submitGateAnswers = useCallback(async () => {
+    const answers = gateQuestions.map((q) => ({
+      question_id: q.id,
+      answer_text: gateAnswers[q.id] || "",
+    }));
+    const unanswered = answers.filter((a) => !a.answer_text.trim());
+    if (unanswered.length > 0) {
+      Alert.alert("Please answer all questions before continuing.");
+      return;
+    }
+    setGateSubmitting(true);
+    try {
+      const { error } = await supabase.functions.invoke("submit-chat-gate-answers", {
+        body: { matchId: chatId, answers },
+      });
+      if (error) {
+        Alert.alert("Error", "Failed to submit answers. Please try again.");
+        return;
+      }
+      setGateRequired(false);
+      setAwaitingApproval(true);
+      setAwaitingOtherName(gateOtherName);
+    } catch {
+      Alert.alert("Error", "Failed to submit answers. Please try again.");
+    } finally {
+      setGateSubmitting(false);
+    }
+  }, [chatId, gateAnswers, gateOtherName, gateQuestions]);
 
   // Q&A card collapse state — default expanded when no messages, collapsed when messages exist
   const [isQAExpanded, setIsQAExpanded] = useState<boolean | null>(null);
@@ -1331,12 +1501,297 @@ export default function ChatScreen() {
     [groupedMessages]
   );
 
-  // Show loading state
-  if (isLoading) {
+  // Show loading state (chat data or gate check)
+  if (isLoading || gateLoading) {
     return (
       <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
         <ActivityIndicator size="large" color="#B8860B" />
       </View>
+    );
+  }
+
+  // Show intent questions gate
+  if (gateRequired && gateQuestions.length > 0) {
+    return (
+      <KeyboardAvoidingView
+        className="flex-1 bg-[#FDFAF5]"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
+      >
+        {/* Header */}
+        <View className="bg-[#FDFAF5] px-4 pt-12 pb-4 flex-row items-center border-b border-[#EDE5D5]">
+          <Pressable onPress={() => router.replace("/(main)/chat")} className="mr-3">
+            <Text className="text-[#1C1208] text-2xl font-semibold">←</Text>
+          </Pressable>
+          <Text className="text-[#1C1208] text-lg font-semibold flex-1" numberOfLines={1}>
+            {gateOtherName}
+          </Text>
+        </View>
+
+        {/* Gate content */}
+        <FlatList
+          data={gateQuestions}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+          ListHeaderComponent={
+            <View className="mb-6">
+              <View className="bg-[#B8860B]/10 rounded-2xl p-4 border border-[#B8860B]/30 mb-5">
+                <View className="flex-row items-center mb-2">
+                  <Ionicons name="sparkles" size={20} color="#B8860B" />
+                  <Text className="text-[#B8860B] text-base font-bold ml-2">
+                    Before you chat
+                  </Text>
+                </View>
+                <Text className="text-[#6B5D4F] text-sm leading-5">
+                  {gateOtherName} has set a few questions they'd like you to answer before starting a conversation. Take a moment to respond thoughtfully.
+                </Text>
+              </View>
+            </View>
+          }
+          renderItem={({ item, index }) => (
+            <View key={item.id} className="mb-5">
+              <Text className="text-[#1C1208] text-base font-semibold mb-2">
+                {index + 1}. {item.question_text}
+              </Text>
+              <TextInput
+                value={gateAnswers[item.id] || ""}
+                onChangeText={(val) =>
+                  setGateAnswers((prev) => ({ ...prev, [item.id]: val }))
+                }
+                placeholder="Type your answer..."
+                placeholderTextColor="#B0A090"
+                multiline
+                className="bg-white border border-[#EDE5D5] rounded-xl px-4 py-3 text-[#1C1208] text-base"
+                style={{ textAlignVertical: "top", minHeight: 80 }}
+              />
+            </View>
+          )}
+          ListFooterComponent={
+            <Pressable
+              onPress={submitGateAnswers}
+              disabled={gateSubmitting}
+              className={`bg-[#B8860B] rounded-2xl py-4 items-center mt-2 ${gateSubmitting ? "opacity-60" : ""}`}
+            >
+              {gateSubmitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text className="text-white text-base font-bold">
+                  Submit & Start Chatting
+                </Text>
+              )}
+            </Pressable>
+          }
+        />
+      </KeyboardAvoidingView>
+    );
+  }
+
+  // Show waiting screen — acceptor waits for sender to answer questions
+  if (waitingForOther) {
+    const otherPhoto = otherUser
+      ? cleanPhotoUrl(otherUser.photos?.[0] ?? null)
+      : null;
+
+    return (
+      <View className="flex-1 bg-[#FDFAF5]">
+        {/* Header */}
+        <View className="bg-[#FDFAF5] px-4 pt-12 pb-4 flex-row items-center border-b border-[#EDE5D5]">
+          <Pressable onPress={() => router.replace("/(main)/chat")} className="mr-3">
+            <Text className="text-[#1C1208] text-2xl font-semibold">←</Text>
+          </Pressable>
+          <Text className="text-[#1C1208] text-lg font-semibold flex-1" numberOfLines={1}>
+            {waitingOtherName}
+          </Text>
+        </View>
+
+        <FlatList
+          data={waitingQuestions}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ padding: 24, paddingBottom: 60 }}
+          ListHeaderComponent={
+            <View className="items-center mb-8">
+              {/* Avatar */}
+              <View className="w-24 h-24 rounded-full overflow-hidden mb-4 border-4 border-[#B8860B]/30 bg-[#F5F0E8] items-center justify-center">
+                {otherPhoto ? (
+                  <ExpoImage
+                    source={{ uri: otherPhoto }}
+                    style={{ width: "100%", height: "100%" }}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <Text style={{ fontSize: 40 }}>👤</Text>
+                )}
+              </View>
+
+              {/* Waiting message */}
+              <View className="bg-[#FFF8E7] border border-[#B8860B]/30 rounded-2xl px-5 py-4 w-full">
+                <View className="flex-row items-center justify-center mb-2">
+                  <Ionicons name="time-outline" size={22} color="#B8860B" />
+                  <Text className="text-[#B8860B] text-base font-bold ml-2">
+                    Waiting for {waitingOtherName}
+                  </Text>
+                </View>
+                <Text className="text-[#6B5D4F] text-sm text-center leading-5">
+                  {waitingOtherName} needs to answer your questions before you can start chatting. You'll be notified when they respond.
+                </Text>
+              </View>
+
+              {waitingQuestions.length > 0 && (
+                <Text className="text-[#9E8E7E] text-sm font-semibold mt-6 mb-2 self-start">
+                  Your questions for {waitingOtherName}:
+                </Text>
+              )}
+            </View>
+          }
+          renderItem={({ item, index }) => (
+            <View className="bg-white border border-[#EDE5D5] rounded-2xl p-4 mb-3">
+              <Text className="text-[#B8860B] text-xs font-bold mb-1 uppercase tracking-wider">
+                Question {index + 1}
+              </Text>
+              <Text className="text-[#1C1208] text-sm leading-5">{item.question_text}</Text>
+            </View>
+          )}
+          ListFooterComponent={
+            <Pressable
+              onPress={() => router.replace("/(main)/chat")}
+              className="mt-6 py-3 rounded-2xl items-center border border-[#EDE5D5]"
+            >
+              <Text className="text-[#9E8E7E] text-sm font-medium">Back to Chats</Text>
+            </Pressable>
+          }
+        />
+      </View>
+    );
+  }
+
+  // Show awaiting approval screen — initiator submitted answers, waiting for acceptor to review
+  if (awaitingApproval) {
+    const otherPhoto = otherUser ? cleanPhotoUrl(otherUser.photos?.[0] ?? null) : null;
+    return (
+      <View className="flex-1 bg-[#FDFAF5]">
+        <View className="bg-[#FDFAF5] px-4 pt-12 pb-4 flex-row items-center border-b border-[#EDE5D5]">
+          <Pressable onPress={() => router.replace("/(main)/chat")} className="mr-3">
+            <Text className="text-[#1C1208] text-2xl font-semibold">←</Text>
+          </Pressable>
+          <Text className="text-[#1C1208] text-lg font-semibold flex-1" numberOfLines={1}>
+            {awaitingOtherName}
+          </Text>
+        </View>
+
+        <View className="flex-1 items-center justify-center px-6">
+          <View className="w-24 h-24 rounded-full overflow-hidden mb-6 border-4 border-[#B8860B]/30 bg-[#F5F0E8] items-center justify-center">
+            {otherPhoto ? (
+              <ExpoImage source={{ uri: otherPhoto }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+            ) : (
+              <Text style={{ fontSize: 40 }}>👤</Text>
+            )}
+          </View>
+
+          <View className="bg-[#FFF8E7] border border-[#B8860B]/30 rounded-2xl px-5 py-5 w-full mb-6">
+            <View className="flex-row items-center justify-center mb-3">
+              <Ionicons name="time-outline" size={22} color="#B8860B" />
+              <Text className="text-[#B8860B] text-base font-bold ml-2">Answers Submitted!</Text>
+            </View>
+            <Text className="text-[#6B5D4F] text-sm text-center leading-5">
+              Your answers have been sent to {awaitingOtherName}. Once they review and approve, you'll both be able to chat freely.
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={() => router.replace("/(main)/chat")}
+            className="py-3 px-6 rounded-2xl items-center border border-[#EDE5D5]"
+          >
+            <Text className="text-[#9E8E7E] text-sm font-medium">Back to Chats</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  // Show review answers screen — acceptor reviews initiator's answers and can approve
+  if (reviewRequired) {
+    const otherPhoto = otherUser ? cleanPhotoUrl(otherUser.photos?.[0] ?? null) : null;
+    return (
+      <KeyboardAvoidingView
+        className="flex-1 bg-[#FDFAF5]"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <View className="bg-[#FDFAF5] px-4 pt-12 pb-4 flex-row items-center border-b border-[#EDE5D5]">
+          <Pressable onPress={() => router.replace("/(main)/chat")} className="mr-3">
+            <Text className="text-[#1C1208] text-2xl font-semibold">←</Text>
+          </Pressable>
+          <Text className="text-[#1C1208] text-lg font-semibold flex-1" numberOfLines={1}>
+            {reviewOtherName}
+          </Text>
+        </View>
+
+        <FlatList
+          data={reviewAnswers}
+          keyExtractor={(_, i) => String(i)}
+          contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+          ListHeaderComponent={
+            <View className="mb-6">
+              {/* Avatar + name */}
+              <View className="items-center mb-5">
+                <View className="w-20 h-20 rounded-full overflow-hidden mb-3 border-4 border-[#B8860B]/30 bg-[#F5F0E8] items-center justify-center">
+                  {otherPhoto ? (
+                    <ExpoImage source={{ uri: otherPhoto }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                  ) : (
+                    <Text style={{ fontSize: 36 }}>👤</Text>
+                  )}
+                </View>
+                <Text className="text-[#1C1208] text-base font-semibold">{reviewOtherName}</Text>
+              </View>
+
+              <View className="bg-[#B8860B]/10 rounded-2xl p-4 border border-[#B8860B]/30">
+                <View className="flex-row items-center mb-2">
+                  <Ionicons name="document-text-outline" size={20} color="#B8860B" />
+                  <Text className="text-[#B8860B] text-base font-bold ml-2">Review Their Answers</Text>
+                </View>
+                <Text className="text-[#6B5D4F] text-sm leading-5">
+                  {reviewOtherName} answered your questions. Review their responses below and approve to start chatting.
+                </Text>
+              </View>
+            </View>
+          }
+          renderItem={({ item, index }) => (
+            <View key={index} className="mb-4 bg-white rounded-2xl border border-[#EDE5D5] overflow-hidden">
+              <View className="px-4 py-3 bg-[#F5F0E8] border-b border-[#EDE5D5]">
+                <Text className="text-[#B8860B] text-xs font-bold uppercase tracking-wider">
+                  Question {index + 1}
+                </Text>
+                <Text className="text-[#1C1208] text-sm font-semibold mt-0.5">{item.question_text}</Text>
+              </View>
+              <View className="px-4 py-3">
+                <Text className="text-[#3D2C1E] text-sm leading-5">{item.answer_text}</Text>
+              </View>
+            </View>
+          )}
+          ListFooterComponent={
+            <Pressable
+              onPress={approveGate}
+              disabled={reviewApproving}
+              className={`bg-[#B8860B] rounded-2xl py-4 items-center mt-2 ${reviewApproving ? "opacity-60" : ""}`}
+              style={{
+                shadowColor: "#B8860B",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.45,
+                shadowRadius: 12,
+                elevation: 8,
+              }}
+            >
+              {reviewApproving ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <View className="flex-row items-center">
+                  <Ionicons name="checkmark-circle" size={20} color="#1C1208" style={{ marginRight: 8 }} />
+                  <Text className="text-[#1C1208] text-base font-bold">Approve & Start Chatting</Text>
+                </View>
+              )}
+            </Pressable>
+          }
+        />
+      </KeyboardAvoidingView>
     );
   }
 

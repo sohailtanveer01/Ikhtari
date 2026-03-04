@@ -367,6 +367,7 @@ export default function MainLayout() {
       <Tabs.Screen name="swipe/filters/marital-status" options={{ href: null }} />
       <Tabs.Screen name="swipe/filters/children" options={{ href: null }} />
       <Tabs.Screen name="swipe/filters/religiosity" options={{ href: null }} />
+      <Tabs.Screen name="swipe/answer-interest-questions" options={{ href: null }} />
       {/* Hidden routes - likes sub-screens */}
       <Tabs.Screen name="likes/review-interest" options={{ href: null }} />
       <Tabs.Screen name="likes/answer-back" options={{ href: null }} />

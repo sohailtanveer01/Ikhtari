@@ -55,11 +55,14 @@ serve(async (req) => {
     const body = await req.json();
     const { recipient_id, answers } = body;
 
-    if (!recipient_id || !Array.isArray(answers)) {
+    if (!recipient_id) {
       return new Response(JSON.stringify({ error: "Invalid payload" }), {
         status: 400, headers: corsHeaders,
       });
     }
+
+    // answers are now optional — intent questions are answered post-match in chat
+    const safeAnswers = Array.isArray(answers) ? answers : [];
 
     if (recipient_id === user.id) {
       return new Response(JSON.stringify({ error: "Cannot send interest to yourself" }), {
@@ -94,40 +97,6 @@ serve(async (req) => {
       });
     }
 
-    // Get recipient's intent questions to validate answers
-    const { data: recipientQuestions } = await supabase
-      .from("intent_questions")
-      .select("id")
-      .eq("user_id", recipient_id)
-      .order("display_order", { ascending: true });
-
-    if (!recipientQuestions || recipientQuestions.length === 0) {
-      return new Response(JSON.stringify({ error: "Recipient has no questions set" }), {
-        status: 400, headers: corsHeaders,
-      });
-    }
-
-    // Validate that all questions are answered
-    const questionIds = new Set(recipientQuestions.map((q: any) => q.id));
-    const answeredIds = new Set(answers.map((a: any) => a.question_id));
-
-    for (const qId of questionIds) {
-      if (!answeredIds.has(qId)) {
-        return new Response(JSON.stringify({ error: "All questions must be answered" }), {
-          status: 400, headers: corsHeaders,
-        });
-      }
-    }
-
-    // Validate answer text
-    for (const answer of answers) {
-      if (!answer.answer_text || typeof answer.answer_text !== "string" || answer.answer_text.trim().length === 0) {
-        return new Response(JSON.stringify({ error: "All answers must be non-empty" }), {
-          status: 400, headers: corsHeaders,
-        });
-      }
-    }
-
     // Create interest request
     const { data: interestRequest, error: requestError } = await supabase
       .from("interest_requests")
@@ -146,22 +115,23 @@ serve(async (req) => {
       });
     }
 
-    // Insert answers
-    const answersToInsert = answers
-      .filter((a: any) => questionIds.has(a.question_id))
-      .map((a: any) => ({
-        interest_request_id: interestRequest.id,
-        question_id: a.question_id,
-        answerer_id: user.id,
-        answer_text: a.answer_text.trim(),
-      }));
+    // Insert answers if any were provided
+    if (safeAnswers.length > 0) {
+      const answersToInsert = safeAnswers
+        .filter((a: any) => a.question_id && a.answer_text?.trim())
+        .map((a: any) => ({
+          interest_request_id: interestRequest.id,
+          question_id: a.question_id,
+          answerer_id: user.id,
+          answer_text: a.answer_text.trim(),
+        }));
 
-    const { error: answersError } = await supabase
-      .from("interest_answers")
-      .insert(answersToInsert);
-
-    if (answersError) {
-      console.error("Error inserting answers:", answersError);
+      if (answersToInsert.length > 0) {
+        const { error: answersError } = await supabase
+          .from("interest_answers")
+          .insert(answersToInsert);
+        if (answersError) console.error("Error inserting answers:", answersError);
+      }
     }
 
     // Send push notification

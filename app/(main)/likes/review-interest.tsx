@@ -26,60 +26,25 @@ export default function ReviewInterestScreen() {
   const isSubmitting = useInterestStore((s) => s.isSubmitting);
 
   const [profile, setProfile] = useState<any>(null);
-  const [answers, setAnswers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showProfile, setShowProfile] = useState(false);
+  const [showProfile, setShowProfile] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       if (!senderId || !interestId) return;
-
       try {
-        // Load sender profile
         const { data: profileData } = await supabase
           .from("users")
           .select("*")
           .eq("id", senderId)
           .single();
         if (profileData) setProfile(profileData);
-
-        // Load answers for this interest request
-        const { data: answersData } = await supabase
-          .from("interest_answers")
-          .select("question_id, answer_text")
-          .eq("interest_request_id", interestId)
-          .eq("answerer_id", senderId);
-
-        if (answersData) {
-          // Get question texts
-          const questionIds = answersData.map((a: any) => a.question_id);
-          const { data: questions } = await supabase
-            .from("intent_questions")
-            .select("id, question_text, display_order")
-            .in("id", questionIds);
-
-          const questionMap = new Map<string, any>();
-          if (questions) {
-            questions.forEach((q: any) => questionMap.set(q.id, q));
-          }
-
-          const enrichedAnswers = answersData
-            .map((a: any) => ({
-              question_text: questionMap.get(a.question_id)?.question_text || "",
-              answer_text: a.answer_text,
-              display_order: questionMap.get(a.question_id)?.display_order || 0,
-            }))
-            .sort((a: any, b: any) => a.display_order - b.display_order);
-
-          setAnswers(enrichedAnswers);
-        }
       } catch (e) {
-        console.error("Error loading review data:", e);
+        console.error("Error loading profile:", e);
       } finally {
         setLoading(false);
       }
     };
-
     load();
   }, [senderId, interestId]);
 
@@ -87,12 +52,9 @@ export default function ReviewInterestScreen() {
     if (!interestId) return;
     const result = await respondToInterest(interestId, "accept");
     if (result.success) {
-      // Get current user's photo for celebration screen
       let myPhoto = "";
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           const { data: myProfile } = await supabase
             .from("users")
@@ -107,8 +69,8 @@ export default function ReviewInterestScreen() {
         pathname: "/(main)/matches",
         params: {
           matchId: result.match_id || "",
-          otherUserName: profile.first_name || profile.name || "",
-          otherUserPhoto: profile.photos?.[0] || "",
+          otherUserName: profile?.first_name || profile?.name || "",
+          otherUserPhoto: profile?.photos?.[0] || "",
           myPhoto,
         },
       });
@@ -136,13 +98,6 @@ export default function ReviewInterestScreen() {
     ]);
   };
 
-  const handleAnswerBack = () => {
-    if (!interestId || !senderId) return;
-    router.push(
-      `/(main)/likes/answer-back?interestRequestId=${interestId}&senderId=${senderId}`
-    );
-  };
-
   if (loading || !profile) {
     return (
       <View className="flex-1 bg-[#FDFAF5] items-center justify-center">
@@ -150,8 +105,6 @@ export default function ReviewInterestScreen() {
       </View>
     );
   }
-
-  const senderName = profile.first_name || profile.name || "This person";
 
   return (
     <View className="flex-1 bg-[#FDFAF5]">
@@ -174,7 +127,7 @@ export default function ReviewInterestScreen() {
           onPress={() => setShowProfile(!showProfile)}
         >
           <Text className="text-[#6B5D4F] text-sm font-medium">
-            {showProfile ? "Show Answers" : "View Profile"}
+            {showProfile ? "Hide" : "View Profile"}
           </Text>
         </Pressable>
       </View>
@@ -187,23 +140,9 @@ export default function ReviewInterestScreen() {
           contentContainerStyle={{ paddingBottom: 180 }}
           showsVerticalScrollIndicator={false}
         >
-          <Text className="text-[#9E8E7E] text-sm mb-6">
-            {senderName} answered your questions:
+          <Text className="text-[#9E8E7E] text-sm mt-4">
+            {profile.first_name || profile.name || "This person"} is interested in you.
           </Text>
-
-          {answers.map((answer, index) => (
-            <View
-              key={index}
-              className="bg-white rounded-2xl border border-[#EDE5D5] p-5 mb-4"
-            >
-              <Text className="text-[#B8860B] text-xs font-bold mb-2 uppercase tracking-wider">
-                {answer.question_text}
-              </Text>
-              <Text className="text-[#1C1208] text-base leading-6">
-                {answer.answer_text}
-              </Text>
-            </View>
-          ))}
         </ScrollView>
       )}
 
@@ -228,7 +167,6 @@ export default function ReviewInterestScreen() {
         }}
       >
         <View className="flex-row gap-3">
-          {/* Decline */}
           <Pressable
             className="flex-1 py-4 rounded-2xl items-center bg-red-900/30 border border-red-500/30"
             onPress={handleDecline}
@@ -236,10 +174,8 @@ export default function ReviewInterestScreen() {
           >
             <Text className="text-red-400 font-bold text-base">Decline</Text>
           </Pressable>
-
-          {/* Accept */}
           <Pressable
-            className="flex-1 py-4 rounded-2xl items-center bg-[#B8860B]"
+            className="flex-[2] py-4 rounded-2xl items-center bg-[#B8860B]"
             style={{
               shadowColor: "#B8860B",
               shadowOffset: { width: 0, height: 4 },
@@ -253,19 +189,8 @@ export default function ReviewInterestScreen() {
             {isSubmitting ? (
               <ActivityIndicator color="#1C1208" />
             ) : (
-              <Text className="text-white font-bold text-base">Accept</Text>
+              <Text className="text-white font-bold text-base">Accept Interest</Text>
             )}
-          </Pressable>
-
-          {/* Answer Back */}
-          <Pressable
-            className="flex-1 py-4 rounded-2xl items-center border-2 border-[#B8860B]"
-            onPress={handleAnswerBack}
-            disabled={isSubmitting}
-          >
-            <Text className="text-[#B8860B] font-bold text-base">
-              Answer Back
-            </Text>
           </Pressable>
         </View>
       </View>

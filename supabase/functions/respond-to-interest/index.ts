@@ -7,30 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
 
-async function sendExpoPush(
-  tokens: string[],
-  payload: { title: string; body: string; data?: Record<string, unknown> }
-) {
-  if (!tokens || tokens.length === 0) return;
-  const messages = tokens.map((to) => ({
-    to,
-    sound: "default",
-    title: payload.title,
-    body: payload.body,
-    data: payload.data ?? {},
-  }));
-  try {
-    const res = await fetch("https://exp.host/--/api/v2/push/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(messages),
-    });
-    if (!res.ok) console.error("Expo push error:", res.status);
-  } catch (e) {
-    console.error("Expo push exception:", e);
-  }
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -81,7 +57,6 @@ serve(async (req) => {
       });
     }
 
-    // Verify request is pending
     if (request.status !== "pending") {
       return new Response(JSON.stringify({ error: "Request already processed" }), {
         status: 409, headers: corsHeaders,
@@ -89,9 +64,8 @@ serve(async (req) => {
     }
 
     const senderId = request.sender_id;
-    let matchId = null;
 
-    // Get sender and recipient names for notifications
+    // Get recipient (current user) name for notifications
     const { data: recipientProfile } = await supabase
       .from("users")
       .select("first_name, name")
@@ -99,8 +73,10 @@ serve(async (req) => {
       .single();
     const recipientName = recipientProfile?.first_name || recipientProfile?.name || "Someone";
 
+    let matchId = null;
+
     if (action === "accept") {
-      // Create match
+      // Create match immediately
       const user1 = user.id < senderId ? user.id : senderId;
       const user2 = user.id > senderId ? user.id : senderId;
 
@@ -112,9 +88,10 @@ serve(async (req) => {
         .maybeSingle();
 
       if (!existingMatch) {
+        // senderId is the one who initiated interest — they must answer questions in chat
         const { data: newMatch, error: matchError } = await supabase
           .from("matches")
-          .insert({ user1, user2 })
+          .insert({ user1, user2, initiated_by: senderId })
           .select("id")
           .single();
 
@@ -124,7 +101,6 @@ serve(async (req) => {
         matchId = existingMatch.id;
       }
 
-      // Update request
       await supabase
         .from("interest_requests")
         .update({
@@ -135,10 +111,10 @@ serve(async (req) => {
         })
         .eq("id", interest_request_id);
 
-      // Push notification
+      // Notify sender to open the chat and answer questions
       await sendPushToUser(supabase, senderId, {
         title: "Interest accepted!",
-        body: `${recipientName} accepted your interest. Start chatting!`,
+        body: `${recipientName} accepted your interest. Open the chat to answer their questions!`,
         data: { type: "interest_accepted", matchId },
       });
 
@@ -159,7 +135,6 @@ serve(async (req) => {
       });
 
     } else if (action === "answer_back") {
-      // Validate answers cover sender's questions
       if (!Array.isArray(answers) || answers.length === 0) {
         return new Response(JSON.stringify({ error: "Answers required for answer_back" }), {
           status: 400, headers: corsHeaders,
@@ -186,7 +161,6 @@ serve(async (req) => {
         }
       }
 
-      // Insert answers
       const answersToInsert = answers
         .filter((a: any) => senderQuestionIds.has(a.question_id))
         .map((a: any) => ({
@@ -202,7 +176,6 @@ serve(async (req) => {
 
       if (answersError) console.error("Error inserting answers:", answersError);
 
-      // Create match
       const user1 = user.id < senderId ? user.id : senderId;
       const user2 = user.id > senderId ? user.id : senderId;
 
@@ -216,7 +189,7 @@ serve(async (req) => {
       if (!existingMatch) {
         const { data: newMatch, error: matchError } = await supabase
           .from("matches")
-          .insert({ user1, user2 })
+          .insert({ user1, user2, initiated_by: senderId })
           .select("id")
           .single();
 
@@ -226,7 +199,6 @@ serve(async (req) => {
         matchId = existingMatch.id;
       }
 
-      // Update request
       await supabase
         .from("interest_requests")
         .update({
@@ -237,7 +209,6 @@ serve(async (req) => {
         })
         .eq("id", interest_request_id);
 
-      // Push notification
       await sendPushToUser(supabase, senderId, {
         title: "They answered your questions!",
         body: `${recipientName} answered your questions back. Start chatting!`,
@@ -262,14 +233,13 @@ async function sendPushToUser(
   payload: { title: string; body: string; data?: Record<string, unknown> }
 ) {
   try {
-    const { data: recipientPrefs } = await supabase
+    const { data: prefs } = await supabase
       .from("user_preferences")
       .select("notifications_enabled")
       .eq("user_id", userId)
       .single();
 
-    const notificationsEnabled = recipientPrefs?.notifications_enabled ?? true;
-    if (!notificationsEnabled) return;
+    if (prefs?.notifications_enabled === false) return;
 
     const { data: tokenRows } = await supabase
       .from("user_push_tokens")
@@ -280,9 +250,21 @@ async function sendPushToUser(
       .limit(5);
 
     const tokens = (tokenRows ?? []).map((r: any) => r.token).filter(Boolean);
-    if (tokens.length > 0) {
-      await sendExpoPush(tokens, payload);
-    }
+    if (tokens.length === 0) return;
+
+    const messages = tokens.map((to: string) => ({
+      to,
+      sound: "default",
+      title: payload.title,
+      body: payload.body,
+      data: payload.data ?? {},
+    }));
+
+    await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(messages),
+    });
   } catch (e) {
     console.error("Push notification failed:", e);
   }

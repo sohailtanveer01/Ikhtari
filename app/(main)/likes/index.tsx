@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -98,6 +98,15 @@ export default function InterestsScreen() {
     else loadSeen();
   }, [activeTab]);
 
+  // Reload current tab data whenever this screen gains focus (e.g. after navigating back from matches)
+  useFocusEffect(
+    useCallback(() => {
+      if (activeTab === "received") loadReceived();
+      else if (activeTab === "sent") loadSent();
+      else loadSeen();
+    }, [activeTab])
+  );
+
   // Refresh seen tab when session seen IDs grow (user marks more profiles)
   useEffect(() => {
     if (activeTab === "seen" && sessionSeenIds.length > 0) {
@@ -128,9 +137,13 @@ export default function InterestsScreen() {
     return () => { if (channel) supabase.removeChannel(channel); };
   }, [activeTab]);
 
+  // Count badges — only actionable items
+  const receivedActionCount = received.filter((r) => r.status === "pending").length;
+  const sentActionCount = sent.filter((s) => s.status === "awaiting_answers").length;
+
   const tabs = [
-    { key: "received" as const, label: "Interested in Me", count: received.length },
-    { key: "sent" as const, label: "My Interests", count: sent.length },
+    { key: "received" as const, label: "Interested in Me", count: receivedActionCount },
+    { key: "sent" as const, label: "My Interests", count: sentActionCount },
     { key: "seen" as const, label: "Passed On", count: seen.length },
   ];
 
@@ -155,13 +168,18 @@ export default function InterestsScreen() {
       ? `${profile.first_name} ${profile.last_name}`
       : profile.name || "Unknown";
     const age = calculateAge(profile.dob);
-    const answersCount = item.answers?.length || 0;
+
+    const handlePress = () => {
+      router.push(
+        `/(main)/likes/review-interest?interestId=${item.id}&senderId=${item.sender_id}`
+      );
+    };
 
     return (
       <Pressable
         className="bg-white rounded-3xl overflow-hidden"
         style={{ width: CARD_WIDTH, height: CARD_WIDTH * 1.45, borderWidth: 1, borderColor: "rgba(184,134,11,0.7)" }}
-        onPress={() => router.push(`/(main)/likes/review-interest?interestId=${item.id}&senderId=${item.sender_id}`)}
+        onPress={handlePress}
       >
         {mainPhoto ? (
           <View style={{ width: "100%", height: "100%", position: "relative" }}>
@@ -171,12 +189,9 @@ export default function InterestsScreen() {
               <Text className="text-white text-lg font-semibold" numberOfLines={1}>
                 {fullName}{age !== null ? `, ${age}` : ""}
               </Text>
-              <Pressable
-                className="mt-2 bg-[#B8860B] px-3 py-1.5 rounded-full self-start"
-                onPress={() => router.push(`/(main)/likes/review-interest?interestId=${item.id}&senderId=${item.sender_id}`)}
-              >
-                <Text className="text-white text-xs font-bold">View Answers ({answersCount})</Text>
-              </Pressable>
+              <View style={{ marginTop: 8, backgroundColor: "#B8860B", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: "flex-start" }}>
+                <Text style={{ color: "#fff", fontSize: 11, fontWeight: "700" }}>Review</Text>
+              </View>
             </View>
           </View>
         ) : (
@@ -184,6 +199,9 @@ export default function InterestsScreen() {
             <Text className="text-[#9E8E7E] text-4xl">👤</Text>
             <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
               <Text className="text-[#1C1208] text-lg font-semibold" numberOfLines={1}>{fullName}</Text>
+              <View style={{ marginTop: 8, backgroundColor: "#B8860B", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: "flex-start" }}>
+                <Text style={{ color: "#fff", fontSize: 11, fontWeight: "700" }}>Review</Text>
+              </View>
             </View>
           </View>
         )}
@@ -204,28 +222,40 @@ export default function InterestsScreen() {
       ? `${profile.first_name} ${profile.last_name}`
       : profile.name || "Unknown";
     const age = calculateAge(profile.dob);
-    const statusColors: Record<string, { bg: string; text: string; label: string }> = {
+
+    const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
       pending: { bg: "bg-yellow-600/20", text: "text-yellow-500", label: "Pending" },
+      awaiting_answers: { bg: "bg-orange-500/20", text: "text-orange-400", label: "Answer Questions!" },
+      answers_submitted: { bg: "bg-blue-600/20", text: "text-blue-400", label: "Awaiting Review" },
       accepted: { bg: "bg-green-600/20", text: "text-green-500", label: "Accepted" },
       declined: { bg: "bg-red-600/20", text: "text-red-400", label: "Declined" },
       answered_back: { bg: "bg-green-600/20", text: "text-green-500", label: "Matched" },
     };
-    const status = statusColors[item.status] || statusColors.pending;
+    const status = statusConfig[item.status] || statusConfig.pending;
+
+    const handlePress = () => {
+      if (item.status === "awaiting_answers") {
+        router.push(`/(main)/swipe/answer-interest-questions?interestId=${item.id}`);
+      } else if ((item.status === "accepted" || item.status === "answered_back") && item.match_id) {
+        router.push(`/(main)/chat/${item.match_id}`);
+      }
+    };
 
     return (
       <Pressable
         className="bg-white rounded-3xl overflow-hidden"
         style={{ width: CARD_WIDTH, height: CARD_WIDTH * 1.45, borderWidth: 1, borderColor: "rgba(184,134,11,0.7)" }}
-        onPress={() => {
-          if ((item.status === "accepted" || item.status === "answered_back") && item.match_id) {
-            router.push(`/(main)/chat/${item.match_id}`);
-          }
-        }}
+        onPress={handlePress}
       >
         {mainPhoto ? (
           <View style={{ width: "100%", height: "100%", position: "relative" }}>
             <Image source={{ uri: mainPhoto }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
             <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80, backgroundColor: "rgba(0,0,0,0.6)" }} />
+            {item.status === "awaiting_answers" && (
+              <View style={{ position: "absolute", top: 10, right: 10, backgroundColor: "rgba(249,115,22,0.9)", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4 }}>
+                <Text style={{ color: "#fff", fontSize: 9, fontWeight: "800" }}>ACTION NEEDED</Text>
+              </View>
+            )}
             <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
               <Text className="text-white text-lg font-semibold" numberOfLines={1}>
                 {fullName}{age !== null ? `, ${age}` : ""}
@@ -240,6 +270,11 @@ export default function InterestsScreen() {
         ) : (
           <View className="w-full h-full bg-[#F5F0E8] items-center justify-center" style={{ position: "relative" }}>
             <Text className="text-[#9E8E7E] text-4xl">👤</Text>
+            {item.status === "awaiting_answers" && (
+              <View style={{ position: "absolute", top: 10, right: 10, backgroundColor: "rgba(249,115,22,0.9)", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4 }}>
+                <Text style={{ color: "#fff", fontSize: 9, fontWeight: "800" }}>ACTION NEEDED</Text>
+              </View>
+            )}
             <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
               <Text className="text-[#1C1208] text-lg font-semibold" numberOfLines={1}>{fullName}</Text>
               <View className="flex-row mt-2">
@@ -375,7 +410,7 @@ export default function InterestsScreen() {
             <Text className="text-4xl mb-4">💌</Text>
             <Text className="text-[#1C1208] text-lg font-semibold mb-2">No interests yet</Text>
             <Text className="text-[#6B5D4F] text-center text-sm mb-5">
-              When someone answers your questions and expresses interest, they'll appear here.
+              When someone expresses interest in you, they'll appear here.
             </Text>
             <Pressable className="bg-[#B8860B] px-6 py-3 rounded-full" onPress={() => router.push("/(main)/swipe")}>
               <Text className="text-white font-semibold text-sm">Go to Discover</Text>
@@ -401,7 +436,7 @@ export default function InterestsScreen() {
             <Text className="text-4xl mb-4">📤</Text>
             <Text className="text-[#1C1208] text-lg font-semibold mb-2">No sent interests</Text>
             <Text className="text-[#6B5D4F] text-center text-sm mb-5">
-              Express interest in someone by answering their questions.
+              Express interest in someone from their profile page.
             </Text>
             <Pressable className="bg-[#B8860B] px-6 py-3 rounded-full" onPress={() => router.push("/(main)/swipe")}>
               <Text className="text-white font-semibold text-sm">Go to Discover</Text>

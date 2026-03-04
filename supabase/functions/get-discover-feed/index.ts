@@ -239,7 +239,7 @@ serve(async (req) => {
     let filteredProfiles = (allProfiles || []).filter((profile: any) => {
       if (seenProfileIds.has(profile.id)) return false;
       if (sentInterestIds.has(profile.id)) return false;
-      if (receivedInterestIds.has(profile.id)) return false;
+      // Note: receivedInterestIds are NOT excluded — they appear with "Liked you" label
       if (blockedUserIds.has(profile.id)) return false;
       if (unmatchedUserIds.has(profile.id)) return false;
       if (matchedUserIds.has(profile.id)) return false;
@@ -448,6 +448,7 @@ serve(async (req) => {
           is_certified: cert?.is_certified || false,
           show_badge: cert?.show_badge || false,
           compatibility_score: compatScore,
+          is_interested_in_me: receivedInterestIds.has(p.id),
           prompts: promptMap.get(p.id) || [],
           intent_questions: intentQuestionsMap.get(p.id) || [],
           __sortKey: sortKey,

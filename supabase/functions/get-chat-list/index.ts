@@ -93,7 +93,6 @@ serve(async (req) => {
           .from("users")
           .select("*")
           .eq("id", otherUserId)
-          .eq("account_active", true)
           .single();
 
         if (userError || !otherUser) {

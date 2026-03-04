@@ -33,7 +33,6 @@ export default function DiscoverScreen() {
   const feedMode = useDiscoverStore((s) => s.feedMode);
   const setFeedMode = useDiscoverStore((s) => s.setFeedMode);
 
-  const [showTicks, setShowTicks] = useState(false);
   const [isNewBatch, setIsNewBatch] = useState(false);
 
   const gridExitAnim = useRef(new Animated.Value(1)).current;
@@ -123,13 +122,9 @@ export default function DiscoverScreen() {
   }, [checkingQuestions, loadInitial]);
 
   const handleMarkAsSeen = useCallback(async () => {
-    if (isLoading || showTicks || profiles.length === 0) return;
+    if (isLoading || profiles.length === 0) return;
 
-    // Step 1: Green ticks appear on all cards
-    setShowTicks(true);
-    await new Promise((r) => setTimeout(r, 500));
-
-    // Step 2: Cards scale + fade out together
+    // Step 1: Cards scale + fade out together
     await new Promise<void>((resolve) => {
       Animated.timing(gridExitAnim, {
         toValue: 0,
@@ -138,18 +133,17 @@ export default function DiscoverScreen() {
       }).start(() => resolve());
     });
 
-    // Step 3: Grid is invisible — load next batch
-    setShowTicks(false);
+    // Step 2: Grid is invisible — load next batch
     setIsNewBatch(true);
     flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
     await markAsSeen();
 
-    // Step 4: Show grid again — new cards will spring in from DiscoverCard
+    // Step 3: Show grid again — new cards will spring in from DiscoverCard
     gridExitAnim.setValue(1);
 
-    // Step 5: Clear new batch flag after entry animations finish
+    // Step 4: Clear new batch flag after entry animations finish
     setTimeout(() => setIsNewBatch(false), 700);
-  }, [isLoading, showTicks, profiles.length, markAsSeen, gridExitAnim]);
+  }, [isLoading, profiles.length, markAsSeen, gridExitAnim]);
 
   const handleProfilePress = useCallback(
     (profile: any) => {
@@ -408,7 +402,7 @@ export default function DiscoverScreen() {
               contentContainerStyle={{
                 gap: 16,
                 paddingTop: 4,
-                paddingBottom: 16,
+                paddingBottom: 120,
               }}
               keyExtractor={(item) => item.id}
               scrollEnabled={!showCertGate && !showIntentGate}
@@ -417,7 +411,6 @@ export default function DiscoverScreen() {
                 <DiscoverCard
                   profile={item}
                   onPress={() => handleProfilePress(item)}
-                  showTick={showTicks}
                   playEntry={isNewBatch}
                   entryIndex={index}
                 />
@@ -425,47 +418,73 @@ export default function DiscoverScreen() {
             />
           </Animated.View>
 
-          {/* Mark as Seen & Next — bottom */}
+          {/* Mark as Seen & Next — floating liquid glass */}
           {!showCertGate && !showIntentGate && (
-            <View style={{ paddingBottom: insets.bottom + 90, paddingHorizontal: 14, paddingTop: 8 }}>
+            <View
+              pointerEvents="box-none"
+              style={{
+                position: 'absolute',
+                bottom: insets.bottom + 90,
+                left: 0,
+                right: 0,
+                alignItems: 'center',
+                zIndex: 20,
+              }}
+            >
               <Pressable
                 onPress={handleMarkAsSeen}
-                disabled={isLoading || showTicks || profiles.length === 0}
+                disabled={isLoading || profiles.length === 0}
                 style={({ pressed }) => ({
-                  opacity: isLoading || showTicks || profiles.length === 0 ? 0.45 : pressed ? 0.8 : 1,
-                  borderRadius: 16,
+                  opacity: isLoading || profiles.length === 0 ? 0.35 : pressed ? 0.65 : 1,
+                  borderRadius: 999,
                   overflow: 'hidden',
-                  borderWidth: 1,
-                  borderColor: 'rgba(34,197,94,0.3)',
-                  shadowColor: '#22C55E',
+                  shadowColor: '#000',
                   shadowOpacity: 0.12,
-                  shadowRadius: 8,
-                  shadowOffset: { width: 0, height: 2 },
-                  elevation: 3,
+                  shadowRadius: 24,
+                  shadowOffset: { width: 0, height: 6 },
+                  elevation: 10,
                 })}
               >
                 <BlurView
-                  intensity={Platform.OS === "ios" ? 28 : 0}
-                  tint="light"
+                  intensity={Platform.OS === 'ios' ? 90 : 0}
+                  tint="extraLight"
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    paddingVertical: 15,
-                    gap: 9,
-                    backgroundColor: Platform.OS === "android" ? "rgba(240,253,244,0.95)" : "rgba(240,253,244,0.6)",
+                    borderRadius: 999,
+                    overflow: 'hidden',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.85)',
+                    backgroundColor: Platform.OS === 'android' ? 'rgba(255,253,248,0.82)' : undefined,
                   }}
                 >
-                  {isLoading && !showTicks ? (
-                    <ActivityIndicator size="small" color="#16A34A" />
-                  ) : (
-                    <>
-                      <Ionicons name="checkmark-circle-outline" size={20} color="#16A34A" />
-                      <Text style={{ color: "#16A34A", fontWeight: '700', fontSize: 15 }}>
+                  <LinearGradient
+                    colors={[
+                      'rgba(255,255,255,0.72)',
+                      'rgba(255,250,235,0.48)',
+                      'rgba(255,245,220,0.38)',
+                    ]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      paddingVertical: 9,
+                      paddingHorizontal: 18,
+                    }}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator size="small" color="#B8860B" />
+                    ) : (
+                      <Text style={{
+                        color: '#4A3510',
+                        fontWeight: '600',
+                        fontSize: 13,
+                        letterSpacing: 0.15,
+                      }}>
                         Mark as Seen & Next
                       </Text>
-                    </>
-                  )}
+                    )}
+                  </LinearGradient>
                 </BlurView>
               </Pressable>
             </View>

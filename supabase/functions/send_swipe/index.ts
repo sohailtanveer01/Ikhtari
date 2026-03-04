@@ -121,9 +121,10 @@ serve(async (req) => {
         .maybeSingle();
 
       if (!existingMatch) {
+        // swiped_id liked first (reverse swipe was already there)
         const { data: newMatch, error: matchError } = await supabase
           .from("matches")
-          .insert({ user1, user2 })
+          .insert({ user1, user2, initiated_by: swiped_id })
           .select("id")
           .single();
 

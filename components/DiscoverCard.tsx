@@ -157,6 +157,11 @@ export default function DiscoverCard({
               <Text style={styles.locationText} numberOfLines={1}>{location}</Text>
             </View>
           )}
+          {!!profile.is_interested_in_me && (
+            <View style={styles.likedBadge}>
+              <Text style={styles.likedBadgeText}>Liked you</Text>
+            </View>
+          )}
         </View>
 
         {/* Green tick overlay */}
@@ -253,6 +258,26 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.82)",
     fontSize: 11,
     fontWeight: "500",
+  },
+  likedBadge: {
+    backgroundColor: "#B8860B",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginTop: 4,
+    alignSelf: "flex-start",
+    shadowColor: "#B8860B",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  likedBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
   },
   tickOverlay: {
     ...StyleSheet.absoluteFillObject,

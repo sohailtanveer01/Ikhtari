@@ -116,10 +116,10 @@ serve(async (req) => {
       // Match already exists, use it
       matchId = existingMatch.id;
     } else {
-      // Create new match
+      // Create new match — compliment sender liked first
       const { data: newMatch, error: matchError } = await supabaseAdmin
         .from("matches")
-        .insert({ user1, user2 })
+        .insert({ user1, user2, initiated_by: compliment.sender_id })
         .select()
         .single();
 

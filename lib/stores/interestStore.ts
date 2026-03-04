@@ -9,10 +9,11 @@ interface InterestState {
   setAnswer: (questionId: string, answer: string) => void;
   clearAnswers: () => void;
   submitInterest: (recipientId: string, answers: Array<{ question_id: string; answer_text: string }>) => Promise<{ success: boolean; interest_request_id?: string; error?: string }>;
-  respondToInterest: (interestRequestId: string, action: "accept" | "decline" | "answer_back", answers?: Array<{ question_id: string; answer_text: string }>) => Promise<{ success: boolean; match_id?: string; error?: string }>;
+  respondToInterest: (interestRequestId: string, action: "accept" | "decline" | "answer_back" | "final_accept", answers?: Array<{ question_id: string; answer_text: string }>) => Promise<{ success: boolean; match_id?: string; awaiting_answers?: boolean; error?: string }>;
+  submitInterestAnswers: (interestRequestId: string, answers: Array<{ question_id: string; answer_text: string }>) => Promise<{ success: boolean; error?: string }>;
 }
 
-export const useInterestStore = create<InterestState>((set, get) => ({
+export const useInterestStore = create<InterestState>((set) => ({
   currentAnswers: new Map(),
   isSubmitting: false,
 
@@ -75,7 +76,38 @@ export const useInterestStore = create<InterestState>((set, get) => ({
       }
 
       set({ isSubmitting: false, currentAnswers: new Map() });
-      return { success: true, match_id: parsedData?.match_id };
+      return {
+        success: true,
+        match_id: parsedData?.match_id,
+        awaiting_answers: parsedData?.awaiting_answers,
+      };
+    } catch (e: any) {
+      set({ isSubmitting: false });
+      return { success: false, error: e.message };
+    }
+  },
+
+  submitInterestAnswers: async (interestRequestId, answers) => {
+    set({ isSubmitting: true });
+    try {
+      const { data, error } = await supabase.functions.invoke("submit-interest-answers", {
+        body: { interest_request_id: interestRequestId, answers },
+      });
+
+      if (error) {
+        set({ isSubmitting: false });
+        return { success: false, error: error.message };
+      }
+
+      const parsedData = typeof data === "string" ? JSON.parse(data) : data;
+
+      if (parsedData?.error) {
+        set({ isSubmitting: false });
+        return { success: false, error: parsedData.error };
+      }
+
+      set({ isSubmitting: false, currentAnswers: new Map() });
+      return { success: true };
     } catch (e: any) {
       set({ isSubmitting: false });
       return { success: false, error: e.message };
