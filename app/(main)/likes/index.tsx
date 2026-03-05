@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -8,15 +9,32 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
+  StyleSheet,
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDiscoverStore } from "../../../lib/stores/discoverStore";
 import { supabase } from "../../../lib/supabase";
 import { formatLastActive } from "../../../lib/utils/timeUtils";
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 54) / 2;
+
+const seenCardStyle = {
+  width: CARD_WIDTH,
+  height: CARD_WIDTH * 1.65,
+  borderRadius: 20,
+  overflow: "hidden" as const,
+  backgroundColor: "#F5F0E8",
+  borderWidth: 1,
+  borderColor: "rgba(184,134,11,0.7)",
+  shadowColor: "#B8860B",
+  shadowOpacity: 0.22,
+  shadowRadius: 18,
+  shadowOffset: { width: 0, height: 6 },
+  elevation: 8,
+};
 
 function cleanPhotoUrl(url: string | null | undefined): string | null {
   if (!url || typeof url !== "string") return null;
@@ -41,6 +59,7 @@ function calculateAge(dob: string | null): number | null {
 
 export default function InterestsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const sessionSeenIds = useDiscoverStore((s) => s.sessionSeenIds);
   const [received, setReceived] = useState<any[]>([]);
   const [sent, setSent] = useState<any[]>([]);
@@ -301,120 +320,218 @@ export default function InterestsScreen() {
       ? `${item.first_name} ${item.last_name}`
       : item.name || "Unknown";
     const age = calculateAge(item.dob);
-    const hasBadges = item.is_boosted || item.compatibility_score != null;
     const activeInfo = formatLastActive(item.last_active_at);
+    const isOnline = activeInfo?.dotColor === "#22C55E" || activeInfo?.label?.toLowerCase() === "online";
+    const city = item.city || "";
+    const country = item.country || "";
+    const location = [city, country].filter(Boolean).join(", ");
+    const rawScore = item.compatibility_score;
+    const compatibilityScore = rawScore != null
+      ? (rawScore > 1 ? Math.round(rawScore) : Math.round(rawScore * 100))
+      : null;
 
     return (
       <Pressable
-        className="bg-white rounded-3xl overflow-hidden"
-        style={{ width: CARD_WIDTH, height: CARD_WIDTH * 1.45, borderWidth: 1, borderColor: "rgba(184,134,11,0.4)" }}
+        style={seenCardStyle}
         onPress={() => router.push(`/(main)/swipe/profile-view?userId=${item.id}`)}
       >
         {mainPhoto ? (
-          <View style={{ width: "100%", height: "100%", position: "relative" }}>
-            <Image source={{ uri: mainPhoto }} style={{ width: "100%", height: "100%" }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
-            <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.15)" }} />
-            <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 90, backgroundColor: "rgba(0,0,0,0.6)" }} />
-            {/* Seen badge */}
-            <View style={{ position: "absolute", top: 10, right: 10, backgroundColor: "rgba(34,197,94,0.9)", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 3 }}>
-              <Ionicons name="checkmark-circle" size={12} color="#fff" />
-              <Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>Seen</Text>
-            </View>
-            <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
-              <Text className="text-white text-lg font-semibold" numberOfLines={1}>
-                {fullName}{age !== null ? `, ${age}` : ""}
-              </Text>
-              {item.city ? (
-                <Text className="text-white/70 text-xs mt-1" numberOfLines={1}>{item.city}</Text>
-              ) : null}
-              {activeInfo && (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
-                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: activeInfo.dotColor }} />
-                  <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 10 }}>{activeInfo.label}</Text>
-                </View>
-              )}
-              {hasBadges && (
-                <View style={{ flexDirection: "row", marginTop: 6, gap: 5, flexWrap: "wrap" }}>
-                  {item.is_boosted && (
-                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, backgroundColor: "rgba(184,134,11,0.35)" }}>
-                      <Text style={{ fontSize: 10, color: "#FFD700", fontWeight: "700" }}>Boosted</Text>
-                    </View>
-                  )}
-                  {item.compatibility_score != null && (
-                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, backgroundColor: "rgba(184,134,11,0.35)" }}>
-                      <Text style={{ fontSize: 10, color: "#FFD700", fontWeight: "700" }}>
-                        {item.compatibility_score}% Match
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
-            </View>
-          </View>
+          <Image
+            source={{ uri: mainPhoto }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={200}
+            cachePolicy="memory-disk"
+          />
         ) : (
-          <View className="w-full h-full bg-[#F5F0E8] items-center justify-center" style={{ position: "relative" }}>
-            <Text className="text-[#9E8E7E] text-4xl">👤</Text>
-            <View style={{ position: "absolute", top: 10, right: 10, backgroundColor: "rgba(34,197,94,0.9)", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 4, flexDirection: "row", alignItems: "center", gap: 3 }}>
-              <Ionicons name="checkmark-circle" size={12} color="#fff" />
-              <Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>Seen</Text>
-            </View>
-            <View style={{ position: "absolute", bottom: 12, left: 12, right: 12 }}>
-              <Text className="text-[#1C1208] text-lg font-semibold" numberOfLines={1}>{fullName}</Text>
-              {hasBadges && (
-                <View style={{ flexDirection: "row", marginTop: 6, gap: 5, flexWrap: "wrap" }}>
-                  {item.is_boosted && (
-                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, backgroundColor: "rgba(184,134,11,0.2)" }}>
-                      <Text style={{ fontSize: 10, color: "#B8860B", fontWeight: "700" }}>Boosted</Text>
-                    </View>
-                  )}
-                  {item.compatibility_score != null && (
-                    <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, backgroundColor: "rgba(184,134,11,0.2)" }}>
-                      <Text style={{ fontSize: 10, color: "#B8860B", fontWeight: "700" }}>
-                        {item.compatibility_score}% Match
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
-            </View>
-          </View>
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: "#F5F0E8" }]} />
         )}
+
+        {/* Bottom gradient */}
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.25)", "rgba(0,0,0,0.72)"]}
+          style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "55%" }}
+          pointerEvents="none"
+        />
+
+        {/* Top row — Online + Compatibility */}
+        <View style={{ position: "absolute", top: 10, left: 10, right: 10, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          {isOnline ? (
+            <View style={{ backgroundColor: "rgba(0,0,0,0.42)", paddingHorizontal: 9, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" }}>
+              <Text style={{ color: "#fff", fontSize: 10, fontWeight: "600" }}>Online</Text>
+            </View>
+          ) : <View />}
+          {compatibilityScore !== null && (
+            <View style={{ backgroundColor: "#C9980A", paddingHorizontal: 9, paddingVertical: 4, borderRadius: 12 }}>
+              <Text style={{ color: "#fff", fontSize: 10, fontWeight: "700" }}>{compatibilityScore}%</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Bottom info */}
+        <View style={{ position: "absolute", bottom: 12, left: 12, right: 12, gap: 3 }}>
+          <Text style={{ color: "#fff", fontSize: 15, fontWeight: "700", letterSpacing: 0.1 }} numberOfLines={1}>
+            {fullName}{age !== null ? `, ${age}` : ""}
+          </Text>
+          {!!location && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+              <Ionicons name="location-outline" size={11} color="rgba(255,255,255,0.85)" />
+              <Text style={{ color: "rgba(255,255,255,0.82)", fontSize: 11, fontWeight: "500" }} numberOfLines={1}>
+                {location}
+              </Text>
+            </View>
+          )}
+          {activeInfo && !isOnline && (
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: activeInfo.dotColor }} />
+              <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 10 }}>{activeInfo.label}</Text>
+            </View>
+          )}
+        </View>
       </Pressable>
     );
   };
 
   return (
-    <View className="flex-1 bg-[#FDFAF5] pt-20 px-4 pb-16">
-      {/* Tabs */}
-      <View className="flex-row rounded-full px-1 py-1.5 mb-6">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.key;
-          return (
-            <Pressable
-              key={tab.key}
-              onPress={() => setActiveTab(tab.key)}
-              className={`flex-1 py-2 rounded-full items-center justify-center ${isActive ? "bg-[#B8860B]" : "bg-transparent"}`}
-            >
-              <Text className={`text-sm font-semibold ${isActive ? "text-black" : "text-[#9E8E7E]"}`}>
-                {tab.label}{tab.count > 0 ? ` (${tab.count})` : ""}
-              </Text>
-            </Pressable>
-          );
-        })}
+    <View style={{ flex: 1, backgroundColor: "#FDFAF5", paddingTop: insets.top }}>
+      <LinearGradient
+        colors={["#FFF2B8", "#FDF8EE", "#FDFAF5"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.52 }}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+      />
+      {/* Header */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 12 }}>
+        <Text style={{ fontSize: 26, fontWeight: "900", letterSpacing: -0.8, color: "#1C1208", marginBottom: 14 }}>
+          ik<Text style={{ color: "#B8860B" }}>htiar</Text>
+        </Text>
+
+        {/* Tab bar */}
+        <LinearGradient
+          colors={["rgba(212,160,23,0.18)", "rgba(184,134,11,0.08)"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            flexDirection: "row",
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: "rgba(184,134,11,0.38)",
+            padding: 3,
+            shadowColor: "#B8860B",
+            shadowOpacity: 0.12,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 3 },
+            elevation: 3,
+          }}
+        >
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <Pressable
+                key={tab.key}
+                onPress={() => setActiveTab(tab.key)}
+                style={{ flex: 1, borderRadius: 999, overflow: "hidden" }}
+              >
+                {isActive ? (
+                  <LinearGradient
+                    colors={["#E8B820", "#C9980A", "#A87A08"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      paddingVertical: 9,
+                      paddingHorizontal: 4,
+                      borderRadius: 999,
+                      gap: 5,
+                    }}
+                  >
+                    <Text style={{ fontSize: 11.5, fontWeight: "800", color: "#fff", letterSpacing: 0.1 }} numberOfLines={1}>
+                      {tab.label}
+                    </Text>
+                    {tab.count > 0 && (
+                      <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: "rgba(255,255,255,0.3)", alignItems: "center", justifyContent: "center" }}>
+                        <Text style={{ color: "#fff", fontSize: 9, fontWeight: "800" }}>{tab.count}</Text>
+                      </View>
+                    )}
+                  </LinearGradient>
+                ) : (
+                  <View style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    paddingVertical: 9,
+                    paddingHorizontal: 4,
+                    borderRadius: 999,
+                    gap: 5,
+                  }}>
+                    <Text style={{ fontSize: 11.5, fontWeight: "500", color: "rgba(184,134,11,0.6)" }} numberOfLines={1}>
+                      {tab.label}
+                    </Text>
+                    {tab.count > 0 && (
+                      <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: "rgba(184,134,11,0.3)", alignItems: "center", justifyContent: "center" }}>
+                        <Text style={{ color: "#fff", fontSize: 9, fontWeight: "800" }}>{tab.count}</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
+        </LinearGradient>
       </View>
+
+      <View style={{ flex: 1, paddingHorizontal: 16 }}>
 
       {/* Received Tab */}
       {activeTab === "received" && (
         received.length === 0 ? (
-          <View className="flex-1 items-center justify-center px-10">
-            <Text className="text-4xl mb-4">💌</Text>
-            <Text className="text-[#1C1208] text-lg font-semibold mb-2">No interests yet</Text>
-            <Text className="text-[#6B5D4F] text-center text-sm mb-5">
-              When someone expresses interest in you, they'll appear here.
-            </Text>
-            <Pressable className="bg-[#B8860B] px-6 py-3 rounded-full" onPress={() => router.push("/(main)/swipe")}>
-              <Text className="text-white font-semibold text-sm">Go to Discover</Text>
-            </Pressable>
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
+            <LinearGradient
+              colors={["#FFFFFF", "#FFF8E8", "#FFF2CC"]}
+              start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+              style={{ width: "100%", borderRadius: 28, padding: 32, alignItems: "center", borderWidth: 1, borderColor: "rgba(184,134,11,0.2)", shadowColor: "#B8860B", shadowOpacity: 0.12, shadowRadius: 20, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}
+            >
+              <Image
+                source={require('../../../assets/Logos/transparent-logo.png')}
+                style={{ width: 280, height: 140, marginBottom: 20 }}
+                contentFit="contain"
+              />
+              <Text style={{ color: "#1C1208", fontSize: 20, fontWeight: "800", textAlign: "center", letterSpacing: -0.3, marginBottom: 8 }}>No interests yet</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12, width: "70%" }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: "rgba(184,134,11,0.2)" }} />
+                <Ionicons name="heart" size={11} color="#B8860B" style={{ opacity: 0.5 }} />
+                <View style={{ flex: 1, height: 1, backgroundColor: "rgba(184,134,11,0.2)" }} />
+              </View>
+              <Text style={{ color: "#6B5D4F", fontSize: 13.5, textAlign: "center", lineHeight: 21, marginBottom: 24 }}>
+                When someone expresses interest in you, they'll appear here.
+              </Text>
+              <Pressable
+                onPress={() => router.push("/(main)/swipe")}
+                style={({ pressed }) => ({
+                  borderRadius: 999,
+                  overflow: "hidden",
+                  transform: [{ scale: pressed ? 0.97 : 1 }],
+                  shadowColor: "#B8860B",
+                  shadowOpacity: 0.4,
+                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: 6 },
+                  elevation: 8,
+                })}
+              >
+                <LinearGradient
+                  colors={["#E8B820", "#C9980A", "#A87A08"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{ paddingHorizontal: 36, paddingVertical: 15, borderRadius: 999 }}
+                >
+                  <Text style={{ color: "#fff", fontSize: 15, fontWeight: "800", letterSpacing: 0.2 }}>
+                    Discover Profiles
+                  </Text>
+                </LinearGradient>
+              </Pressable>
+            </LinearGradient>
           </View>
         ) : (
           <FlatList
@@ -432,15 +549,51 @@ export default function InterestsScreen() {
       {/* Sent Tab */}
       {activeTab === "sent" && (
         sent.length === 0 ? (
-          <View className="flex-1 items-center justify-center px-10">
-            <Text className="text-4xl mb-4">📤</Text>
-            <Text className="text-[#1C1208] text-lg font-semibold mb-2">No sent interests</Text>
-            <Text className="text-[#6B5D4F] text-center text-sm mb-5">
-              Express interest in someone from their profile page.
-            </Text>
-            <Pressable className="bg-[#B8860B] px-6 py-3 rounded-full" onPress={() => router.push("/(main)/swipe")}>
-              <Text className="text-white font-semibold text-sm">Go to Discover</Text>
-            </Pressable>
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
+            <LinearGradient
+              colors={["#FFFFFF", "#FFF8E8", "#FFF2CC"]}
+              start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+              style={{ width: "100%", borderRadius: 28, padding: 32, alignItems: "center", borderWidth: 1, borderColor: "rgba(184,134,11,0.2)", shadowColor: "#B8860B", shadowOpacity: 0.12, shadowRadius: 20, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}
+            >
+              <Image
+                source={require('../../../assets/Logos/transparent-logo.png')}
+                style={{ width: 280, height: 140, marginBottom: 20 }}
+                contentFit="contain"
+              />
+              <Text style={{ color: "#1C1208", fontSize: 20, fontWeight: "800", textAlign: "center", letterSpacing: -0.3, marginBottom: 8 }}>No sent interests</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12, width: "70%" }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: "rgba(184,134,11,0.2)" }} />
+                <Ionicons name="heart" size={11} color="#B8860B" style={{ opacity: 0.5 }} />
+                <View style={{ flex: 1, height: 1, backgroundColor: "rgba(184,134,11,0.2)" }} />
+              </View>
+              <Text style={{ color: "#6B5D4F", fontSize: 13.5, textAlign: "center", lineHeight: 21, marginBottom: 24 }}>
+                Express interest in someone from their profile to get started.
+              </Text>
+              <Pressable
+                onPress={() => router.push("/(main)/swipe")}
+                style={({ pressed }) => ({
+                  borderRadius: 999,
+                  overflow: "hidden",
+                  transform: [{ scale: pressed ? 0.97 : 1 }],
+                  shadowColor: "#B8860B",
+                  shadowOpacity: 0.4,
+                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: 6 },
+                  elevation: 8,
+                })}
+              >
+                <LinearGradient
+                  colors={["#E8B820", "#C9980A", "#A87A08"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{ paddingHorizontal: 36, paddingVertical: 15, borderRadius: 999 }}
+                >
+                  <Text style={{ color: "#fff", fontSize: 15, fontWeight: "800", letterSpacing: 0.2 }}>
+                    Discover Profiles
+                  </Text>
+                </LinearGradient>
+              </Pressable>
+            </LinearGradient>
           </View>
         ) : (
           <FlatList
@@ -458,15 +611,51 @@ export default function InterestsScreen() {
       {/* Already Seen Tab */}
       {activeTab === "seen" && (
         seen.length === 0 ? (
-          <View className="flex-1 items-center justify-center px-10">
-            <Text className="text-4xl mb-4">👀</Text>
-            <Text className="text-[#1C1208] text-lg font-semibold mb-2">No seen profiles yet</Text>
-            <Text className="text-[#6B5D4F] text-center text-sm mb-5">
-              Profiles you mark as seen will appear here so you can revisit them.
-            </Text>
-            <Pressable className="bg-[#B8860B] px-6 py-3 rounded-full" onPress={() => router.push("/(main)/swipe")}>
-              <Text className="text-white font-semibold text-sm">Go to Discover</Text>
-            </Pressable>
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
+            <LinearGradient
+              colors={["#FFFFFF", "#FFF8E8", "#FFF2CC"]}
+              start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+              style={{ width: "100%", borderRadius: 28, padding: 32, alignItems: "center", borderWidth: 1, borderColor: "rgba(184,134,11,0.2)", shadowColor: "#B8860B", shadowOpacity: 0.12, shadowRadius: 20, shadowOffset: { width: 0, height: 6 }, elevation: 6 }}
+            >
+              <Image
+                source={require('../../../assets/Logos/transparent-logo.png')}
+                style={{ width: 280, height: 140, marginBottom: 20 }}
+                contentFit="contain"
+              />
+              <Text style={{ color: "#1C1208", fontSize: 20, fontWeight: "800", textAlign: "center", letterSpacing: -0.3, marginBottom: 8 }}>No seen profiles yet</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12, width: "70%" }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: "rgba(184,134,11,0.2)" }} />
+                <Ionicons name="heart" size={11} color="#B8860B" style={{ opacity: 0.5 }} />
+                <View style={{ flex: 1, height: 1, backgroundColor: "rgba(184,134,11,0.2)" }} />
+              </View>
+              <Text style={{ color: "#6B5D4F", fontSize: 13.5, textAlign: "center", lineHeight: 21, marginBottom: 24 }}>
+                Profiles you mark as seen will appear here so you can revisit them.
+              </Text>
+              <Pressable
+                onPress={() => router.push("/(main)/swipe")}
+                style={({ pressed }) => ({
+                  borderRadius: 999,
+                  overflow: "hidden",
+                  transform: [{ scale: pressed ? 0.97 : 1 }],
+                  shadowColor: "#B8860B",
+                  shadowOpacity: 0.4,
+                  shadowRadius: 12,
+                  shadowOffset: { width: 0, height: 6 },
+                  elevation: 8,
+                })}
+              >
+                <LinearGradient
+                  colors={["#E8B820", "#C9980A", "#A87A08"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{ paddingHorizontal: 36, paddingVertical: 15, borderRadius: 999 }}
+                >
+                  <Text style={{ color: "#fff", fontSize: 15, fontWeight: "800", letterSpacing: 0.2 }}>
+                    Discover Profiles
+                  </Text>
+                </LinearGradient>
+              </Pressable>
+            </LinearGradient>
           </View>
         ) : (
           <FlatList
@@ -480,6 +669,7 @@ export default function InterestsScreen() {
           />
         )
       )}
+      </View>
     </View>
   );
 }

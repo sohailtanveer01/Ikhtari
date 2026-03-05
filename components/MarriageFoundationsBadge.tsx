@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Text } from "react-native";
 
 interface MarriageFoundationsBadgeProps {
   size?: "small" | "medium" | "large";
@@ -13,54 +14,43 @@ export function MarriageFoundationsBadge({
   certifiedDate,
 }: MarriageFoundationsBadgeProps) {
   const sizeStyles = {
-    small: {
-      icon: 12,
-      text: 8,
-      padding: 4,
-      borderRadius: 8,
-    },
-    medium: {
-      icon: 16,
-      text: 10,
-      padding: 6,
-      borderRadius: 10,
-    },
-    large: {
-      icon: 20,
-      text: 12,
-      padding: 8,
-      borderRadius: 12,
-    },
+    small:  { icon: 11, text: 8,  paddingH: 8,  paddingV: 4,  borderRadius: 10, gap: 4 },
+    medium: { icon: 14, text: 10, paddingH: 10, paddingV: 5,  borderRadius: 12, gap: 5 },
+    large:  { icon: 22, text: 14, paddingH: 18, paddingV: 11, borderRadius: 16, gap: 8 },
   };
 
-  const style = sizeStyles[size];
+  const s = sizeStyles[size];
 
   return (
-    <View style={[styles.container, { padding: style.padding, borderRadius: style.borderRadius }]}>
-      <Ionicons name="school" size={style.icon} color="#B8860B" />
+    <LinearGradient
+      colors={["rgba(212,160,23,0.22)", "rgba(184,134,11,0.1)"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingHorizontal: s.paddingH,
+        paddingVertical: s.paddingV,
+        borderRadius: s.borderRadius,
+        borderWidth: 1,
+        borderColor: "rgba(184,134,11,0.45)",
+        gap: s.gap,
+      }}
+    >
+      <Ionicons name="ribbon" size={s.icon} color="#B8860B" />
       {showText && (
-        <Text style={[styles.text, { fontSize: style.text }]}>
+        <Text
+          style={{
+            color: "#B8860B",
+            fontWeight: "800",
+            fontSize: s.text,
+            textTransform: "uppercase",
+            letterSpacing: 0.6,
+          }}
+        >
           Certified
         </Text>
       )}
-    </View>
+    </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(184, 134, 11, 0.15)", // Gold with transparency
-    borderWidth: 1,
-    borderColor: "#B8860B",
-    gap: 4,
-  },
-  text: {
-    color: "#B8860B",
-    fontWeight: "700",
-    textTransform: "uppercase",
-  },
-});
-
-

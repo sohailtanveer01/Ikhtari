@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtari.com",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtiar.app",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
@@ -69,6 +69,14 @@ serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Fire-and-forget: update last_accessed_at for this chaperone link
+    serviceClient
+      .from("chaperone_links")
+      .update({ last_accessed_at: new Date().toISOString() })
+      .eq("id", link.id)
+      .then(() => {})
+      .catch(() => {});
 
     // Verify the match belongs to the ward
     const { data: match, error: matchError } = await serviceClient

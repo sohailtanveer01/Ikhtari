@@ -116,7 +116,7 @@ export default function QuizScreen() {
       >
         <Text className="text-[#1C1208] text-lg mb-4">No quiz questions available</Text>
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => router.navigate(`/(main)/profile/marriage-foundations/${moduleId}`)}
           className="bg-[#B8860B] rounded-xl py-3 px-6"
         >
           <Text className="text-black font-semibold">Go Back</Text>
@@ -132,7 +132,7 @@ export default function QuizScreen() {
     >
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-4 border-b border-[#EDE5D5]">
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={() => router.navigate(`/(main)/profile/marriage-foundations/${moduleId}`)}>
           <Ionicons name="arrow-back" size={24} color="#1C1208" />
         </Pressable>
         <Text className="text-[#1C1208] text-base font-semibold">
@@ -279,7 +279,7 @@ export default function QuizScreen() {
           <View className="px-4 pb-6">
             {result.passed ? (
               <Pressable
-                onPress={() => router.back()}
+                onPress={() => router.navigate(`/(main)/profile/marriage-foundations/${moduleId}`)}
                 className="bg-[#B8860B] rounded-xl py-4 px-6"
               >
                 <Text className="text-black text-center font-bold text-base">

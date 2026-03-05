@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtari.com",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtiar.app",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
@@ -478,6 +478,44 @@ serve(async (req) => {
       }
     }
 
+    // Fetch chat gate Q&A if gate was approved for this match
+    let gateQA = null;
+    if (!isUnmatched && match && match.gate_approved_at && match.initiated_by) {
+      const { data: gateAnswers } = await supabaseClient
+        .from("match_intent_answers")
+        .select("question_id, answer_text")
+        .eq("match_id", matchId)
+        .eq("answerer_id", match.initiated_by);
+
+      if (gateAnswers && gateAnswers.length > 0) {
+        const questionIds = gateAnswers.map((a: any) => a.question_id);
+        const { data: gateQuestions } = await supabaseClient
+          .from("intent_questions")
+          .select("id, question_text, display_order")
+          .in("id", questionIds)
+          .order("display_order", { ascending: true });
+
+        if (gateQuestions && gateQuestions.length > 0) {
+          const qMap = new Map(
+            (gateQuestions as any[]).map((q: any) => [q.id, q])
+          );
+          const pairs = gateAnswers
+            .map((a: any) => ({
+              question: qMap.get(a.question_id)?.question_text || "",
+              answer: a.answer_text,
+              display_order: qMap.get(a.question_id)?.display_order || 0,
+            }))
+            .sort((a: any, b: any) => a.display_order - b.display_order);
+
+          const answererName = match.initiated_by === user.id
+            ? "You"
+            : (otherUser?.first_name || otherUser?.name || "Them");
+
+          gateQA = { answererName, pairs };
+        }
+      }
+    }
+
     return new Response(
       JSON.stringify({
         match: match
@@ -495,6 +533,8 @@ serve(async (req) => {
         has_chaperone: hasChaperone,
         // Include interest Q&A if available
         ...(interestQA ? { interestQA } : {}),
+        // Include chat gate Q&A if gate was approved
+        ...(gateQA ? { gateQA } : {}),
         // Include compliment info if this match was created from a compliment
         ...(complimentInfo ? {
           isCompliment: true,

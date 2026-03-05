@@ -122,6 +122,7 @@ export default function ModuleDetailScreen() {
   const [wifeObligations, setWifeObligations] = useState<Record<string, boolean>>({});
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [formLoaded, setFormLoaded] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const category = module?.expectations_category as string | undefined;
   const isCompleted = progress?.module_completed || false;
@@ -216,6 +217,32 @@ export default function ModuleDetailScreen() {
         },
         onError: () => {
           Alert.alert("Error", "Failed to save expectations. Please try again.");
+        },
+      }
+    );
+  };
+
+  const handleSaveEdits = () => {
+    if (!category) return;
+
+    const expectations: any = {};
+    if (category === "obligations") {
+      expectations.husband_obligations = husbandObligations;
+      expectations.wife_obligations = wifeObligations;
+    } else if (category === "notes") {
+      expectations.additional_notes = additionalNotes;
+    } else {
+      expectations[category] = form;
+    }
+
+    saveExpectations.mutate(
+      { expectations, isComplete: true },
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+        },
+        onError: () => {
+          Alert.alert("Error", "Failed to save changes. Please try again.");
         },
       }
     );
@@ -573,7 +600,7 @@ export default function ModuleDetailScreen() {
     >
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-4 border-b border-[#EDE5D5]">
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={() => router.navigate("/(main)/profile/marriage-foundations")}>
           <Ionicons name="arrow-back" size={24} color="#1C1208" />
         </Pressable>
         <Text className="text-[#1C1208] text-base font-semibold" numberOfLines={1}>
@@ -639,7 +666,7 @@ export default function ModuleDetailScreen() {
         )}
 
         {/* Inline Expectations Form */}
-        {!isCompleted && (
+        {(!isCompleted || isEditing) && (
           <View className="px-4 mb-6">
             <View className="h-px bg-[#EDE5D5] mb-6" />
             <Text className="text-[#B8860B] text-xs font-semibold uppercase tracking-wider mb-4">
@@ -650,14 +677,23 @@ export default function ModuleDetailScreen() {
         )}
 
         {/* Saved Answers (read-only when completed) */}
-        {isCompleted && category && (
+        {isCompleted && !isEditing && category && (
           <View className="px-4 mb-6">
             <View className="h-px bg-[#EDE5D5] mb-6" />
-            <View className="flex-row items-center mb-4">
-              <Ionicons name="checkmark-circle" size={16} color="#B8860B" />
-              <Text className="text-[#B8860B] text-xs font-semibold uppercase tracking-wider ml-2">
-                Your Saved Answers
-              </Text>
+            <View className="flex-row items-center justify-between mb-4">
+              <View className="flex-row items-center">
+                <Ionicons name="checkmark-circle" size={16} color="#B8860B" />
+                <Text className="text-[#B8860B] text-xs font-semibold uppercase tracking-wider ml-2">
+                  Your Saved Answers
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setIsEditing(true)}
+                style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingVertical: 6, backgroundColor: "rgba(184,134,11,0.1)", borderRadius: 999, borderWidth: 1, borderColor: "rgba(184,134,11,0.3)" }}
+              >
+                <Ionicons name="pencil-outline" size={13} color="#B8860B" />
+                <Text style={{ color: "#B8860B", fontSize: 12, fontWeight: "700", marginLeft: 4 }}>Edit</Text>
+              </Pressable>
             </View>
             {renderReadOnlyAnswers()}
           </View>
@@ -666,6 +702,58 @@ export default function ModuleDetailScreen() {
         {/* Bottom spacer for button */}
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Bottom Save Button — editing a completed module */}
+      {isCompleted && isEditing && (
+        <View
+          className="px-4 border-t border-[#EDE5D5]"
+          style={{ paddingBottom: Math.max(insets.bottom, 10) + 90, paddingTop: 12 }}
+        >
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <Pressable
+              onPress={() => { setFormLoaded(false); setIsEditing(false); }}
+              style={{ flex: 1, paddingVertical: 16, borderRadius: 18, alignItems: "center", borderWidth: 1.5, borderColor: "rgba(184,134,11,0.3)", backgroundColor: "rgba(184,134,11,0.06)" }}
+            >
+              <Text style={{ color: "#B8860B", fontSize: 15, fontWeight: "700" }}>Cancel</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleSaveEdits}
+              disabled={!isFormValid || isSaving}
+              style={({ pressed }) => ({
+                flex: 2, borderRadius: 18,
+                shadowColor: isFormValid ? "#B8860B" : "transparent",
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.5,
+                shadowRadius: 16,
+                elevation: isFormValid ? 10 : 0,
+                opacity: pressed ? 0.88 : 1,
+              })}
+            >
+              {isFormValid ? (
+                <LinearGradient
+                  colors={["#D4A017", "#B8860B"]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                  style={{ paddingVertical: 16, paddingHorizontal: 24, borderRadius: 18, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 10, borderWidth: 1, borderColor: "rgba(255,255,255,0.2)" }}
+                >
+                  {isSaving ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Ionicons name="save-outline" size={20} color="#fff" />
+                      <Text style={{ color: "#fff", fontSize: 17, fontWeight: "800", letterSpacing: 0.4 }}>Save Changes</Text>
+                    </>
+                  )}
+                </LinearGradient>
+              ) : (
+                <View style={{ paddingVertical: 16, paddingHorizontal: 24, borderRadius: 18, alignItems: "center", backgroundColor: "rgba(184,134,11,0.08)", borderWidth: 1.5, borderColor: "rgba(184,134,11,0.2)" }}>
+                  <Text style={{ color: "#B8860B", opacity: 0.4, fontSize: 17, fontWeight: "800" }}>Save Changes</Text>
+                </View>
+              )}
+            </Pressable>
+          </View>
+        </View>
+      )}
 
       {/* Bottom Save Button */}
       {!isCompleted && (

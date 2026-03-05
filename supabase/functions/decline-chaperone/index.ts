@@ -35,10 +35,10 @@ serve(async (req) => {
       );
     }
 
-    const { ward_id } = await req.json();
-    if (!ward_id) {
+    const { link_id } = await req.json();
+    if (!link_id) {
       return new Response(
-        JSON.stringify({ error: "Missing ward_id" }),
+        JSON.stringify({ error: "Missing link_id" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -54,71 +54,59 @@ serve(async (req) => {
       auth: { persistSession: false },
     });
 
-    // Verify caller has an active chaperone link for this ward
-    const { data: link, error: linkError } = await serviceClient
+    // Fetch the link
+    const { data: link, error: fetchError } = await serviceClient
       .from("chaperone_links")
-      .select("id")
-      .eq("chaperone_id", user.id)
-      .eq("user_id", ward_id)
-      .eq("status", "active")
+      .select("id, chaperone_id, invite_email, status")
+      .eq("id", link_id)
       .single();
 
-    if (linkError || !link) {
+    if (fetchError || !link) {
       return new Response(
-        JSON.stringify({ error: "No active chaperone link for this ward" }),
+        JSON.stringify({ error: "Link not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify the caller is the chaperone (active link) or their email matches invite_email (pending)
+    const callerEmail = user.email?.toLowerCase();
+    const isChaperone = link.chaperone_id === user.id;
+    const isInvitedEmail = callerEmail && link.invite_email?.toLowerCase() === callerEmail;
+
+    if (!isChaperone && !isInvitedEmail) {
+      return new Response(
+        JSON.stringify({ error: "Not authorized to decline this link" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Fetch all matches for the ward
-    const { data: matches, error: matchesError } = await serviceClient
-      .from("matches")
-      .select("*")
-      .or(`user1.eq.${ward_id},user2.eq.${ward_id}`)
-      .order("created_at", { ascending: false });
-
-    if (matchesError) {
+    // Only allow declining pending or active links
+    if (link.status !== "pending" && link.status !== "active") {
       return new Response(
-        JSON.stringify({ error: matchesError.message }),
+        JSON.stringify({ error: "Link is not in a declinable state" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Update status to declined
+    const { error: updateError } = await serviceClient
+      .from("chaperone_links")
+      .update({ status: "declined" })
+      .eq("id", link_id);
+
+    if (updateError) {
+      return new Response(
+        JSON.stringify({ error: updateError.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const chats = await Promise.all(
-      (matches || []).map(async (match: any) => {
-        const otherUserId = match.user1 === ward_id ? match.user2 : match.user1;
-
-        const { data: otherUser } = await serviceClient
-          .from("users")
-          .select("id, first_name, last_name, name, main_photo")
-          .eq("id", otherUserId)
-          .single();
-
-        // Get last message
-        const { data: lastMessages } = await serviceClient
-          .from("messages")
-          .select("content, image_url, created_at, sender_id")
-          .eq("match_id", match.id)
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        const lastMessage = lastMessages?.[0] || null;
-
-        return {
-          match_id: match.id,
-          other_user: otherUser,
-          last_message: lastMessage,
-          created_at: match.created_at,
-        };
-      })
-    );
-
     return new Response(
-      JSON.stringify({ chats, ward_id }),
+      JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error in get-chaperone-chats:", error);
+    console.error("Error in decline-chaperone:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

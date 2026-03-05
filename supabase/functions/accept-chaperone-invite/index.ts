@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtari.com",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtiar.app",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
@@ -54,10 +54,10 @@ serve(async (req) => {
       );
     }
 
-    // Find all pending links where invite_email matches caller's email
+    // Find all pending non-expired links where invite_email matches caller's email
     const { data: pendingLinks, error: fetchError } = await serviceClient
       .from("chaperone_links")
-      .select("id")
+      .select("id, expires_at")
       .eq("invite_email", callerEmail)
       .eq("status", "pending");
 
@@ -75,7 +75,21 @@ serve(async (req) => {
       );
     }
 
-    const linkIds = pendingLinks.map((l: any) => l.id);
+    // Filter out expired links
+    const now = new Date();
+    const validLinks = pendingLinks.filter((l: any) => {
+      if (!l.expires_at) return true;
+      return new Date(l.expires_at) > now;
+    });
+
+    if (validLinks.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "All pending invitations have expired", accepted_count: 0 }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const linkIds = validLinks.map((l: any) => l.id);
 
     // Update all pending links
     const { error: updateError } = await serviceClient

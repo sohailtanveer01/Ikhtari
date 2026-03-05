@@ -18,9 +18,11 @@ interface ChaperoneLink {
   user_id: string;
   chaperone_id: string | null;
   invite_email: string;
-  status: "pending" | "active" | "revoked";
+  status: "pending" | "active" | "revoked" | "declined";
   created_at: string;
   accepted_at: string | null;
+  expires_at: string | null;
+  last_accessed_at: string | null;
   chaperone_profile?: {
     id: string;
     first_name: string | null;
@@ -177,18 +179,17 @@ export default function WaliSetupScreen() {
               const { data: { session } } = await supabase.auth.getSession();
               if (!session) return;
 
-              // Revoke from chaperone side: call revoke-chaperone with service role via ward_id
-              // Since chaperone can't directly update (only ward can revoke), we repurpose the link
-              // by calling accept which sets status to active, then the ward must revoke.
-              // Instead: we use a service approach — just remove wardship from wardships list locally
-              // and alert user to ask the ward to revoke. In production, add a decline edge function.
-              Alert.alert(
-                "Note",
-                "To remove this wardship, ask the person to remove you from their Wali settings, or contact support.",
-                [{ text: "OK" }]
-              );
+              const { data, error } = await supabase.functions.invoke("decline-chaperone", {
+                body: { link_id: link.id },
+                headers: { Authorization: `Bearer ${session.access_token}` },
+              });
+
+              if (error) throw error;
+              if (data?.error) throw new Error(data.error);
+
+              await loadStatus();
             } catch (err: any) {
-              Alert.alert("Error", err.message || "Failed.");
+              Alert.alert("Error", err.message || "Failed to decline.");
             }
           },
         },
@@ -233,12 +234,40 @@ export default function WaliSetupScreen() {
             </View>
           )}
 
+          {myChaperone?.status === "pending" && myChaperone.expires_at && (() => {
+            const expiresAt = new Date(myChaperone.expires_at);
+            const daysLeft = Math.ceil((expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            const isExpired = daysLeft <= 0;
+            return (
+              <Text style={{ color: isExpired ? "#EF4444" : "#F59E0B" }} className="text-xs mt-1">
+                {isExpired ? "Expired" : `Expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`}
+              </Text>
+            );
+          })()}
+
+          {myChaperone?.status === "active" && myChaperone.last_accessed_at && (() => {
+            const accessedAt = new Date(myChaperone.last_accessed_at);
+            const diffMs = Date.now() - accessedAt.getTime();
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            const timeAgo = diffMins < 1 ? "just now"
+              : diffMins < 60 ? `${diffMins}m ago`
+              : diffHours < 24 ? `${diffHours}h ago`
+              : `${diffDays}d ago`;
+            return (
+              <Text className="text-gray-400 text-xs mt-1">Last viewed your chats: {timeAgo}</Text>
+            );
+          })()}
+
           {myChaperone && (myChaperone.status === "pending" || myChaperone.status === "active") && (
             <Pressable
               onPress={handleRevoke}
               className="mt-3 bg-red-500/20 rounded-xl py-2 px-4 self-start"
             >
-              <Text className="text-red-400 text-sm font-medium">Remove Wali</Text>
+              <Text className="text-red-400 text-sm font-medium">
+                {myChaperone.status === "pending" ? "Cancel Invite" : "Remove Wali"}
+              </Text>
             </Pressable>
           )}
         </View>

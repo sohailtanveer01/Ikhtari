@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtari.com",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtiar.app",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
@@ -12,7 +12,7 @@ const corsHeaders = {
 const EMAIL_SERVICE = Deno.env.get("EMAIL_SERVICE") || "resend"; // "resend" or "sendgrid"
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
-const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "welcome@ikhtari.com";
+const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "welcome@ikhtiar.app";
 const FROM_NAME = Deno.env.get("FROM_NAME") || "Ikhtari";
 
 // Send email using Resend
@@ -63,8 +63,8 @@ async function sendEmailWithResend(email: string, name: string) {
           <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
             <p>© ${new Date().getFullYear()} Ikhtari. All rights reserved.</p>
             <p>
-              <a href="https://ikhtari.com" style="color: #B8860B; text-decoration: none;">Visit our website</a> | 
-              <a href="https://ikhtari.com/support" style="color: #B8860B; text-decoration: none;">Support</a>
+              <a href="https://ikhtiar.app" style="color: #B8860B; text-decoration: none;">Visit our website</a> | 
+              <a href="https://ikhtiar.app/support" style="color: #B8860B; text-decoration: none;">Support</a>
             </p>
           </div>
         </body>
@@ -88,7 +88,7 @@ Best regards,
 The Ikhtari Team
 
 © ${new Date().getFullYear()} Ikhtari. All rights reserved.
-Visit us at https://ikhtari.com
+Visit us at https://ikhtiar.app
     `.trim(),
   };
 
@@ -164,8 +164,8 @@ async function sendEmailWithSendGrid(email: string, name: string) {
               <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
                 <p>© ${new Date().getFullYear()} Ikhtari. All rights reserved.</p>
                 <p>
-                  <a href="https://ikhtari.com" style="color: #B8860B; text-decoration: none;">Visit our website</a> | 
-                  <a href="https://ikhtari.com/support" style="color: #B8860B; text-decoration: none;">Support</a>
+                  <a href="https://ikhtiar.app" style="color: #B8860B; text-decoration: none;">Visit our website</a> | 
+                  <a href="https://ikhtiar.app/support" style="color: #B8860B; text-decoration: none;">Support</a>
                 </p>
               </div>
             </body>

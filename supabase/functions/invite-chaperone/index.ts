@@ -2,13 +2,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtari.com",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtiar.app",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "noreply@ikhtari.com";
+const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "noreply@ikhtiar.app";
 const FROM_NAME = Deno.env.get("FROM_NAME") || "Ikhtari";
 
 // Email sent when the wali already has an Ikhtari account
@@ -57,8 +57,8 @@ function buildExistingUserEmail(inviterName: string, waliEmail: string): object 
           <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
             <p>© ${new Date().getFullYear()} Ikhtari. All rights reserved.</p>
             <p>
-              <a href="https://ikhtari.com" style="color: #B8860B; text-decoration: none;">Visit our website</a> |
-              <a href="https://ikhtari.com/support" style="color: #B8860B; text-decoration: none;">Support</a>
+              <a href="https://ikhtiar.app" style="color: #B8860B; text-decoration: none;">Visit our website</a> |
+              <a href="https://ikhtiar.app/support" style="color: #B8860B; text-decoration: none;">Support</a>
             </p>
           </div>
         </body>
@@ -80,7 +80,7 @@ Best regards,
 The Ikhtari Team
 
 © ${new Date().getFullYear()} Ikhtari. All rights reserved.
-https://ikhtari.com
+https://ikhtiar.app
     `.trim(),
   };
 }
@@ -132,8 +132,8 @@ function buildNewUserEmail(inviterName: string, waliEmail: string): object {
           <div style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
             <p>© ${new Date().getFullYear()} Ikhtari. All rights reserved.</p>
             <p>
-              <a href="https://ikhtari.com" style="color: #B8860B; text-decoration: none;">Visit our website</a> |
-              <a href="https://ikhtari.com/support" style="color: #B8860B; text-decoration: none;">Support</a>
+              <a href="https://ikhtiar.app" style="color: #B8860B; text-decoration: none;">Visit our website</a> |
+              <a href="https://ikhtiar.app/support" style="color: #B8860B; text-decoration: none;">Support</a>
             </p>
           </div>
         </body>
@@ -156,7 +156,7 @@ Best regards,
 The Ikhtari Team
 
 © ${new Date().getFullYear()} Ikhtari. All rights reserved.
-https://ikhtari.com
+https://ikhtiar.app
     `.trim(),
   };
 }
@@ -260,7 +260,8 @@ serve(async (req) => {
     const chaperoneId = chaperoneUser?.id ?? null;
     const hasAccount = !!chaperoneId;
 
-    // Upsert the chaperone link
+    // Upsert the chaperone link (set expires_at to 30 days from now)
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
     const { error: upsertError } = await serviceClient
       .from("chaperone_links")
       .upsert(
@@ -269,6 +270,7 @@ serve(async (req) => {
           invite_email: normalizedEmail,
           chaperone_id: chaperoneId,
           status: "pending",
+          expires_at: expiresAt,
         },
         { onConflict: "user_id,invite_email" }
       );

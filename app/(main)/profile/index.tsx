@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, LayoutChangeEvent, Pressable, ScrollView, Text, View } from "react-native";
@@ -724,8 +725,16 @@ export default function ProfileScreen() {
   const fullName = firstName && lastName ? `${firstName} ${lastName}` : profile?.name || "Profile";
 
   return (
+    <View style={{ flex: 1, backgroundColor: "#FDFAF5" }}>
+      {/* Background gradient — warm gold bloom at the top */}
+      <LinearGradient
+        colors={["#FFF2B8", "#FDF8EE", "#FDFAF5"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.52 }}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+      />
     <ScrollView
-      className="flex-1 bg-[#FDFAF5]"
+      style={{ flex: 1 }}
       showsVerticalScrollIndicator={false}
       // Allows scrolling past the last item (and above the tab bar)
       contentContainerStyle={{ paddingBottom: insets.bottom + 60 }}
@@ -785,24 +794,17 @@ export default function ProfileScreen() {
 
           {/* Action Buttons */}
           <View className="flex-row gap-3 items-center justify-center">
-            {/* Edit Profile Button */}
             <Pressable
               onPress={() => router.push("/(main)/profile/edit")}
               className="px-6 py-2.5 bg-[#B8860B]/10 rounded-full border border-[#B8860B]/30"
             >
-              <Text className="text-[#B8860B] text-base font-semibold">
-                Edit Profile
-              </Text>
+              <Text className="text-[#B8860B] text-base font-semibold">Edit Profile</Text>
             </Pressable>
-
-            {/* Preview Profile Button */}
             <Pressable
               onPress={() => router.push("/(main)/profile/preview")}
               className="px-6 py-2.5 bg-[#B8860B]/10 rounded-full border border-[#B8860B]/30"
             >
-              <Text className="text-[#B8860B] text-base font-semibold">
-                Preview Profile
-              </Text>
+              <Text className="text-[#B8860B] text-base font-semibold">Preview Profile</Text>
             </Pressable>
           </View>
 
@@ -831,31 +833,12 @@ export default function ProfileScreen() {
         </View>
 
         {/* Marriage Foundations Course Section */}
-        <View className="mb-6 px-0">
+        <View className="items-center mb-6">
           <Pressable
             onPress={() => router.push("/(main)/profile/marriage-foundations")}
-            className="bg-white rounded-2xl p-4 border border-[#EDE5D5]"
+            className="px-6 py-2.5 bg-[#B8860B]/10 rounded-full border border-[#B8860B]/30"
           >
-            <View className="flex-row items-center justify-between">
-              <View className="flex-1">
-                <View className="flex-row items-center mb-2">
-                  <Ionicons name="school" size={24} color="#B8860B" />
-                  <Text className="text-[#1C1208] text-lg font-semibold ml-2">
-                    Marriage Foundations Course
-                  </Text>
-                </View>
-                <Text className="text-[#6B5D4F] text-sm mb-2">
-                  Learn Islamic marriage values and earn certification
-                </Text>
-                {certification && (
-                  <Text className="text-[#B8860B] text-xs">
-                    {certification.completion_percentage}% Complete
-                    {certification.is_certified && " • Certified"}
-                  </Text>
-                )}
-              </View>
-              <Ionicons name="chevron-forward" size={24} color="#9CA3AF" />
-            </View>
+            <Text className="text-[#B8860B] text-base font-semibold">Marriage Foundation</Text>
           </Pressable>
         </View>
 
@@ -943,6 +926,7 @@ export default function ProfileScreen() {
         </View>
       </View>
     </ScrollView>
+    </View>
   );
 }
 

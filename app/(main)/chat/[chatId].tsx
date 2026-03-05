@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Audio } from "expo-av";
+import { LinearGradient } from "expo-linear-gradient";
 import { Image as ExpoImage } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -539,6 +540,7 @@ export default function ChatScreen() {
   const isComplimentSender = chatData?.isComplimentSender || false;
   const isComplimentRecipient = chatData?.isComplimentRecipient || false;
   const interestQA = chatData?.interestQA || null;
+  const gateQA = chatData?.gateQA || null;
 
   // Check intent questions gate on mount
   useEffect(() => {
@@ -690,6 +692,7 @@ export default function ChatScreen() {
 
   // Q&A card collapse state — default expanded when no messages, collapsed when messages exist
   const [isQAExpanded, setIsQAExpanded] = useState<boolean | null>(null);
+  const [gateQAVisible, setGateQAVisible] = useState(true);
 
   // Track OTHER USER's active status with real-time updates
   const [otherUserActive, setOtherUserActive] = useState<boolean>(false);
@@ -2001,7 +2004,89 @@ export default function ChatScreen() {
           // Optimize scroll events
           onScrollToIndexFailed={() => { }}
           ListHeaderComponent={
-            interestQA ? (
+            (interestQA || gateQA) ? (
+              <View>
+              {gateQA && gateQA.pairs?.length > 0 && gateQAVisible && (
+                <LinearGradient
+                  colors={["rgba(184,134,11,0.13)", "rgba(212,160,23,0.05)"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    borderRadius: 18,
+                    borderWidth: 1,
+                    borderColor: "rgba(184,134,11,0.28)",
+                    marginBottom: 12,
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* Header row */}
+                  <View style={{ flexDirection: "row", alignItems: "center", padding: 16, paddingBottom: 12 }}>
+                    <View
+                      style={{
+                        width: 40, height: 40, borderRadius: 20,
+                        backgroundColor: "rgba(184,134,11,0.13)",
+                        alignItems: "center", justifyContent: "center",
+                        borderWidth: 1, borderColor: "rgba(184,134,11,0.22)",
+                        marginRight: 12,
+                      }}
+                    >
+                      <Ionicons name="shield-checkmark" size={20} color="#B8860B" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: "rgba(184,134,11,0.65)", fontSize: 9, fontWeight: "700", letterSpacing: 2.2, textTransform: "uppercase", marginBottom: 2 }}>
+                        IKHTIAR
+                      </Text>
+                      <Text style={{ color: "#1C1208", fontSize: 15, fontWeight: "800" }}>
+                        Intent Answers
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() => setGateQAVisible(false)}
+                      style={{
+                        paddingHorizontal: 10, paddingVertical: 6,
+                        borderRadius: 10,
+                        backgroundColor: "rgba(184,134,11,0.1)",
+                        borderWidth: 1, borderColor: "rgba(184,134,11,0.2)",
+                      }}
+                    >
+                      <Text style={{ color: "#B8860B", fontSize: 11, fontWeight: "700" }}>Remove</Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Subtitle */}
+                  <Text style={{ color: "#9E8E7E", fontSize: 12, lineHeight: 17, paddingHorizontal: 16, paddingBottom: 14 }}>
+                    {gateQA.answererName} answered these questions before starting the conversation
+                  </Text>
+
+                  {/* Q&A pairs */}
+                  <View
+                    style={{
+                      marginHorizontal: 16,
+                      marginBottom: 16,
+                      backgroundColor: "rgba(0,0,0,0.04)",
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: "rgba(184,134,11,0.1)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {gateQA.pairs.map((qa: any, index: number) => (
+                      <View
+                        key={`gate-${index}`}
+                        style={{
+                          padding: 14,
+                          borderBottomWidth: index < gateQA.pairs.length - 1 ? 1 : 0,
+                          borderBottomColor: "rgba(184,134,11,0.1)",
+                        }}
+                      >
+                        <Text style={{ color: "#9E8E7E", fontSize: 12, marginBottom: 4 }}>{qa.question}</Text>
+                        <Text style={{ color: "#1C1208", fontSize: 14, fontWeight: "500", lineHeight: 20 }}>{qa.answer}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </LinearGradient>
+              )}
+              {interestQA ? (
               <View className="bg-[#B8860B]/10 rounded-2xl border border-[#B8860B]/30 mx-0 mb-4 p-4">
                 <Pressable
                   onPress={() =>
@@ -2093,6 +2178,8 @@ export default function ChatScreen() {
                     )}
                   </View>
                 )}
+              </View>
+              ) : null}
               </View>
             ) : null
           }

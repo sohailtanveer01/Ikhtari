@@ -94,6 +94,9 @@ export default function EmailOTP() {
       return;
     }
 
+    // Auto-link any pending chaperone invite for this email (fire-and-forget)
+    supabase.functions.invoke("accept-chaperone-invite").catch(() => {});
+
     // Handle account reactivation if needed
     if (shouldReactivate) {
       try {

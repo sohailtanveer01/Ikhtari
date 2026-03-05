@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtari.com",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") || "https://ikhtiar.app",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
@@ -47,11 +47,14 @@ serve(async (req) => {
     });
 
     // Fetch my_chaperone: the active chaperone link where caller is the ward
+    // Exclude expired pending invites
+    const now = new Date().toISOString();
     const { data: myChaperone } = await serviceClient
       .from("chaperone_links")
-      .select("id, invite_email, status, chaperone_id, created_at, accepted_at")
+      .select("id, invite_email, status, chaperone_id, created_at, accepted_at, expires_at, last_accessed_at")
       .eq("user_id", user.id)
       .in("status", ["pending", "active"])
+      .or(`status.eq.active,expires_at.is.null,expires_at.gt.${now}`)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -69,12 +72,13 @@ serve(async (req) => {
       }
     }
 
-    // Fetch wardships: links where caller is the chaperone (pending or active)
+    // Fetch wardships: links where caller is the chaperone (pending or active), excluding expired pending
     const { data: wardships } = await serviceClient
       .from("chaperone_links")
-      .select("id, user_id, invite_email, status, created_at, accepted_at")
+      .select("id, user_id, invite_email, status, created_at, accepted_at, expires_at, last_accessed_at")
       .eq("chaperone_id", user.id)
       .in("status", ["pending", "active"])
+      .or(`status.eq.active,expires_at.is.null,expires_at.gt.${now}`)
       .order("created_at", { ascending: false });
 
     // Also fetch pending links where invite_email matches caller's email (in case they were invited before signup)
@@ -83,9 +87,10 @@ serve(async (req) => {
     if (callerEmail) {
       const { data: emailLinks } = await serviceClient
         .from("chaperone_links")
-        .select("id, user_id, invite_email, status, created_at, accepted_at")
+        .select("id, user_id, invite_email, status, created_at, accepted_at, expires_at, last_accessed_at")
         .eq("invite_email", callerEmail)
-        .eq("status", "pending");
+        .eq("status", "pending")
+        .or(`expires_at.is.null,expires_at.gt.${now}`);
       emailPendingLinks = emailLinks || [];
     }
 

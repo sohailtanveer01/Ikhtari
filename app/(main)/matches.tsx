@@ -4,12 +4,9 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { Dimensions, Pressable, Text, View } from "react-native";
 import Animated, {
-  Easing,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withRepeat,
-  withSequence,
   withSpring,
   withTiming,
 } from "react-native-reanimated";
@@ -28,74 +25,26 @@ export default function MatchCelebrationScreen() {
       myPhoto: string;
     }>();
 
-  // Animated values
-  const heartScale = useSharedValue(0);
-  const heartGlow = useSharedValue(0.3);
   const photoLeftX = useSharedValue(-SCREEN_WIDTH);
   const photoRightX = useSharedValue(SCREEN_WIDTH);
+  const badgeScale = useSharedValue(0);
   const textOpacity = useSharedValue(0);
-  const textTranslateY = useSharedValue(20);
+  const textTranslateY = useSharedValue(24);
   const buttonsOpacity = useSharedValue(0);
   const buttonsTranslateY = useSharedValue(30);
-  const logoOpacity = useSharedValue(0);
-  const logoScale = useSharedValue(0.8);
 
   useEffect(() => {
-    // Logo fades in first
-    logoOpacity.value = withDelay(100, withTiming(1, { duration: 600 }));
-    logoScale.value = withDelay(100, withSpring(1, { damping: 12, stiffness: 100 }));
+    photoLeftX.value = withDelay(100, withSpring(0, { damping: 14, stiffness: 90 }));
+    photoRightX.value = withDelay(100, withSpring(0, { damping: 14, stiffness: 90 }));
 
-    // Heart pops in with spring
-    heartScale.value = withDelay(
-      300,
-      withSpring(1, { damping: 8, stiffness: 120 })
-    );
+    badgeScale.value = withDelay(380, withSpring(1, { damping: 8, stiffness: 130 }));
 
-    // Heart glow pulses continuously
-    heartGlow.value = withDelay(
-      600,
-      withRepeat(
-        withSequence(
-          withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.3, { duration: 1200, easing: Easing.inOut(Easing.ease) })
-        ),
-        -1,
-        false
-      )
-    );
+    textOpacity.value = withDelay(500, withTiming(1, { duration: 500 }));
+    textTranslateY.value = withDelay(500, withSpring(0, { damping: 12, stiffness: 100 }));
 
-    // Photos slide in from sides
-    photoLeftX.value = withDelay(
-      200,
-      withSpring(0, { damping: 14, stiffness: 90 })
-    );
-    photoRightX.value = withDelay(
-      200,
-      withSpring(0, { damping: 14, stiffness: 90 })
-    );
-
-    // Text fades up
-    textOpacity.value = withDelay(600, withTiming(1, { duration: 500 }));
-    textTranslateY.value = withDelay(
-      600,
-      withSpring(0, { damping: 12, stiffness: 100 })
-    );
-
-    // Buttons fade up last
-    buttonsOpacity.value = withDelay(900, withTiming(1, { duration: 500 }));
-    buttonsTranslateY.value = withDelay(
-      900,
-      withSpring(0, { damping: 12, stiffness: 100 })
-    );
+    buttonsOpacity.value = withDelay(750, withTiming(1, { duration: 500 }));
+    buttonsTranslateY.value = withDelay(750, withSpring(0, { damping: 12, stiffness: 100 }));
   }, []);
-
-  const heartAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: heartScale.value }],
-  }));
-
-  const heartGlowStyle = useAnimatedStyle(() => ({
-    opacity: heartGlow.value,
-  }));
 
   const photoLeftStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: photoLeftX.value }],
@@ -103,6 +52,10 @@ export default function MatchCelebrationScreen() {
 
   const photoRightStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: photoRightX.value }],
+  }));
+
+  const badgeStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: badgeScale.value }],
   }));
 
   const textStyle = useAnimatedStyle(() => ({
@@ -115,58 +68,38 @@ export default function MatchCelebrationScreen() {
     transform: [{ translateY: buttonsTranslateY.value }],
   }));
 
-  const logoStyle = useAnimatedStyle(() => ({
-    opacity: logoOpacity.value,
-    transform: [{ scale: logoScale.value }],
-  }));
-
   return (
     <View
-      style={{ flex: 1, backgroundColor: "#FDFAF5", paddingTop: insets.top }}
-      className="flex-1 items-center justify-center px-6"
+      style={{
+        flex: 1,
+        backgroundColor: "#FDFAF5",
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom + 16,
+        alignItems: "center",
+        justifyContent: "center",
+        paddingHorizontal: 24,
+      }}
     >
-      {/* App Logo at top */}
-      <Animated.View style={logoStyle} className="mb-4">
-        <Image
-          source={require("../../assets/Logos/colored-logo-without-brand.png")}
-          style={{ width: 80, height: 80 }}
-          contentFit="contain"
-        />
-      </Animated.View>
-
-      {/* Animated Heart with Glow */}
-      <Animated.View style={heartAnimatedStyle} className="mb-6 items-center justify-center">
-        {/* Glow ring behind */}
-        <Animated.View
-          style={[
-            heartGlowStyle,
-            {
-              position: "absolute",
-              width: 110,
-              height: 110,
-              borderRadius: 55,
-              backgroundColor: "#B8860B",
-            },
-          ]}
-        />
-        <View className="w-24 h-24 rounded-full bg-[#F5F0E8] items-center justify-center border-2 border-[#B8860B]/60">
-          <Ionicons name="heart" size={48} color="#B8860B" />
-        </View>
-      </Animated.View>
-
-      {/* Profile Photos */}
-      <View className="flex-row items-center justify-center mb-8">
-        {/* My Photo */}
+      {/* Profile cards with logo connector */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 40,
+        }}
+      >
+        {/* Left card — my photo */}
         <Animated.View style={photoLeftStyle}>
           <View
             style={{
-              width: 112,
-              height: 112,
-              borderRadius: 56,
-              borderWidth: 3,
+              width: 140,
+              height: 190,
+              borderRadius: 20,
+              borderWidth: 2,
               borderColor: "#B8860B",
               overflow: "hidden",
-              backgroundColor: "rgba(255,255,255,0.05)",
+              backgroundColor: "#F5F0E8",
             }}
           >
             {myPhoto ? (
@@ -177,39 +110,51 @@ export default function MatchCelebrationScreen() {
                 transition={200}
               />
             ) : (
-              <View className="flex-1 items-center justify-center">
-                <Ionicons name="person" size={40} color="#9CA3AF" />
+              <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name="person" size={48} color="#9CA3AF" />
               </View>
             )}
           </View>
         </Animated.View>
 
-        {/* Heart connector badge */}
-        <Animated.View
-          style={[
-            heartAnimatedStyle,
-            {
-              marginHorizontal: -14,
-              zIndex: 10,
-            },
-          ]}
-        >
-          <View className="w-11 h-11 rounded-full bg-[#B8860B] items-center justify-center border-2 border-black">
-            <Ionicons name="heart" size={20} color="#FFFFFF" />
+        {/* Logo connector bubble */}
+        <Animated.View style={[badgeStyle, { marginHorizontal: -20, zIndex: 10 }]}>
+          <View
+            style={{
+              width: 76,
+              height: 76,
+              borderRadius: 38,
+              backgroundColor: "#FDFAF5",
+              borderWidth: 2,
+              borderColor: "#EDE5D5",
+              alignItems: "center",
+              justifyContent: "center",
+              shadowColor: "#B8860B",
+              shadowOpacity: 0.18,
+              shadowRadius: 10,
+              shadowOffset: { width: 0, height: 2 },
+              elevation: 5,
+            }}
+          >
+            <Image
+              source={require("../../assets/Logos/transparent-logo.png")}
+              style={{ width: 56, height: 56 }}
+              contentFit="contain"
+            />
           </View>
         </Animated.View>
 
-        {/* Other User Photo */}
+        {/* Right card — other user's photo */}
         <Animated.View style={photoRightStyle}>
           <View
             style={{
-              width: 112,
-              height: 112,
-              borderRadius: 56,
-              borderWidth: 3,
+              width: 140,
+              height: 190,
+              borderRadius: 20,
+              borderWidth: 2,
               borderColor: "#B8860B",
               overflow: "hidden",
-              backgroundColor: "rgba(255,255,255,0.05)",
+              backgroundColor: "#F5F0E8",
             }}
           >
             {otherUserPhoto ? (
@@ -220,26 +165,54 @@ export default function MatchCelebrationScreen() {
                 transition={200}
               />
             ) : (
-              <View className="flex-1 items-center justify-center">
-                <Ionicons name="person" size={40} color="#9CA3AF" />
+              <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                <Ionicons name="person" size={48} color="#9CA3AF" />
               </View>
             )}
           </View>
         </Animated.View>
       </View>
 
-      {/* Heading */}
-      <Animated.View style={textStyle} className="items-center">
-        <Text className="text-[#B8860B] text-4xl font-bold text-center mb-2">
+      {/* Text */}
+      <Animated.View style={[textStyle, { alignItems: "center", marginBottom: 40, paddingHorizontal: 8 }]}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <View style={{ height: 1, width: 32, backgroundColor: "#B8860B", opacity: 0.4 }} />
+          <Text style={{ color: "#B8860B", fontSize: 11, letterSpacing: 2.5, opacity: 0.7 }}>
+            ALHAMDULILLAH
+          </Text>
+          <View style={{ height: 1, width: 32, backgroundColor: "#B8860B", opacity: 0.4 }} />
+        </View>
+
+        <Text
+          style={{
+            color: "#1C1208",
+            fontSize: 34,
+            fontWeight: "700",
+            textAlign: "center",
+            marginBottom: 10,
+            letterSpacing: -0.5,
+          }}
+        >
           It's a Match!
         </Text>
-        <Text className="text-[#9E8E7E] text-base text-center leading-6">
-          You and {otherUserName || "your match"} can now start chatting
+        <Text
+          style={{
+            color: "#9E8E7E",
+            fontSize: 15,
+            textAlign: "center",
+            lineHeight: 22,
+          }}
+        >
+          You and{" "}
+          <Text style={{ color: "#B8860B", fontWeight: "600" }}>
+            {otherUserName || "your match"}
+          </Text>{" "}
+          have both shown interest.{"\n"}Start the conversation.
         </Text>
       </Animated.View>
 
       {/* Buttons */}
-      <Animated.View style={buttonsStyle} className="w-full mt-10">
+      <Animated.View style={[buttonsStyle, { width: "100%" }]}>
         <Pressable
           onPress={() => {
             if (matchId) {
@@ -248,18 +221,39 @@ export default function MatchCelebrationScreen() {
               router.back();
             }
           }}
-          className="bg-[#B8860B] rounded-2xl py-4 px-6 mb-3 items-center flex-row justify-center"
+          style={{
+            backgroundColor: "#B8860B",
+            borderRadius: 16,
+            paddingVertical: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 12,
+            gap: 8,
+          }}
         >
-          <Ionicons name="chatbubble" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-          <Text className="text-[#1C1208] text-lg font-bold">Send a Message</Text>
+          <Ionicons name="chatbubble" size={18} color="#FDFAF5" />
+          <Text style={{ color: "#FDFAF5", fontSize: 16, fontWeight: "700" }}>
+            Send a Message
+          </Text>
         </Pressable>
 
         <Pressable
           onPress={() => router.back()}
-          className="bg-[#F5F0E8] rounded-2xl py-4 px-6 items-center flex-row justify-center border border-[#EDE5D5]"
+          style={{
+            backgroundColor: "#F5F0E8",
+            borderRadius: 16,
+            paddingVertical: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            borderWidth: 1,
+            borderColor: "#EDE5D5",
+            gap: 8,
+          }}
         >
-          <Ionicons name="compass-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-          <Text className="text-[#6B5D4F] text-lg font-semibold">
+          <Ionicons name="compass-outline" size={18} color="#6B5D4F" />
+          <Text style={{ color: "#6B5D4F", fontSize: 16, fontWeight: "600" }}>
             Keep Browsing
           </Text>
         </Pressable>
