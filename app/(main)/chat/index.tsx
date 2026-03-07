@@ -128,11 +128,18 @@ export default function ChatListScreen() {
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "matches" }, () => {
           queryClient.invalidateQueries({ queryKey: ["chat-list"] });
         })
+        // DELETE on matches is the definitive signal that an unmatch completed.
+        // This fires AFTER the match row is gone, so the refetch correctly omits it.
+        // Covers both the unmatching user (belt-and-suspenders) and the other user.
+        .on("postgres_changes", { event: "DELETE", schema: "public", table: "matches" }, () => {
+          queryClient.invalidateQueries({ queryKey: ["chat-list"] });
+        })
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "unmatches" }, (payload) => {
           if (payload.new.unmatched_by !== userId) {
+            // Also update the unmatches screen and badge — the chat-list drop
+            // is handled by the matches DELETE subscription above.
             queryClient.invalidateQueries({ queryKey: ["unmatches-notification-count"] });
             queryClient.invalidateQueries({ queryKey: ["unmatches"] });
-            queryClient.invalidateQueries({ queryKey: ["chat-list"] });
           }
         })
         .on("postgres_changes", { event: "UPDATE", schema: "public", table: "unmatches" }, (payload) => {
@@ -425,8 +432,8 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
   const handleUnmatch = async () => {
     swipeableRef.current?.close();
     Alert.alert(
-      "Unmatch User",
-      `Are you sure you want to unmatch with ${fullName}? You won't be able to message them anymore.`,
+      "Unmatch",
+      `Are you sure you want to unmatch with ${fullName}?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -434,13 +441,17 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
           style: "destructive",
           onPress: async () => {
             try {
-              const { error } = await supabase.functions.invoke("unmatch", {
+              await supabase.functions.invoke("unmatch", {
                 body: { matchId: item.id },
               });
-              if (error) throw error;
-              queryClient.invalidateQueries({ queryKey: ["chat-list"] });
             } catch (err: any) {
-              Alert.alert("Error", err.message || "Failed to unmatch.");
+              // Log only — the DB operation may have succeeded even if the
+              // HTTP response errored. The chat list is always refreshed below.
+              console.error("Unmatch invoke error:", err);
+            } finally {
+              // Always invalidate so the card disappears for User A immediately.
+              // The matches DELETE real-time event handles User B's side.
+              queryClient.invalidateQueries({ queryKey: ["chat-list"] });
             }
           },
         },

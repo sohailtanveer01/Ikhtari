@@ -314,7 +314,7 @@ export default function Step1Basic() {
           {/* Header Section */}
           <View className="mb-8">
             <Text className="text-[#1C1208] text-4xl font-bold mb-3 leading-tight">
-              Welcome to Ikhtari!
+              Welcome to Ikhtiar!
             </Text>
             <Text className="text-[#6B5D4F] text-xl font-medium">
               Don&apos;t worry, your information is safe and secure.

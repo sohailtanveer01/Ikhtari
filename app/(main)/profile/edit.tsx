@@ -70,6 +70,7 @@ export default function ProfileEditScreen() {
   const [dob, setDob] = useState("");
   const [education, setEducation] = useState("");
   const [profession, setProfession] = useState("");
+  const [bio, setBio] = useState("");
   const [ethnicity, setEthnicity] = useState("");
   const [nationality, setNationality] = useState("");
   const [intentQuestions, setIntentQuestions] = useState<Array<{ question_text: string; is_from_library: boolean; library_question_id?: string; display_order: number }>>([]);
@@ -159,6 +160,7 @@ export default function ProfileEditScreen() {
       setDob(data.dob || "");
       setEducation(data.education || "");
       setProfession(data.profession || "");
+      setBio(data.bio || "");
       setEthnicity(data.ethnicity || "");
       setNationality(data.nationality || "");
 
@@ -248,7 +250,12 @@ export default function ProfileEditScreen() {
           return "Profession must be less than 100 characters.";
         }
         break;
-      
+
+      case 'bio':
+        if (bio.trim().length > 500) {
+          return "Bio must be less than 500 characters.";
+        }
+        break;
     }
     return null;
   };
@@ -311,7 +318,11 @@ export default function ProfileEditScreen() {
         case 'profession':
           updatePayload.profession = profession.trim();
           break;
-        
+
+        case 'bio':
+          updatePayload.bio = bio.trim();
+          break;
+
         case 'ethnicity':
           updatePayload.ethnicity = (overrideValues?.ethnicity !== undefined ? overrideValues.ethnicity : ethnicity).trim();
           break;
@@ -331,6 +342,7 @@ export default function ProfileEditScreen() {
           updatePayload.has_children = hasChildren;
           updatePayload.education = education.trim();
           updatePayload.profession = profession.trim();
+          updatePayload.bio = bio.trim();
           updatePayload.ethnicity = (overrideValues?.ethnicity !== undefined ? overrideValues.ethnicity : ethnicity).trim();
           updatePayload.nationality = (overrideValues?.nationality !== undefined ? overrideValues.nationality : nationality).trim();
           break;
@@ -838,8 +850,47 @@ export default function ProfileEditScreen() {
               )}
             </Pressable>
 
+            {/* Bio Row */}
+            <Pressable
+              onPress={() => setEditingField(editingField === 'bio' ? null : 'bio')}
+              className="flex-row items-center justify-between py-4 active:bg-[#F5F0E8] rounded-lg"
+            >
+              <View className="flex-row items-center flex-1">
+                <View className="w-10 h-10 rounded-full bg-[#B8860B]/20 items-center justify-center mr-3">
+                  <Text className="text-lg">📝</Text>
+                </View>
+                <Text className="text-[#1C1208] text-base font-medium">About Me</Text>
+              </View>
+              {editingField === 'bio' ? (
+                <View className="flex-1 ml-4">
+                  <TextInput
+                    className="bg-white border border-[#EDE5D5] text-[#1C1208] px-4 py-2.5 rounded-xl focus:border-[#B8860B]"
+                    placeholder="Tell others a little about yourself…"
+                    placeholderTextColor="#9E8E7E"
+                    value={bio}
+                    onChangeText={(text) => setBio(text.slice(0, 500))}
+                    multiline
+                    numberOfLines={4}
+                    maxLength={500}
+                    style={{ textAlignVertical: "top", minHeight: 90 }}
+                    autoFocus
+                  />
+                  <Text className="text-[#C9BFB5] text-xs mt-1 text-right">
+                    {bio.length}/500 characters
+                  </Text>
+                </View>
+              ) : (
+                <View className="flex-row items-center flex-1 justify-end">
+                  <Text className="text-[#1C1208] text-base mr-2 font-medium" numberOfLines={1} style={{ maxWidth: 180 }}>
+                    {bio ? bio : "Not set"}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={20} color="#B8860B" />
+                </View>
+              )}
+            </Pressable>
+
             {/* Save button for text inputs */}
-            {(editingField === 'education' || editingField === 'profession') && (
+            {(editingField === 'education' || editingField === 'profession' || editingField === 'bio') && (
               <View className="flex-row gap-3 mt-6">
                 <Pressable
                   className="flex-1 bg-white px-4 py-3 rounded-xl border border-[#EDE5D5] active:bg-[#F5F0E8]"
