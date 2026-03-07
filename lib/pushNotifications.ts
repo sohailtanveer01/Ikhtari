@@ -14,11 +14,14 @@ AppState.addEventListener("change", (next) => {
 });
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => {
+  handleNotification: async (notification) => {
     const isForeground = currentAppState === "active";
+    const type = notification.request.content.data?.type;
+    // Always surface gate_approved — user is actively waiting for this
+    const alwaysShow = type === "gate_approved";
     return {
-      shouldShowAlert: !isForeground,
-      shouldPlaySound: !isForeground,
+      shouldShowAlert: !isForeground || alwaysShow,
+      shouldPlaySound: !isForeground || alwaysShow,
       shouldSetBadge: false,
     };
   },

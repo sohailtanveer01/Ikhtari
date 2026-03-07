@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Ikhtari",
-    "slug": "Ikhtari",
+    "name": "Ikhtiar",
+    "slug": "Ikhtiar",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "ikhtari",
+    "icon": "./assets/Logos/transparent-logo.png",
+    "scheme": "ikhtiar",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

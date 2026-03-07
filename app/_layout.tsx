@@ -1,12 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useFonts } from "expo-font";
 import * as Notifications from "expo-notifications";
 import { Stack, useFocusEffect, useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Animated } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../global.css";
+import AppSplashScreen from "../components/AppSplashScreen";
 import { LikesNotificationProvider } from "../lib/likesNotificationContext";
 import { registerAndSyncPushToken } from "../lib/pushNotifications";
 import { supabase } from "../lib/supabase";
@@ -27,6 +30,25 @@ const qc = new QueryClient({
 
 export default function RootLayout() {
   const router = useRouter();
+  const [showSplash, setShowSplash] = useState(true);
+  const splashOpacity = useRef(new Animated.Value(1)).current;
+
+  const [fontsLoaded] = useFonts({
+    "GreatVibes-Regular": require("../assets/fonts/GreatVibes-Regular.ttf"),
+  });
+
+  useEffect(() => {
+    if (!fontsLoaded) return;
+    // Keep splash for at least 2.8s after fonts load, then fade out
+    const timer = setTimeout(() => {
+      Animated.timing(splashOpacity, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }).start(() => setShowSplash(false));
+    }, 2800);
+    return () => clearTimeout(timer);
+  }, [fontsLoaded]);
 
   // Lock screen orientation to portrait whenever app is focused
   useFocusEffect(
@@ -60,6 +82,9 @@ export default function RootLayout() {
         router.push(`/(main)/chat/${data.matchId}`);
       } else if (data?.type === "answer_back" && data?.matchId) {
         // Navigate to chat when someone answers back
+        router.push(`/(main)/chat/${data.matchId}`);
+      } else if (data?.type === "gate_approved" && data?.matchId) {
+        // Navigate to chat when intent answers are approved
         router.push(`/(main)/chat/${data.matchId}`);
       }
     });
@@ -105,6 +130,16 @@ export default function RootLayout() {
             </Stack>
           </LikesNotificationProvider>
         </QueryClientProvider>
+
+        {/* Splash screen — shown until fonts load + 2.8s delay */}
+        {showSplash && (
+          <Animated.View
+            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: splashOpacity }}
+            pointerEvents="none"
+          >
+            <AppSplashScreen />
+          </Animated.View>
+        )}
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );

@@ -742,8 +742,11 @@ export default function ProfileScreen() {
       <View className="px-6 pt-16 pb-8">
         {/* Header with Profile Picture and Settings */}
         <View className="items-center mb-8">
-          {/* Settings Icon - Positioned to the left */}
-          <View className="w-full flex-row justify-start mb-4">
+          {/* Header row: wordmark left, settings right */}
+          <View className="w-full flex-row justify-between items-center mb-4">
+            <Text style={{ fontFamily: "GreatVibes-Regular", fontSize: 42, color: "#1C1208", textShadowColor: "#1C1208", textShadowOffset: { width: 0.4, height: 0.4 }, textShadowRadius: 0.5 }}>
+              Ikhtiar
+            </Text>
             <Pressable
               onPress={() => router.push("/(main)/profile/settings")}
               className="w-14 h-14 rounded-full border-2 border-[#B8860B] items-center justify-center"

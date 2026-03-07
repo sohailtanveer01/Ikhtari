@@ -14,13 +14,7 @@ export default function Logo({
   height,
   style 
 }) {
-  const logoSource = variant === 'new-big-transparent'
-    ? require('../assets/Logos/new-big-transparent (1).png')
-    : variant === 'new-transparent'
-    ? require('../assets/Logos/new-transparent-logo.png')
-    : variant === 'transparent'
-    ? require('../assets/Logos/transparent-logo.png')
-    : require('../assets/Logos/colored-logo.png');
+  const logoSource = require('../assets/Logos/transparent-logo.png');
 
   // Maintain aspect ratio if height not specified
   const aspectRatio = 1; // Adjust this based on your logo's actual aspect ratio

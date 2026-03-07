@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { BlurView } from "expo-blur";
 import { ActivityIndicator, Dimensions, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getFlagByName } from "../../../lib/countries";
 import { supabase } from "../../../lib/supabase";
 
@@ -21,6 +23,7 @@ function calculateAge(dob: string | null): number | null {
 
 export default function UserProfileScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { userId, chatId } = useLocalSearchParams<{ userId: string; chatId?: string }>();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
@@ -216,7 +219,7 @@ export default function UserProfileScreen() {
   const hasBackgroundInfo = ethnicity || nationality || location;
 
   return (
-      <View style={{ flex: 1, backgroundColor: '#FDFAF5' }}>
+    <View style={{ flex: 1, backgroundColor: '#FDFAF5' }}>
       <ScrollView
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
@@ -367,9 +370,47 @@ export default function UserProfileScreen() {
             imageIndex++;
           }
 
+          // Review Compatibility gold button at the very end
+          if (profile?.id) {
+            sections.push(
+              <Pressable
+                key="review-compatibility"
+                onPress={() =>
+                  router.push({
+                    pathname: "/(main)/profile/compatibility-review",
+                    params: { profileId: profile.id, profileName: firstName || "them" },
+                  })
+                }
+                style={styles.compatibilityButtonWrapper}
+              >
+                <LinearGradient
+                  colors={["#2A1505", "#5C3010", "#9E6A08", "#B8860B"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.compatibilityButton}
+                >
+                  <View style={styles.compatRing1} />
+                  <View style={styles.compatRing2} />
+                  <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                    <View style={styles.compatIconCircle}>
+                      <Ionicons name="stats-chart" size={22} color="#FFD060" />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 14 }}>
+                      <Text style={styles.compatMicroLabel}>IKHTIAR</Text>
+                      <Text style={styles.compatTitle}>Review Compatibility</Text>
+                      <Text style={styles.compatSubtitle}>See how aligned your values are</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="rgba(255,220,100,0.7)" />
+                  </View>
+                </LinearGradient>
+              </Pressable>
+            );
+          }
+
           return sections;
         })()}
       </ScrollView>
+
     </View>
   );
 }
@@ -519,6 +560,72 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     color: "#1C1208",
     fontWeight: "800",
+  },
+  compatibilityButtonWrapper: {
+    marginHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 16,
+    borderRadius: 24,
+    overflow: "hidden",
+    shadowColor: "#3D2000",
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 12,
+  },
+  compatibilityButton: {
+    padding: 20,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  compatRing1: {
+    position: "absolute",
+    top: -30,
+    right: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 1,
+    borderColor: "rgba(255,220,100,0.1)",
+  },
+  compatRing2: {
+    position: "absolute",
+    top: -10,
+    right: -10,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 1,
+    borderColor: "rgba(255,220,100,0.07)",
+  },
+  compatIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "rgba(255,220,100,0.14)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,220,100,0.22)",
+  },
+  compatMicroLabel: {
+    color: "rgba(255,220,100,0.7)",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 2.5,
+    textTransform: "uppercase",
+    marginBottom: 3,
+  },
+  compatTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "900",
+    letterSpacing: -0.3,
+  },
+  compatSubtitle: {
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 12,
+    marginTop: 3,
   },
 });
 

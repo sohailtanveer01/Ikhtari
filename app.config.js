@@ -1,15 +1,13 @@
 export default {
     expo: {
-      name: "Ikhtari",
-      slug: "ikhtari",
-      scheme: "ikhtari",
-      orientation: "portrait", // Lock app to portrait mode only
-      icon: "./assets/images/icon.png",
-      // Custom notification icon (Android only - iOS uses app icon automatically)
-      // IMPORTANT: Android notification icons MUST be monochrome (white on transparent)
+      name: "Ikhtiar",
+      slug: "habibi-swipe",
+      scheme: "ikhtiar",
+      orientation: "portrait",
+      icon: "./assets/Logos/bigger-logo.png",
       notification: {
         icon: "./assets/images/android-icon-monochrome.png",
-        color: "#B8860B", // Gold color for notification icon
+        color: "#B8860B",
       },
       extra: {
         eas: {
@@ -27,45 +25,40 @@ export default {
         "expo-apple-authentication",
       ],
       ios: {
-        bundleIdentifier: "com.ikhtari.app",
-        icon: "./assets/images/icon.png",
+        bundleIdentifier: "com.habibiswipe.app",
+        icon: "./assets/Logos/bigger-logo.png",
         usesIcloudStorage: true,
-        // iOS automatically uses the app icon for push notifications
-        // Ensure icon.png is 1024x1024 PNG (currently verified)
         infoPlist: {
           NSPhotoLibraryUsageDescription:
-            "Ikhtari needs access to your gallery to upload profile photos.",
+            "Ikhtiar needs access to your gallery to upload profile photos.",
           NSCameraUsageDescription:
-            "Ikhtari needs access to your camera to take profile photos.",
+            "Ikhtiar needs access to your camera to take profile photos.",
           NSMicrophoneUsageDescription:
-            "Ikhtari needs access to your microphone to send voice messages.",
+            "Ikhtiar needs access to your microphone to send voice messages.",
           NSLocationWhenInUseUsageDescription:
-            "Habibi Swipe needs your location to show events near you.",
+            "Ikhtiar needs your location to show events near you.",
           "ITSAppUsesNonExemptEncryption": false,
-          // Lock iOS to portrait mode only
           UISupportedInterfaceOrientations: [
             "UIInterfaceOrientationPortrait"
           ],
-          // iPad can support portrait and upside down, but not landscape
           "UISupportedInterfaceOrientations~ipad": [
             "UIInterfaceOrientationPortrait"
           ],
         },
       },
       android: {
-        package: "com.ikhtari.app",
-        screenOrientation: "portrait", // Lock Android to portrait mode only
+        package: "com.habibiswipe.app",
+        screenOrientation: "portrait",
         permissions: [
           "READ_EXTERNAL_STORAGE",
           "WRITE_EXTERNAL_STORAGE",
           "CAMERA",
           "android.permission.ACCESS_FINE_LOCATION",
         ],
-        // Android notification icon configuration
-        icon: "./assets/images/icon.png",
+        icon: "./assets/Logos/bigger-logo.png",
         adaptiveIcon: {
-          foregroundImage: "./assets/images/icon.png",
-          backgroundColor: "#000000", // Black background to match app theme
+          foregroundImage: "./assets/Logos/bigger-logo.png",
+          backgroundColor: "#000000",
         },
       },
     },

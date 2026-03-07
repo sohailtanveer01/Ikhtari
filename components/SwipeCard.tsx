@@ -35,7 +35,8 @@ export default function SwipeCard({ profile, onTap }: SwipeCardProps) {
   const location = [city, country].filter(Boolean).join(", ");
 
   const rawScore = profile?.compatibility_score;
-  const compatibilityScore = rawScore != null ? Math.round(rawScore * 100) : null;
+  // Score is already 0-100 from the server
+  const compatibilityScore = rawScore != null ? Math.round(rawScore) : null;
 
   const isOnline = profile?.is_online ?? false;
 

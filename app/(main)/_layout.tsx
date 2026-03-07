@@ -38,6 +38,7 @@ export default function MainLayout() {
     pathname?.includes("/swipe/setup-questions") ||
     pathname?.includes("/likes/review-interest") ||
     pathname?.includes("/likes/answer-back") ||
+    pathname?.includes("/profile/compatibility-review") ||
     pathname === "/matches" ||
     (pathname?.includes("/events/") && pathname !== "/events");
 
@@ -393,6 +394,8 @@ export default function MainLayout() {
       <Tabs.Screen name="profile/wali-setup" options={{ href: null }} />
       <Tabs.Screen name="profile/chaperone-dashboard" options={{ href: null }} />
       <Tabs.Screen name="profile/chaperone-chat" options={{ href: null }} />
+      <Tabs.Screen name="profile/compatibility-review" options={{ href: null }} />
+
       {/* Hidden routes - events */}
       <Tabs.Screen name="events/[eventId]" options={{ href: null }} />
       {/* Hidden routes - misc */}

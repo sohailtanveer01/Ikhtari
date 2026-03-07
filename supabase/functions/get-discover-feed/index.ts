@@ -354,34 +354,59 @@ serve(async (req) => {
       }
     }
 
-    // Simple compatibility scoring (mirrors lib/compatibility.ts logic)
+    // Compatibility scoring — must exactly mirror lib/compatibility.ts
+    // Categories: Deen 30%, Financial 20%, Lifestyle 20%, Family 20%, Mahr 10%
+    const OPTION_ORDERS: Record<string, string[]> = {
+      primary_provider: ["husband", "shared", "flexible"],
+      expected_income_range: ["low", "medium", "high", "flexible"],
+      financial_transparency: ["true", "false"],
+      savings_expectations: ["high", "medium", "low", "none"],
+      living_arrangement: ["separate", "with_family", "flexible"],
+      work_life_balance: ["traditional", "modern", "flexible"],
+      social_activities: ["conservative", "moderate", "active"],
+      technology_usage: ["limited", "moderate", "active"],
+      travel_expectations: ["frequent", "occasional", "rare", "none"],
+      mahr_type: ["cash", "property", "education", "symbolic", "flexible"],
+      mahr_range: ["symbolic", "modest", "moderate", "substantial", "flexible"],
+      payment_timeline: ["immediate", "deferred", "flexible"],
+      flexibility: ["strict", "moderate", "very_flexible"],
+      family_involvement: ["high", "moderate", "low", "none"],
+      living_with_inlaws: ["yes", "temporary", "no", "flexible"],
+      family_visits: ["frequent", "moderate", "occasional", "rare"],
+      cultural_priorities: ["islamic_first", "balanced", "cultural_first"],
+      prayer_together: ["always", "often", "sometimes", "prefer_not"],
+      religious_education_children: ["essential", "important", "preferred"],
+      religious_activities: ["very_active", "active", "moderate", "minimal"],
+      madhhab_compatibility: ["essential", "important", "preferred", "flexible"],
+    };
+    const scoreField = (av: string, bv: string, field: string): number => {
+      if (av === bv) return 100;
+      if (av === "flexible" || av === "very_flexible" || bv === "flexible" || bv === "very_flexible") return 80;
+      const order = OPTION_ORDERS[field];
+      if (!order) return 50;
+      const ia = order.indexOf(av), ib = order.indexOf(bv);
+      if (ia === -1 || ib === -1) return 50;
+      return Math.abs(ia - ib) === 1 ? 60 : 20;
+    };
+    const scoreCategory = (a: any, b: any): number => {
+      if (!a || !b) return 0;
+      const fields = Object.keys(a);
+      let total = 0, count = 0;
+      for (const f of fields) {
+        if (a[f] === undefined || b[f] === undefined) continue;
+        total += scoreField(String(a[f]), String(b[f]), f);
+        count++;
+      }
+      return count > 0 ? Math.round(total / count) : 0;
+    };
     const computeScore = (mine: any, theirs: any): number | null => {
       if (!mine || !theirs) return null;
-      const categories = [
-        { key: "religious_expectations", weight: 0.30 },
-        { key: "financial_expectations", weight: 0.20 },
-        { key: "lifestyle_expectations", weight: 0.20 },
-        { key: "dress_code_expectations", weight: 0.20 },
-        { key: "mahr_expectations",       weight: 0.10 },
-      ];
-      let overall = 0;
-      for (const cat of categories) {
-        const a = mine[cat.key];
-        const b = theirs[cat.key];
-        if (!a || !b) continue;
-        const fields = Object.keys(a);
-        let total = 0, count = 0;
-        for (const f of fields) {
-          if (a[f] === undefined || b[f] === undefined) continue;
-          const av = String(a[f]), bv = String(b[f]);
-          if (av === bv) { total += 100; }
-          else if (av === "flexible" || av === "very_flexible" || bv === "flexible" || bv === "very_flexible") { total += 80; }
-          else { total += 40; }
-          count++;
-        }
-        overall += (count > 0 ? total / count : 0) * cat.weight;
-      }
-      return Math.round(overall);
+      const deen     = scoreCategory(mine.religious_expectations,  theirs.religious_expectations);
+      const financial = scoreCategory(mine.financial_expectations, theirs.financial_expectations);
+      const lifestyle = scoreCategory(mine.lifestyle_expectations, theirs.lifestyle_expectations);
+      const family   = scoreCategory(mine.family_expectations,     theirs.family_expectations);
+      const mahr     = scoreCategory(mine.mahr_expectations,       theirs.mahr_expectations);
+      return Math.round(deen * 0.30 + financial * 0.20 + lifestyle * 0.20 + family * 0.20 + mahr * 0.10);
     };
 
     // Fetch prompts for filtered profiles

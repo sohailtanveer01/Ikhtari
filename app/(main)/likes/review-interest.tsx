@@ -194,6 +194,7 @@ export default function ReviewInterestScreen() {
           </Pressable>
         </View>
       </View>
+
     </View>
   );
 }

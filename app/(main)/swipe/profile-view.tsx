@@ -289,6 +289,7 @@ export default function ProfileViewScreen() {
       >
         {renderBottomAction()}
       </View>
+
     </View>
   );
 }

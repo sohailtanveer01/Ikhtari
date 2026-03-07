@@ -41,10 +41,11 @@ function formatTimestamp(dateStr: string): string {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 1) return "now";
-  if (diffMins < 60) return `${diffMins}m`;
-  if (diffHours < 24) return `${diffHours}h`;
-  if (diffDays < 7) return `${diffDays}d`;
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays}d ago`;
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
@@ -80,16 +81,20 @@ export default function ChatListScreen() {
 
       const { data: unmatches, error: unmatchesError } = await supabase
         .from("unmatches")
-        .select("id, rematch_status")
-        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-        .neq("unmatched_by", user.id);
-
-      const filteredUnmatches =
-        unmatches?.filter(
-          (u) => u.rematch_status !== "pending" && u.rematch_status !== "accepted"
-        ) || [];
+        .select("id, rematch_status, unmatched_by, rematch_requested_by")
+        .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
 
       if (unmatchesError) console.error("Error fetching unmatches count:", unmatchesError);
+
+      // Count items that need the user's attention:
+      // 1. Someone else unmatched me with no rematch activity yet
+      // 2. Someone sent me a rematch request that I haven't responded to
+      const actionableUnmatches = unmatches?.filter((u) => {
+        if (u.rematch_status === "accepted") return false;
+        if (!u.rematch_status && u.unmatched_by !== user.id) return true;
+        if (u.rematch_status === "pending" && u.rematch_requested_by !== user.id) return true;
+        return false;
+      }) || [];
 
       const { data: declinedCompliments, error: complimentsError } = await supabase
         .from("compliments")
@@ -100,7 +105,7 @@ export default function ChatListScreen() {
       if (complimentsError)
         console.error("Error fetching declined compliments count:", complimentsError);
 
-      return filteredUnmatches.length + (declinedCompliments?.length || 0);
+      return actionableUnmatches.length + (declinedCompliments?.length || 0);
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -127,21 +132,20 @@ export default function ChatListScreen() {
           if (payload.new.unmatched_by !== userId) {
             queryClient.invalidateQueries({ queryKey: ["unmatches-notification-count"] });
             queryClient.invalidateQueries({ queryKey: ["unmatches"] });
+            queryClient.invalidateQueries({ queryKey: ["chat-list"] });
           }
         })
         .on("postgres_changes", { event: "UPDATE", schema: "public", table: "unmatches" }, (payload) => {
           if (payload.new.user1_id === userId || payload.new.user2_id === userId) {
             if (payload.new.rematch_status === "accepted") {
+              // Rematch accepted: new match was created — refresh chat list + unmatches
               queryClient.invalidateQueries({ queryKey: ["unmatches-notification-count"] });
               queryClient.invalidateQueries({ queryKey: ["unmatches"] });
               queryClient.invalidateQueries({ queryKey: ["chat-list"] });
-            } else if (
-              payload.new.rematch_status === "rejected" &&
-              payload.old?.rematch_status !== "rejected"
-            ) {
-              queryClient.invalidateQueries({ queryKey: ["chat-list"] });
             } else if (payload.old?.rematch_status !== payload.new.rematch_status) {
+              // Any other status change (pending, rejected): only refresh unmatches screen + badge
               queryClient.invalidateQueries({ queryKey: ["unmatches-notification-count"] });
+              queryClient.invalidateQueries({ queryKey: ["unmatches"] });
             }
           }
         })
@@ -235,8 +239,8 @@ export default function ChatListScreen() {
         }}
       >
         {/* Wordmark */}
-        <Text style={{ fontSize: 28, fontWeight: "900", letterSpacing: -0.8, color: "#1C1208" }}>
-          ik<Text style={{ color: "#B8860B" }}>htiar</Text>
+        <Text style={{ fontFamily: "GreatVibes-Regular", fontSize: 42, color: "#1C1208", textShadowColor: "#1C1208", textShadowOffset: { width: 0.4, height: 0.4 }, textShadowRadius: 0.5 }}>
+          Ikhtiar
         </Text>
 
         {/* Unmatches button */}
@@ -473,8 +477,9 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
       <Animated.View
         style={{
           flexDirection: "row",
-          width: 164,
+          width: 160,
           marginBottom: 10,
+          marginLeft: 8,
           gap: 8,
           opacity,
         }}
@@ -531,18 +536,6 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
           : `${fullName} sent you a compliment`}
       </Text>
     );
-  } else if (item.hasPendingRematchRequest) {
-    subText = (
-      <Text style={{ fontSize: 13, color: "#B8860B", fontStyle: "italic" }} numberOfLines={1}>
-        {fullName} requested a rematch
-      </Text>
-    );
-  } else if (item.isRematchRejected) {
-    subText = (
-      <Text style={{ fontSize: 13, color: "#EF4444", fontStyle: "italic" }} numberOfLines={1}>
-        Your rematch request was declined
-      </Text>
-    );
   } else if (item.isRematchAccepted) {
     subText = (
       <Text style={{ fontSize: 13, color: "#B8860B", fontStyle: "italic" }} numberOfLines={1}>
@@ -576,167 +569,118 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
       onPress={() => router.push(`/(main)/chat/${item.id}`)}
       style={({ pressed }) => ({
         backgroundColor: "#FFFFFF",
-        borderRadius: 20,
+        borderRadius: 16,
         marginBottom: 10,
-        borderWidth: 1.5,
-        borderColor: hasUnread ? "#B8860B" : "rgba(184,134,11,0.5)",
-        shadowColor: "#B8860B",
-        shadowOpacity: hasUnread ? 0.18 : 0.1,
-        shadowRadius: hasUnread ? 12 : 8,
-        shadowOffset: { width: 0, height: hasUnread ? 4 : 2 },
-        elevation: hasUnread ? 6 : 3,
+        borderWidth: 2,
+        borderColor: "#B8860B",
+        shadowColor: "#000",
+        shadowOpacity: 0.07,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 2,
+        overflow: "hidden",
         transform: [{ scale: pressed ? 0.98 : 1 }],
-        flexDirection: "row",
-        alignItems: "center",
-        padding: 14,
       })}
     >
-      {/* Avatar */}
-      <View style={{ position: "relative", marginRight: 14 }}>
-        {/* Gold ring for unread */}
-        {hasUnread ? (
-          <LinearGradient
-            colors={["#E8B820", "#B8860B"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              width: 68,
-              height: 68,
-              borderRadius: 34,
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 2.5,
-            }}
-          >
-            {mainPhoto ? (
-              <Image
-                source={{ uri: mainPhoto }}
-                style={{ width: 63, height: 63, borderRadius: 31.5 }}
-                resizeMode="cover"
-              />
-            ) : (
-              <View
-                style={{
-                  width: 63,
-                  height: 63,
-                  borderRadius: 31.5,
-                  backgroundColor: "#F5F0E8",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text style={{ fontSize: 26 }}>👤</Text>
-              </View>
-            )}
-          </LinearGradient>
-        ) : mainPhoto ? (
-          <Image
-            source={{ uri: mainPhoto }}
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 32,
-              borderWidth: 1.5,
-              borderColor: "#EDE5D5",
-            }}
-            resizeMode="cover"
-          />
-        ) : (
-          <View
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 32,
-              backgroundColor: "#F5F0E8",
-              alignItems: "center",
-              justifyContent: "center",
-              borderWidth: 1.5,
-              borderColor: "#EDE5D5",
-            }}
-          >
-            <Text style={{ fontSize: 26 }}>👤</Text>
-          </View>
-        )}
-
-        {/* Active indicator */}
-        {isOtherUserActive && (
-          <View
-            style={{
-              position: "absolute",
-              bottom: 1,
-              right: 1,
-              width: 14,
-              height: 14,
-              backgroundColor: "#22C55E",
-              borderRadius: 7,
-              borderWidth: 2,
-              borderColor: "#FFFFFF",
-            }}
-          />
-        )}
-      </View>
-
-      {/* Content */}
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 3 }}>
-          <Text
-            style={{
-              fontSize: 15,
-              fontWeight: hasUnread ? "800" : "600",
-              color: "#1C1208",
-              flex: 1,
-            }}
-            numberOfLines={1}
-          >
-            {fullName}
-          </Text>
-          {item.isCompliment && (
+      {/* Inner row — explicit View so flexDirection is always applied */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+        }}
+      >
+        {/* Avatar */}
+        <View style={{ position: "relative", marginRight: 14, flexShrink: 0 }}>
+          {mainPhoto ? (
+            <Image
+              source={{ uri: mainPhoto }}
+              style={{ width: 62, height: 62, borderRadius: 31 }}
+              resizeMode="cover"
+            />
+          ) : (
             <View
               style={{
-                backgroundColor: "rgba(168,85,247,0.12)",
-                borderRadius: 999,
-                padding: 4,
-              }}
-            >
-              <DiamondIcon size={12} color="#9333EA" style={{}} />
-            </View>
-          )}
-          {hasUnread && (
-            <View
-              style={{
-                backgroundColor: "#B8860B",
-                borderRadius: 999,
-                minWidth: 20,
-                height: 20,
+                width: 62,
+                height: 62,
+                borderRadius: 31,
+                backgroundColor: "#F5F0E8",
                 alignItems: "center",
                 justifyContent: "center",
-                paddingHorizontal: 5,
               }}
             >
-              <Text style={{ color: "#fff", fontSize: 11, fontWeight: "800" }}>
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </Text>
+              <Text style={{ fontSize: 26 }}>👤</Text>
             </View>
           )}
-        </View>
-        {subText}
-      </View>
 
-      {/* Timestamp */}
-      {item.lastMessage && (
-        <Text
-          style={{
-            color: "#C4B5A5",
-            fontSize: 11.5,
-            fontWeight: "500",
-            marginLeft: 8,
-            alignSelf: "flex-start",
-            marginTop: 2,
-          }}
-        >
-          {formatTimestamp(item.lastMessage.created_at)}
-        </Text>
-      )}
+          {/* Online dot */}
+          {isOtherUserActive && (
+            <View
+              style={{
+                position: "absolute",
+                bottom: 1,
+                right: 1,
+                width: 14,
+                height: 14,
+                backgroundColor: "#22C55E",
+                borderRadius: 7,
+                borderWidth: 2,
+                borderColor: "#FFFFFF",
+              }}
+            />
+          )}
+        </View>
+
+        {/* Content — name beside avatar, message below name */}
+        <View style={{ flex: 1 }}>
+          {/* Row 1: Name + Timestamp */}
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: hasUnread ? "700" : "600",
+                color: "#1C1208",
+                flex: 1,
+              }}
+              numberOfLines={1}
+            >
+              {fullName}
+            </Text>
+            {item.isCompliment && (
+              <View style={{ backgroundColor: "rgba(168,85,247,0.12)", borderRadius: 999, padding: 3, marginRight: 6 }}>
+                <DiamondIcon size={11} color="#9333EA" style={{}} />
+              </View>
+            )}
+            <Text style={{ color: "#B0A090", fontSize: 12 }}>
+              {item.lastMessage ? formatTimestamp(item.lastMessage.created_at) : ""}
+            </Text>
+          </View>
+
+          {/* Row 2: Message preview + unread badge */}
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={{ flex: 1 }}>{subText}</View>
+            {hasUnread && (
+              <View
+                style={{
+                  backgroundColor: "#B8860B",
+                  borderRadius: 999,
+                  minWidth: 22,
+                  height: 22,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  paddingHorizontal: 6,
+                  marginLeft: 10,
+                }}
+              >
+                <Text style={{ color: "#fff", fontSize: 11, fontWeight: "800" }}>
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
     </Pressable>
   );
 

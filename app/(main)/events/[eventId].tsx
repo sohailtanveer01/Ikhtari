@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -49,7 +50,14 @@ function formatEventDate(dateStr: string): string {
     year: "numeric",
     month: "long",
     day: "numeric",
-  }) + " · " + date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  });
+}
+
+function formatEventTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 export default function EventDetailScreen() {
@@ -95,22 +103,14 @@ export default function EventDetailScreen() {
     }
   };
 
-  const handleBuyTicket = () => {
+  const handleRegister = () => {
     if (!event) return;
-    const isFree = !event.ticket_price || event.ticket_price === 0;
-    const currency = event.ticket_currency || "USD";
-    const currencySymbol = currency === "USD" ? "$" : currency === "GBP" ? "£" : currency === "EUR" ? "€" : "$";
-    const priceLabel = isFree ? "Free" : `${currencySymbol}${event.ticket_price}`;
-
     Alert.alert(
       "Confirm Registration",
-      `Register for "${event.title}"?\n\nPrice: ${priceLabel}`,
+      `Register for "${event.title}"?\n\nThis event is free to attend.`,
       [
         { text: "Cancel", style: "cancel" },
-        {
-          text: isFree ? "Register" : `Pay ${priceLabel}`,
-          onPress: purchaseTicket,
-        },
+        { text: "Register", onPress: purchaseTicket },
       ]
     );
   };
@@ -124,7 +124,7 @@ export default function EventDetailScreen() {
       });
 
       if (error) {
-        Alert.alert("Error", error.message || "Failed to purchase ticket");
+        Alert.alert("Error", error.message || "Failed to register");
         return;
       }
 
@@ -132,10 +132,9 @@ export default function EventDetailScreen() {
       if (parsed?.success) {
         setSuccessTicketCode(parsed.ticket_code);
         setSuccessModal(true);
-        // Refresh ticket state
         setTicket({ ticket_code: parsed.ticket_code, status: "confirmed" });
       } else {
-        Alert.alert("Error", parsed?.error || "Failed to purchase ticket");
+        Alert.alert("Error", parsed?.error || "Failed to register");
       }
     } catch (e: any) {
       Alert.alert("Error", e.message || "Something went wrong");
@@ -156,41 +155,58 @@ export default function EventDetailScreen() {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>Event not found</Text>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backBtnText}>Go Back</Text>
+        <Pressable onPress={() => router.back()} style={styles.goBackBtn}>
+          <Text style={styles.goBackBtnText}>Go Back</Text>
         </Pressable>
       </View>
     );
   }
 
-  const isFree = !event.ticket_price || event.ticket_price === 0;
-  const currency = event.ticket_currency || "USD";
-  const currencySymbol = currency === "USD" ? "$" : currency === "GBP" ? "£" : currency === "EUR" ? "€" : "$";
   const hasTicket = ticket?.status === "confirmed";
   const hasLocation = event.lat != null && event.lon != null;
   const spotsLeft = event.max_capacity != null
     ? event.max_capacity - (event.tickets_sold || 0)
     : null;
+  const timeRange = event.end_date
+    ? `${formatEventTime(event.event_date)} – ${formatEventTime(event.end_date)}`
+    : formatEventTime(event.event_date);
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
-        {/* Cover image */}
-        <View style={styles.coverContainer}>
+      <LinearGradient
+        colors={["#FFF2B8", "#FDF8EE", "#FDFAF5"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.4 }}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero */}
+        <View style={styles.heroContainer}>
           {event.cover_image_url ? (
             <Image
               source={{ uri: event.cover_image_url }}
-              style={styles.coverImage}
+              style={styles.heroImage}
               contentFit="cover"
-              transition={200}
+              transition={300}
               cachePolicy="memory-disk"
             />
           ) : (
-            <View style={[styles.coverImage, styles.coverFallback]}>
-              <Ionicons name="calendar" size={52} color="rgba(28,18,8,0.2)" />
+            <View style={[styles.heroImage, styles.heroFallback]}>
+              <Ionicons name="calendar" size={64} color="rgba(28,18,8,0.15)" />
             </View>
           )}
-          {/* Back button overlay */}
+
+          {/* Dark gradient over image bottom */}
+          <LinearGradient
+            colors={["transparent", "rgba(28,18,8,0.72)"]}
+            style={styles.heroGradient}
+          />
+
+          {/* Back button */}
           <Pressable
             onPress={() => router.back()}
             style={[styles.backOverlay, { top: insets.top + 8 }]}
@@ -198,58 +214,85 @@ export default function EventDetailScreen() {
           >
             <Ionicons name="chevron-back" size={22} color="#FFF" />
           </Pressable>
+
+          {/* Free badge */}
+          <View style={[styles.freeBadge, { top: insets.top + 8 }]}>
+            <Ionicons name="gift-outline" size={13} color="#B8860B" />
+            <Text style={styles.freeBadgeText}>Free</Text>
+          </View>
+
+          {/* Title overlay on hero */}
+          <View style={styles.heroTitleContainer}>
+            <Text style={styles.heroTitle} numberOfLines={2}>{event.title}</Text>
+            {event.city && (
+              <View style={styles.heroCityRow}>
+                <Ionicons name="location" size={13} color="rgba(255,255,255,0.7)" />
+                <Text style={styles.heroCityText}>
+                  {event.city}{event.country ? `, ${event.country}` : ""}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Content */}
         <View style={styles.content}>
-          {/* Title */}
-          <Text style={styles.title}>{event.title}</Text>
 
-          {/* Date */}
-          <View style={styles.metaRow}>
-            <View style={styles.metaIcon}>
-              <Ionicons name="calendar-outline" size={18} color="#B8860B" />
-            </View>
-            <Text style={styles.metaText}>{formatEventDate(event.event_date)}</Text>
-          </View>
-
-          {/* Location */}
-          <View style={styles.metaRow}>
-            <View style={styles.metaIcon}>
-              <Ionicons name="location-outline" size={18} color="#B8860B" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.metaText}>{event.location_name}</Text>
-              {event.address && (
-                <Text style={styles.metaSubText}>{event.address}</Text>
-              )}
-              {event.city && (
-                <Text style={styles.metaSubText}>{event.city}{event.country ? `, ${event.country}` : ""}</Text>
-              )}
+          {/* Date & Time card */}
+          <View style={styles.card}>
+            <View style={styles.cardIconRow}>
+              <View style={[styles.cardIcon, { backgroundColor: "rgba(184,134,11,0.12)" }]}>
+                <Ionicons name="calendar" size={22} color="#B8860B" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardLabel}>Date & Time</Text>
+                <Text style={styles.cardValue}>{formatEventDate(event.event_date)}</Text>
+                <Text style={styles.cardSub}>{timeRange}</Text>
+              </View>
             </View>
           </View>
 
-          {/* Organizer */}
-          {event.organizer_name && (
-            <View style={styles.metaRow}>
-              <View style={styles.metaIcon}>
-                <Ionicons name="person-outline" size={18} color="#B8860B" />
+          {/* Location card */}
+          <View style={styles.card}>
+            <View style={styles.cardIconRow}>
+              <View style={[styles.cardIcon, { backgroundColor: "rgba(184,134,11,0.12)" }]}>
+                <Ionicons name="location" size={22} color="#B8860B" />
               </View>
-              <Text style={styles.metaText}>Organized by {event.organizer_name}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardLabel}>Venue</Text>
+                <Text style={styles.cardValue}>{event.location_name}</Text>
+                {event.address && <Text style={styles.cardSub}>{event.address}</Text>}
+              </View>
             </View>
-          )}
+          </View>
 
-          {/* Capacity */}
-          {spotsLeft !== null && (
-            <View style={styles.metaRow}>
-              <View style={styles.metaIcon}>
-                <Ionicons name="people-outline" size={18} color="#B8860B" />
+          {/* Organizer + Capacity row */}
+          <View style={styles.rowCards}>
+            {event.organizer_name && (
+              <View style={[styles.card, styles.halfCard]}>
+                <View style={[styles.cardIcon, { backgroundColor: "rgba(184,134,11,0.12)", marginBottom: 8 }]}>
+                  <Ionicons name="person" size={20} color="#B8860B" />
+                </View>
+                <Text style={styles.cardLabel}>Organiser</Text>
+                <Text style={styles.cardValueSmall}>{event.organizer_name}</Text>
               </View>
-              <Text style={styles.metaText}>
-                {spotsLeft <= 0 ? "Sold out" : `${spotsLeft} spot${spotsLeft === 1 ? "" : "s"} remaining`}
-              </Text>
-            </View>
-          )}
+            )}
+            {spotsLeft !== null && (
+              <View style={[styles.card, styles.halfCard]}>
+                <View style={[styles.cardIcon, { backgroundColor: spotsLeft <= 0 ? "rgba(239,68,68,0.1)" : "rgba(16,185,129,0.1)", marginBottom: 8 }]}>
+                  <Ionicons
+                    name="people"
+                    size={20}
+                    color={spotsLeft <= 0 ? "#EF4444" : "#10B981"}
+                  />
+                </View>
+                <Text style={styles.cardLabel}>Capacity</Text>
+                <Text style={[styles.cardValueSmall, { color: spotsLeft <= 0 ? "#EF4444" : "#10B981" }]}>
+                  {spotsLeft <= 0 ? "Sold out" : `${spotsLeft} spots left`}
+                </Text>
+              </View>
+            )}
+          </View>
 
           {/* Tags */}
           {event.tags && event.tags.length > 0 && (
@@ -262,20 +305,20 @@ export default function EventDetailScreen() {
             </View>
           )}
 
-          {/* Description */}
+          {/* About section */}
           {event.description && (
-            <View style={styles.descriptionContainer}>
+            <View style={styles.aboutCard}>
               <Text style={styles.sectionLabel}>About this event</Text>
               <Text style={styles.description}>{event.description}</Text>
             </View>
           )}
 
-          {/* Mini map */}
+          {/* Map */}
           {hasLocation && (
-            <View style={styles.miniMapContainer}>
-              <Text style={styles.sectionLabel}>Location</Text>
+            <View style={styles.mapCard}>
+              <Text style={styles.sectionLabel}>Location on map</Text>
               <MapView
-                style={styles.miniMap}
+                style={styles.map}
                 scrollEnabled={false}
                 zoomEnabled={false}
                 pitchEnabled={false}
@@ -283,8 +326,8 @@ export default function EventDetailScreen() {
                 initialRegion={{
                   latitude: event.lat!,
                   longitude: event.lon!,
-                  latitudeDelta: 0.02,
-                  longitudeDelta: 0.02,
+                  latitudeDelta: 0.018,
+                  longitudeDelta: 0.018,
                 }}
               >
                 <Marker
@@ -292,34 +335,39 @@ export default function EventDetailScreen() {
                   pinColor="#B8860B"
                 />
               </MapView>
+              {event.address && (
+                <View style={styles.mapAddressRow}>
+                  <Ionicons name="navigate-outline" size={14} color="#9E8E7E" />
+                  <Text style={styles.mapAddressText}>{event.address}</Text>
+                </View>
+              )}
             </View>
           )}
         </View>
       </ScrollView>
 
-      {/* Bottom fixed bar */}
+      {/* Bottom bar */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 8 }]}>
         {hasTicket ? (
           <View style={styles.attendingButton}>
-            <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-            <Text style={styles.attendingButtonText}>You're Attending</Text>
+            <Ionicons name="checkmark-circle" size={22} color="#10B981" />
+            <Text style={styles.attendingText}>You're Registered</Text>
           </View>
         ) : (
           <Pressable
-            onPress={handleBuyTicket}
-            style={[styles.buyButton, purchasing && styles.buyButtonDisabled]}
+            onPress={handleRegister}
+            style={[styles.registerButton, (purchasing || (spotsLeft !== null && spotsLeft <= 0)) && styles.buttonDisabled]}
             disabled={purchasing || (spotsLeft !== null && spotsLeft <= 0)}
           >
             {purchasing ? (
-              <ActivityIndicator size="small" color="#000" />
+              <ActivityIndicator size="small" color="#FFF" />
             ) : (
-              <Text style={styles.buyButtonText}>
-                {spotsLeft !== null && spotsLeft <= 0
-                  ? "Sold Out"
-                  : isFree
-                  ? "Register — Free"
-                  : `Buy Ticket — ${currencySymbol}${event.ticket_price}`}
-              </Text>
+              <>
+                <Ionicons name="ticket-outline" size={20} color="#FFF" />
+                <Text style={styles.registerButtonText}>
+                  {spotsLeft !== null && spotsLeft <= 0 ? "Sold Out" : "Register — Free"}
+                </Text>
+              </>
             )}
           </Pressable>
         )}
@@ -329,14 +377,16 @@ export default function EventDetailScreen() {
       <Modal visible={successModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Ionicons name="checkmark-circle" size={60} color="#10B981" />
+            <View style={styles.modalIconCircle}>
+              <Ionicons name="checkmark" size={36} color="#10B981" />
+            </View>
             <Text style={styles.modalTitle}>You're Registered!</Text>
-            <Text style={styles.modalSub}>Your ticket code:</Text>
+            <Text style={styles.modalSub}>Your ticket code</Text>
             <View style={styles.ticketCodeBox}>
               <Text style={styles.ticketCode}>{successTicketCode}</Text>
             </View>
             <Text style={styles.modalNote}>Show this code at the event entrance.</Text>
-            <Pressable onPress={() => setSuccessModal(false)} style={styles.modalClose}>
+            <Pressable onPress={() => setSuccessModal(false)} style={styles.modalCloseBtn}>
               <Text style={styles.modalCloseText}>Done</Text>
             </Pressable>
           </View>
@@ -362,84 +412,159 @@ const styles = StyleSheet.create({
     color: "#1C1208",
     fontSize: 16,
   },
-  backBtn: {
+  goBackBtn: {
     backgroundColor: "#B8860B",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
   },
-  backBtnText: {
-    color: "#000",
+  goBackBtnText: {
+    color: "#FFF",
     fontWeight: "700",
   },
-  coverContainer: {
-    height: 220,
+
+  // Hero
+  heroContainer: {
+    height: 300,
     position: "relative",
   },
-  coverImage: {
+  heroImage: {
     width: "100%",
     height: "100%",
   },
-  coverFallback: {
+  heroFallback: {
     backgroundColor: "#F5F0E8",
     alignItems: "center",
     justifyContent: "center",
   },
+  heroGradient: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 160,
+  },
   backOverlay: {
     position: "absolute",
     left: 16,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(0,0,0,0.45)",
     alignItems: "center",
     justifyContent: "center",
   },
-  content: {
+  freeBadge: {
+    position: "absolute",
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(255,242,184,0.95)",
+    borderWidth: 1,
+    borderColor: "#B8860B",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  freeBadgeText: {
+    color: "#B8860B",
+    fontSize: 12,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  heroTitleContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     padding: 20,
+    paddingBottom: 18,
+    gap: 4,
+  },
+  heroTitle: {
+    color: "#FFFFFF",
+    fontSize: 22,
+    fontWeight: "800",
+    lineHeight: 28,
+  },
+  heroCityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  heroCityText: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 13,
+  },
+
+  // Content
+  content: {
+    padding: 16,
     gap: 12,
   },
-  title: {
-    color: "#1C1208",
-    fontSize: 24,
-    fontWeight: "800",
-    marginBottom: 4,
+  card: {
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#EDE5D5",
   },
-  metaRow: {
+  cardIconRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 10,
+    gap: 14,
   },
-  metaIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: "rgba(184,134,11,0.12)",
+  cardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 1,
+    flexShrink: 0,
   },
-  metaText: {
+  cardLabel: {
+    color: "#9E8E7E",
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 3,
+  },
+  cardValue: {
     color: "#1C1208",
-    fontSize: 14,
-    flex: 1,
+    fontSize: 15,
+    fontWeight: "700",
     lineHeight: 20,
   },
-  metaSubText: {
+  cardValueSmall: {
+    color: "#1C1208",
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 18,
+  },
+  cardSub: {
     color: "#9E8E7E",
     fontSize: 13,
-    marginTop: 2,
+    marginTop: 3,
+  },
+  rowCards: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  halfCard: {
+    flex: 1,
   },
   tagsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginTop: 4,
   },
   tagChip: {
-    backgroundColor: "rgba(184,134,11,0.15)",
+    backgroundColor: "rgba(184,134,11,0.12)",
     borderWidth: 1,
-    borderColor: "rgba(184,134,11,0.4)",
+    borderColor: "rgba(184,134,11,0.35)",
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 5,
@@ -449,32 +574,54 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
-  descriptionContainer: {
-    marginTop: 8,
+  aboutCard: {
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#EDE5D5",
     gap: 8,
   },
   sectionLabel: {
     color: "#9E8E7E",
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
     textTransform: "uppercase",
-    letterSpacing: 0.8,
+    letterSpacing: 0.6,
   },
   description: {
-    color: "#6B5D4F",
+    color: "#4B3D2E",
     fontSize: 14,
     lineHeight: 22,
   },
-  miniMapContainer: {
-    marginTop: 8,
-    gap: 8,
-  },
-  miniMap: {
-    width: "100%",
-    height: 150,
-    borderRadius: 12,
+  mapCard: {
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: 16,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#EDE5D5",
+    gap: 0,
   },
+  map: {
+    width: "100%",
+    height: 220,
+  },
+  mapAddressRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#EDE5D5",
+  },
+  mapAddressText: {
+    color: "#9E8E7E",
+    fontSize: 12,
+    flex: 1,
+  },
+
+  // Bottom bar
   bottomBar: {
     position: "absolute",
     bottom: 0,
@@ -486,17 +633,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
   },
-  buyButton: {
+  registerButton: {
     backgroundColor: "#B8860B",
     borderRadius: 30,
     paddingVertical: 16,
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
   },
-  buyButtonDisabled: {
-    opacity: 0.6,
+  buttonDisabled: {
+    opacity: 0.55,
   },
-  buyButtonText: {
+  registerButtonText: {
     color: "#FFF",
     fontSize: 16,
     fontWeight: "800",
@@ -512,11 +661,13 @@ const styles = StyleSheet.create({
     borderColor: "#10B981",
     backgroundColor: "rgba(16,185,129,0.08)",
   },
-  attendingButtonText: {
+  attendingText: {
     color: "#10B981",
     fontSize: 16,
     fontWeight: "700",
   },
+
+  // Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(28,18,8,0.55)",
@@ -534,22 +685,30 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#EDE5D5",
   },
+  modalIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "rgba(16,185,129,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
   modalTitle: {
     color: "#1C1208",
     fontSize: 22,
     fontWeight: "800",
-    marginTop: 4,
   },
   modalSub: {
     color: "#9E8E7E",
-    fontSize: 14,
+    fontSize: 13,
   },
   ticketCodeBox: {
-    backgroundColor: "rgba(184,134,11,0.12)",
+    backgroundColor: "rgba(184,134,11,0.1)",
     borderWidth: 1.5,
     borderColor: "#B8860B",
     borderRadius: 12,
-    paddingHorizontal: 24,
+    paddingHorizontal: 28,
     paddingVertical: 12,
     marginVertical: 4,
   },
@@ -564,10 +723,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: "center",
   },
-  modalClose: {
+  modalCloseBtn: {
     backgroundColor: "#B8860B",
     borderRadius: 24,
-    paddingHorizontal: 40,
+    paddingHorizontal: 44,
     paddingVertical: 14,
     marginTop: 8,
   },

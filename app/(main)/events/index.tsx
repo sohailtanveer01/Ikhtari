@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -109,6 +110,12 @@ export default function EventsScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
+        <LinearGradient
+          colors={["#FFF2B8", "#FDF8EE", "#FDFAF5"]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 0.52 }}
+          style={StyleSheet.absoluteFill}
+        />
         <ActivityIndicator size="large" color="#B8860B" />
       </View>
     );
@@ -116,8 +123,15 @@ export default function EventsScreen() {
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={["#FFF2B8", "#FDF8EE", "#FDFAF5"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.52 }}
+        style={StyleSheet.absoluteFill}
+      />
       {/* Header */}
       <View style={styles.header}>
+        <Text style={styles.wordmark}>Ikhtiar</Text>
         <Text style={styles.headerTitle}>Events</Text>
         <Pressable
           onPress={() => setViewMode(viewMode === "list" ? "map" : "list")}
@@ -212,14 +226,26 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingBottom: 16,
   },
+  wordmark: {
+    fontFamily: "GreatVibes-Regular",
+    fontSize: 42,
+    color: "#1C1208",
+    textShadowColor: "#1C1208",
+    textShadowOffset: { width: 0.4, height: 0.4 },
+    textShadowRadius: 0.5,
+    flex: 1,
+  },
   headerTitle: {
     color: "#1C1208",
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: "800",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    textAlign: "center",
   },
   toggleButton: {
     width: 40,

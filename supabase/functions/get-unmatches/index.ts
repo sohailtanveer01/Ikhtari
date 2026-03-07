@@ -53,8 +53,7 @@ serve(async (req) => {
       blocksIBlocked.forEach(block => blockedUserIds.add(block.blocked_id));
     }
 
-    // Get all unmatched users from unmatches table
-    // We'll filter out pending rematch requests in code (they appear in chat list)
+    // Get all unmatched users from unmatches table (including pending rematch requests)
     const { data: allUnmatches, error: unmatchesError } = await supabaseClient
       .from("unmatches")
       .select("*")
@@ -65,17 +64,16 @@ serve(async (req) => {
       console.error("❌ Error fetching unmatches:", unmatchesError);
     }
 
-    // Filter out pending rematch requests (they appear in chat list instead)
-    // Filter out accepted rematches (they've been rematched, so remove from unmatches)
-    // AND filter out users I blocked (user 1 shouldn't see user 2)
+    // Show all unmatches EXCEPT accepted ones (accepted = rematched, they appear in the active chat list)
+    // Pending rematch requests are now shown in the Unmatches screen (not the chat list)
     const unmatches = allUnmatches?.filter(
       (unmatch) => {
-        const otherUserId = unmatch.user1_id === user.id 
-          ? unmatch.user2_id 
+        const otherUserId = unmatch.user1_id === user.id
+          ? unmatch.user2_id
           : unmatch.user1_id;
-        return unmatch.rematch_status !== 'pending' 
-          && unmatch.rematch_status !== 'accepted' 
-          && !blockedUserIds.has(otherUserId);
+        if (unmatch.rematch_status === 'accepted') return false;
+        if (blockedUserIds.has(otherUserId)) return false;
+        return true;
       }
     ) || [];
 
@@ -88,11 +86,6 @@ serve(async (req) => {
           ? unmatch.user2_id 
           : unmatch.user1_id;
 
-        // Skip if I blocked this user
-        if (blockedUserIds.has(otherUserId)) {
-          continue;
-        }
-
         // Get user profile
         const { data: otherUser } = await supabaseClient
           .from("users")
@@ -101,7 +94,6 @@ serve(async (req) => {
           .single();
 
         if (otherUser) {
-          // Determine who unmatched whom
           const unmatchedBy = unmatch.unmatched_by === user.id ? "me" : "them";
 
           unmatchedUsersData.push({
@@ -109,8 +101,10 @@ serve(async (req) => {
             matchId: unmatch.match_id,
             user: otherUser,
             unmatchedAt: unmatch.created_at,
-            unmatchedBy: unmatchedBy,
+            unmatchedBy,
             type: "unmatched",
+            rematch_status: unmatch.rematch_status || null,
+            rematch_requested_by: unmatch.rematch_requested_by || null,
           });
         }
       }

@@ -99,9 +99,8 @@ export default function DiscoverCard({
   const isOnline = activeInfo?.dotColor === "#22C55E" || activeInfo?.label?.toLowerCase() === "online";
 
   const rawScore = profile.compatibility_score;
-  const compatibilityScore = rawScore != null
-    ? (rawScore > 1 ? Math.round(rawScore) : Math.round(rawScore * 100))
-    : null;
+  // Score is already 0-100 from the server
+  const compatibilityScore = rawScore != null ? Math.round(rawScore) : null;
 
   return (
     <Animated.View style={{
@@ -136,6 +135,7 @@ export default function DiscoverCard({
         <View style={styles.topRow}>
           {isOnline ? (
             <View style={styles.onlineBadge}>
+              <View style={styles.onlineDot} />
               <Text style={styles.onlineBadgeText}>Online</Text>
             </View>
           ) : <View />}
@@ -213,12 +213,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   onlineBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
     backgroundColor: "rgba(0,0,0,0.42)",
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.18)",
+  },
+  onlineDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#22C55E",
+    shadowColor: "#22C55E",
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 0 },
   },
   onlineBadgeText: {
     color: "#FFFFFF",

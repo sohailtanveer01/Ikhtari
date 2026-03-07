@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Audio } from "expo-av";
+import * as FileSystem from "expo-file-system";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image as ExpoImage } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -693,6 +694,44 @@ export default function ChatScreen() {
   // Q&A card collapse state — default expanded when no messages, collapsed when messages exist
   const [isQAExpanded, setIsQAExpanded] = useState<boolean | null>(null);
   const [gateQAVisible, setGateQAVisible] = useState(true);
+
+  const DISMISSED_FILE = `${FileSystem.documentDirectory}dismissed_gate_qa.json`;
+
+  const readDismissed = async (): Promise<string[]> => {
+    try {
+      const info = await FileSystem.getInfoAsync(DISMISSED_FILE);
+      if (!info.exists) return [];
+      const raw = await FileSystem.readAsStringAsync(DISMISSED_FILE);
+      return JSON.parse(raw) as string[];
+    } catch {
+      return [];
+    }
+  };
+
+  const dismissGateQA = async () => {
+    if (!chatId) return;
+    setGateQAVisible(false);
+    try {
+      const current = await readDismissed();
+      if (!current.includes(chatId)) {
+        await FileSystem.writeAsStringAsync(
+          DISMISSED_FILE,
+          JSON.stringify([...current, chatId])
+        );
+      }
+    } catch {
+      // silently ignore write errors
+    }
+  };
+
+  // Load persisted dismissed state on mount
+  useEffect(() => {
+    if (!chatId) return;
+    readDismissed().then((dismissed) => {
+      if (dismissed.includes(chatId)) setGateQAVisible(false);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId]);
 
   // Track OTHER USER's active status with real-time updates
   const [otherUserActive, setOtherUserActive] = useState<boolean>(false);
@@ -2041,7 +2080,7 @@ export default function ChatScreen() {
                       </Text>
                     </View>
                     <Pressable
-                      onPress={() => setGateQAVisible(false)}
+                      onPress={dismissGateQA}
                       style={{
                         paddingHorizontal: 10, paddingVertical: 6,
                         borderRadius: 10,

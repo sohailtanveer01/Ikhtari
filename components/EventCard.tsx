@@ -42,10 +42,6 @@ function formatEventDate(dateStr: string): string {
 }
 
 export default function EventCard({ event, onPress }: EventCardProps) {
-  const isFree = !event.ticket_price || event.ticket_price === 0;
-  const currency = event.ticket_currency || "USD";
-  const currencySymbol = currency === "USD" ? "$" : currency === "GBP" ? "£" : currency === "EUR" ? "€" : "$";
-
   const locationLabel =
     event.distance_miles != null
       ? `${event.distance_miles} mi away`
@@ -80,11 +76,9 @@ export default function EventCard({ event, onPress }: EventCardProps) {
         pointerEvents="none"
       />
 
-      {/* Price badge */}
-      <View style={[styles.priceBadge, isFree ? styles.priceFree : styles.pricePaid]}>
-        <Text style={[styles.priceText, isFree ? styles.priceTextFree : styles.priceTextPaid]}>
-          {isFree ? "Free" : `${currencySymbol}${event.ticket_price}`}
-        </Text>
+      {/* Free badge */}
+      <View style={styles.priceBadge}>
+        <Text style={styles.priceText}>Free</Text>
       </View>
 
       {/* Attending badge */}
@@ -155,25 +149,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-  },
-  priceFree: {
-    backgroundColor: "rgba(16,185,129,0.2)",
-    borderWidth: 1,
-    borderColor: "#10B981",
-  },
-  pricePaid: {
-    backgroundColor: "rgba(184,134,11,0.2)",
+    backgroundColor: "rgba(184,134,11,0.18)",
     borderWidth: 1,
     borderColor: "#B8860B",
   },
   priceText: {
     fontSize: 12,
     fontWeight: "700",
-  },
-  priceTextFree: {
-    color: "#10B981",
-  },
-  priceTextPaid: {
     color: "#B8860B",
   },
   attendingBadge: {

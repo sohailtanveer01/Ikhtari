@@ -184,8 +184,8 @@ export default function DiscoverScreen() {
         {/* Row 1: wordmark + filter */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: isCertified ? 12 : 0 }}>
           {/* Ikhtiar wordmark */}
-          <Text style={{ fontSize: 26, fontWeight: '900', letterSpacing: -0.8, color: '#1C1208' }}>
-            ik<Text style={{ color: '#B8860B' }}>htiar</Text>
+          <Text style={{ fontFamily: 'GreatVibes-Regular', fontSize: 42, color: '#1C1208', textShadowColor: '#1C1208', textShadowOffset: { width: 0.4, height: 0.4 }, textShadowRadius: 0.5 }}>
+            Ikhtiar
           </Text>
 
           {/* Filter button */}
@@ -193,7 +193,7 @@ export default function DiscoverScreen() {
             <Pressable
               onPress={() => router.push("/(main)/swipe/filters")}
               style={({ pressed }) => ({
-                width: 40, height: 40, borderRadius: 20,
+                width: 46, height: 46, borderRadius: 23,
                 backgroundColor: 'rgba(184,134,11,0.1)',
                 borderWidth: 1.5, borderColor: 'rgba(184,134,11,0.25)',
                 alignItems: 'center', justifyContent: 'center',
@@ -202,7 +202,7 @@ export default function DiscoverScreen() {
                 transform: [{ scale: pressed ? 0.92 : 1 }],
               })}
             >
-              <Ionicons name="options-outline" size={20} color="#B8860B" />
+              <Ionicons name="options-outline" size={24} color="#B8860B" />
             </Pressable>
           )}
         </View>

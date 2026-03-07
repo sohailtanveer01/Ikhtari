@@ -402,8 +402,8 @@ export default function InterestsScreen() {
       />
       {/* Header */}
       <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 12 }}>
-        <Text style={{ fontSize: 26, fontWeight: "900", letterSpacing: -0.8, color: "#1C1208", marginBottom: 14 }}>
-          ik<Text style={{ color: "#B8860B" }}>htiar</Text>
+        <Text style={{ fontFamily: "GreatVibes-Regular", fontSize: 42, color: "#1C1208", textShadowColor: "#1C1208", textShadowOffset: { width: 0.4, height: 0.4 }, textShadowRadius: 0.5, marginBottom: 14 }}>
+          Ikhtiar
         </Text>
 
         {/* Tab bar */}

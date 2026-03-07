@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -170,6 +171,12 @@ export default function FiltersListScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
+        <LinearGradient
+          colors={["#FFF2B8", "#FDF8EE", "#FDFAF5"]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 0.52 }}
+          style={StyleSheet.absoluteFill}
+        />
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#1C1208" />
@@ -186,6 +193,12 @@ export default function FiltersListScreen() {
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={["#FFF2B8", "#FDF8EE", "#FDFAF5"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.52 }}
+        style={StyleSheet.absoluteFill}
+      />
       {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
