@@ -4,7 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, LayoutChangeEvent, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Dimensions, FlatList, LayoutChangeEvent, Modal, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
@@ -124,6 +124,7 @@ interface DraggablePhotoCardProps {
   isMainPhoto: boolean;
   isDragging: boolean;
   onLayout: (event: LayoutChangeEvent) => void;
+  onPress: () => void;
   onLongPress: () => void;
   onDragUpdate?: (targetIndex: number | null) => void;
   onDragEnd: (targetIndex: number | null) => void;
@@ -141,6 +142,7 @@ function DraggablePhotoCard({
   isMainPhoto,
   isDragging,
   onLayout,
+  onPress,
   onLongPress,
   onDragUpdate,
   onDragEnd,
@@ -300,8 +302,19 @@ function DraggablePhotoCard({
       }
     });
 
-  // Compose gestures - long press activates, pan follows
-  const composedGesture = Gesture.Simultaneous(longPressGesture, panGesture);
+  // Tap gesture — opens lightbox; loses to long press automatically via Exclusive
+  const tapGesture = Gesture.Tap()
+    .maxDuration(200)
+    .onEnd(() => {
+      "worklet";
+      runOnJS(onPress)();
+    });
+
+  // Exclusive: tap wins on quick touch; long press + pan win on hold
+  const composedGesture = Gesture.Exclusive(
+    tapGesture,
+    Gesture.Simultaneous(longPressGesture, panGesture)
+  );
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -368,6 +381,8 @@ export default function ProfileScreen() {
   const [lastName, setLastName] = useState("");
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [hoverTargetIndex, setHoverTargetIndex] = useState<number | null>(null);
+  const [lightboxVisible, setLightboxVisible] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const layoutPositions = useRef<{ [key: number]: { x: number; y: number; width: number; height: number } }>({});
   const [layoutVersion, setLayoutVersion] = useState(0); // Track layout changes to trigger re-renders
   const [reorderCount, setReorderCount] = useState(0); // Track reorders to force component remount
@@ -908,6 +923,7 @@ export default function ProfileScreen() {
                 isMainPhoto={index === 0}
                 isDragging={draggingIndex === index}
                 onLayout={(e) => onLayout(index, e)}
+                onPress={() => { setLightboxIndex(index); setLightboxVisible(true); }}
                 onLongPress={() => setDraggingIndex(index)}
                 onDragUpdate={(targetIndex) => setHoverTargetIndex(targetIndex)}
                 onDragEnd={(targetIndex) => {
@@ -929,7 +945,148 @@ export default function ProfileScreen() {
         </View>
       </View>
     </ScrollView>
+
+    {/* Full-screen photo lightbox */}
+    <Modal
+      visible={lightboxVisible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={() => setLightboxVisible(false)}
+    >
+      <StatusBar hidden />
+      <View style={lightboxStyles.backdrop}>
+        <FlatList
+          data={photos}
+          keyExtractor={(_, i) => String(i)}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          initialScrollIndex={lightboxIndex}
+          getItemLayout={(_, i) => ({
+            length: Dimensions.get("window").width,
+            offset: Dimensions.get("window").width * i,
+            index: i,
+          })}
+          onMomentumScrollEnd={(e) => {
+            const newIndex = Math.round(
+              e.nativeEvent.contentOffset.x / Dimensions.get("window").width
+            );
+            setLightboxIndex(newIndex);
+          }}
+          renderItem={({ item }) => (
+            <View style={lightboxStyles.page}>
+              <Image
+                source={{ uri: item }}
+                style={lightboxStyles.fullImage}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+              />
+            </View>
+          )}
+        />
+
+        {/* Close button */}
+        <Pressable
+          onPress={() => { setLightboxVisible(false); StatusBar.setHidden(false); }}
+          style={lightboxStyles.closeBtn}
+          hitSlop={16}
+        >
+          <View style={lightboxStyles.closeBtnInner}>
+            <Ionicons name="close" size={22} color="#fff" />
+          </View>
+        </Pressable>
+
+        {/* Page counter */}
+        <View style={lightboxStyles.counter}>
+          <Text style={lightboxStyles.counterText}>
+            {lightboxIndex + 1} / {photos.length}
+          </Text>
+        </View>
+
+        {/* Dot indicators */}
+        {photos.length > 1 && (
+          <View style={lightboxStyles.dots}>
+            {photos.map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  lightboxStyles.dot,
+                  i === lightboxIndex && lightboxStyles.dotActive,
+                ]}
+              />
+            ))}
+          </View>
+        )}
+      </View>
+    </Modal>
     </View>
   );
 }
+
+const lightboxStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
+  page: {
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fullImage: {
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
+  },
+  closeBtn: {
+    position: "absolute",
+    top: 54,
+    right: 20,
+  },
+  closeBtnInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  counter: {
+    position: "absolute",
+    top: 60,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    pointerEvents: "none",
+  },
+  counterText: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: 0.5,
+  },
+  dots: {
+    position: "absolute",
+    bottom: 48,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+    pointerEvents: "none",
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "rgba(255,255,255,0.35)",
+  },
+  dotActive: {
+    backgroundColor: "#fff",
+    width: 20,
+  },
+});
 
