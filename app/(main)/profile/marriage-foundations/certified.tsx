@@ -77,7 +77,7 @@ export default function CertificationSuccessScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 40,
+          paddingBottom: insets.bottom + 120,
           alignItems: "center",
           paddingTop: 32,
         }}

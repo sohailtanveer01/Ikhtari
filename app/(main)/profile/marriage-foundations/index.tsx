@@ -401,7 +401,7 @@ export default function MarriageFoundationsCourseScreen() {
             >
               <Text style={{ color: "#fff", fontSize: 16, fontWeight: "800", letterSpacing: 0.3 }}>
                 {overallProgress === 0
-                  ? "✦  Begin Course"
+                  ? "Begin Course"
                   : `Continue — Module ${nextModule.module_number}`}
               </Text>
             </LinearGradient>

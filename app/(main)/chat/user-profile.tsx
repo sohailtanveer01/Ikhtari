@@ -7,6 +7,7 @@ import { BlurView } from "expo-blur";
 import { ActivityIndicator, Dimensions, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getFlagByName } from "../../../lib/countries";
+import { useCertification } from "../../../lib/hooks/useCertification";
 import { supabase } from "../../../lib/supabase";
 
 function calculateAge(dob: string | null): number | null {
@@ -27,6 +28,9 @@ export default function UserProfileScreen() {
   const { userId, chatId } = useLocalSearchParams<{ userId: string; chatId?: string }>();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
+
+  const { data: certification } = useCertification();
+  const isCertified = certification?.is_certified === true;
 
   const [photos, setPhotos] = useState<string[]>([]);
   const [firstName, setFirstName] = useState("");
@@ -370,41 +374,105 @@ export default function UserProfileScreen() {
             imageIndex++;
           }
 
-          // Review Compatibility gold button at the very end
+          // Review Compatibility button at the very end
           if (profile?.id) {
-            sections.push(
-              <Pressable
-                key="review-compatibility"
-                onPress={() =>
-                  router.push({
-                    pathname: "/(main)/profile/compatibility-review",
-                    params: { profileId: profile.id, profileName: firstName || "them" },
-                  })
-                }
-                style={styles.compatibilityButtonWrapper}
-              >
-                <LinearGradient
-                  colors={["#2A1505", "#5C3010", "#9E6A08", "#B8860B"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.compatibilityButton}
+            if (isCertified) {
+              // Certified — show full Review Compatibility button
+              sections.push(
+                <Pressable
+                  key="review-compatibility"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(main)/profile/compatibility-review",
+                      params: { profileId: profile.id, profileName: firstName || "them" },
+                    })
+                  }
+                  style={styles.compatibilityButtonWrapper}
                 >
-                  <View style={styles.compatRing1} />
-                  <View style={styles.compatRing2} />
-                  <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-                    <View style={styles.compatIconCircle}>
-                      <Ionicons name="stats-chart" size={22} color="#FFD060" />
+                  <LinearGradient
+                    colors={["#2A1505", "#5C3010", "#9E6A08", "#B8860B"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.compatibilityButton}
+                  >
+                    <View style={styles.compatRing1} />
+                    <View style={styles.compatRing2} />
+                    <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                      <View style={styles.compatIconCircle}>
+                        <Ionicons name="stats-chart" size={22} color="#FFD060" />
+                      </View>
+                      <View style={{ flex: 1, marginLeft: 14 }}>
+                        <Text style={styles.compatMicroLabel}>IKHTIAR</Text>
+                        <Text style={styles.compatTitle}>Review Compatibility</Text>
+                        <Text style={styles.compatSubtitle}>See how aligned your values are</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color="rgba(255,220,100,0.7)" />
                     </View>
-                    <View style={{ flex: 1, marginLeft: 14 }}>
-                      <Text style={styles.compatMicroLabel}>IKHTIAR</Text>
-                      <Text style={styles.compatTitle}>Review Compatibility</Text>
-                      <Text style={styles.compatSubtitle}>See how aligned your values are</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={20} color="rgba(255,220,100,0.7)" />
+                  </LinearGradient>
+                </Pressable>
+              );
+            } else {
+              // Not certified — show locked Review Compatibility + clear CTA
+              sections.push(
+                <View key="review-compatibility-locked" style={styles.compatibilityButtonWrapper}>
+                  {/* Dimmed locked button */}
+                  <View style={{ opacity: 0.45, marginBottom: 12 }}>
+                    <LinearGradient
+                      colors={["#2A1505", "#5C3010", "#9E6A08", "#B8860B"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.compatibilityButton}
+                    >
+                      <View style={styles.compatRing1} />
+                      <View style={styles.compatRing2} />
+                      <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                        <View style={[styles.compatIconCircle, { backgroundColor: "rgba(255,208,96,0.15)" }]}>
+                          <Ionicons name="lock-closed" size={20} color="#FFD060" />
+                        </View>
+                        <View style={{ flex: 1, marginLeft: 14 }}>
+                          <Text style={styles.compatMicroLabel}>IKHTIAR</Text>
+                          <Text style={styles.compatTitle}>Review Compatibility</Text>
+                          <Text style={styles.compatSubtitle}>Complete the course to unlock</Text>
+                        </View>
+                      </View>
+                    </LinearGradient>
                   </View>
-                </LinearGradient>
-              </Pressable>
-            );
+                  {/* CTA */}
+                  <Pressable
+                    onPress={() => router.push("/(main)/profile/marriage-foundations")}
+                    style={({ pressed }) => ({
+                      borderRadius: 16,
+                      overflow: "hidden",
+                      transform: [{ scale: pressed ? 0.97 : 1 }],
+                      shadowColor: "#B8860B",
+                      shadowOpacity: pressed ? 0.3 : 0.55,
+                      shadowRadius: 14,
+                      shadowOffset: { width: 0, height: 6 },
+                      elevation: 8,
+                    })}
+                  >
+                    <LinearGradient
+                      colors={["#E8B820", "#C9980A", "#A87A08"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        paddingVertical: 16,
+                        paddingHorizontal: 24,
+                        gap: 10,
+                      }}
+                    >
+                      <Ionicons name="school-outline" size={20} color="#fff" />
+                      <Text style={{ color: "#fff", fontSize: 15, fontWeight: "800", letterSpacing: 0.3 }}>
+                        Go to Marriage Foundations
+                      </Text>
+                    </LinearGradient>
+                  </Pressable>
+                </View>
+              );
+            }
           }
 
           return sections;

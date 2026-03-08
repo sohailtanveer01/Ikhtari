@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import IntentQuestionsSetup from "../../../components/IntentQuestionsSetup";
 import { supabase } from "../../../lib/supabase";
 
@@ -55,6 +57,7 @@ const NATIONALITY_OPTIONS = [
 
 export default function ProfileEditScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [editingField, setEditingField] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -378,36 +381,54 @@ export default function ProfileEditScreen() {
   }
 
   return (
-    <View className="flex-1 bg-[#FDFAF5]">
-      {/* Premium Header */}
-      <View className="pt-16 px-6 pb-6 bg-[#FDFAF5] border-b border-[#EDE5D5]">
-        <View className="flex-row items-center justify-between mb-2">
+    <View style={{ flex: 1, backgroundColor: "#FDFAF5" }}>
+      {/* Background gradient */}
+      <LinearGradient
+        colors={["#FFF2B8", "#FDF8EE", "#FDFAF5"]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.35 }}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
+      {/* Header */}
+      <View style={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 16 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Pressable
-            onPress={() => {
-              // Navigate back to profile page instead of using router.back()
-              router.push("/(main)/profile");
-            }}
-            className="w-10 h-10 rounded-full items-center justify-center bg-[#F5F0E8] active:bg-[#EDE5D5]"
+            onPress={() => router.push("/(main)/profile")}
+            style={({ pressed }) => ({
+              width: 42, height: 42, borderRadius: 21,
+              backgroundColor: "rgba(184,134,11,0.1)",
+              borderWidth: 1.5, borderColor: "rgba(184,134,11,0.25)",
+              alignItems: "center", justifyContent: "center",
+              transform: [{ scale: pressed ? 0.92 : 1 }],
+            })}
           >
-            <Ionicons name="chevron-back" size={24} color="#1C1208" />
+            <Ionicons name="chevron-back" size={22} color="#B8860B" />
           </Pressable>
-          <Text className="text-[#1C1208] text-2xl font-bold">Edit Profile</Text>
-          <View className="w-10" />
+
+          <View style={{ alignItems: "center" }}>
+            <Text style={{ color: "#1C1208", fontSize: 20, fontWeight: "800", letterSpacing: -0.3 }}>
+              Edit Profile
+            </Text>
+            <View style={{ height: 2, width: 32, backgroundColor: "#B8860B", borderRadius: 2, marginTop: 4 }} />
+          </View>
+
+          <View style={{ width: 42 }} />
         </View>
-        <View className="h-1 w-16 bg-[#B8860B] rounded-full self-center mt-2" />
       </View>
 
-      <ScrollView 
-        className="flex-1" 
+      <ScrollView
+        style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 60 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}
       >
-        <View className="px-6 pt-6 pb-8">
+        <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8 }}>
           {/* About You Section */}
-          <View className="bg-white rounded-3xl p-6 mb-6 border border-[#EDE5D5] shadow-lg">
-            <View className="flex-row items-center mb-6">
-              <View className="w-1 h-6 bg-[#B8860B] rounded-full mr-3" />
-              <Text className="text-[#1C1208] text-xl font-bold">About You</Text>
+          <View style={editStyles.card}>
+            <View style={editStyles.sectionHeader}>
+              <LinearGradient colors={["#D4A017", "#B8860B"]} style={editStyles.sectionAccent} />
+              <Text style={editStyles.sectionTitle}>About You</Text>
             </View>
             
             {/* Name Row */}
@@ -737,39 +758,49 @@ export default function ProfileEditScreen() {
 
             {/* Save button for text inputs */}
             {(editingField === 'name' || editingField === 'dob') && (
-              <View className="flex-row gap-3 mt-6">
+              <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
                 <Pressable
-                  className="flex-1 bg-white px-4 py-3 rounded-xl border border-[#EDE5D5] active:bg-[#F5F0E8]"
-                  onPress={() => {
-                    setEditingField(null);
-                    loadProfile();
-                  }}
+                  style={({ pressed }) => ({
+                    flex: 1, paddingVertical: 13, borderRadius: 14,
+                    borderWidth: 1.5, borderColor: "rgba(184,134,11,0.3)",
+                    alignItems: "center", justifyContent: "center",
+                    backgroundColor: pressed ? "rgba(184,134,11,0.06)" : "rgba(184,134,11,0.02)",
+                  })}
+                  onPress={() => { setEditingField(null); loadProfile(); }}
                 >
-                  <Text className="text-[#1C1208] font-semibold text-center">Cancel</Text>
+                  <Text style={{ color: "#B8860B", fontWeight: "700", fontSize: 15 }}>Cancel</Text>
                 </Pressable>
                 <Pressable
-                  className="flex-1 bg-[#B8860B] px-4 py-3 rounded-xl active:bg-[#B8860B]/90"
-                  onPress={async () => {
-                    await handleSave();
-                    setEditingField(null);
-                  }}
+                  style={({ pressed }) => ({
+                    flex: 1, borderRadius: 14, overflow: "hidden",
+                    shadowColor: "#B8860B", shadowOpacity: pressed ? 0.3 : 0.5,
+                    shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 6,
+                    transform: [{ scale: pressed ? 0.97 : 1 }],
+                  })}
+                  onPress={async () => { await handleSave(); setEditingField(null); }}
                   disabled={saving}
                 >
-                  {saving ? (
-                    <ActivityIndicator color="#1C1208" size="small" />
-                  ) : (
-                    <Text className="text-[#1C1208] font-semibold text-center">Save</Text>
-                  )}
+                  <LinearGradient
+                    colors={["#E8B820", "#C9980A", "#A87A08"]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    style={{ paddingVertical: 13, alignItems: "center", justifyContent: "center" }}
+                  >
+                    {saving ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>Save</Text>
+                    )}
+                  </LinearGradient>
                 </Pressable>
               </View>
             )}
           </View>
 
           {/* Background Section */}
-          <View className="bg-white rounded-3xl p-6 mb-6 border border-[#EDE5D5] shadow-lg">
-            <View className="flex-row items-center mb-6">
-              <View className="w-1 h-6 bg-[#B8860B] rounded-full mr-3" />
-              <Text className="text-[#1C1208] text-xl font-bold">Background</Text>
+          <View style={editStyles.card}>
+            <View style={editStyles.sectionHeader}>
+              <LinearGradient colors={["#D4A017", "#B8860B"]} style={editStyles.sectionAccent} />
+              <Text style={editStyles.sectionTitle}>Background</Text>
             </View>
             
             {/* Education Row */}
@@ -891,39 +922,49 @@ export default function ProfileEditScreen() {
 
             {/* Save button for text inputs */}
             {(editingField === 'education' || editingField === 'profession' || editingField === 'bio') && (
-              <View className="flex-row gap-3 mt-6">
+              <View style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
                 <Pressable
-                  className="flex-1 bg-white px-4 py-3 rounded-xl border border-[#EDE5D5] active:bg-[#F5F0E8]"
-                  onPress={() => {
-                    setEditingField(null);
-                    loadProfile();
-                  }}
+                  style={({ pressed }) => ({
+                    flex: 1, paddingVertical: 13, borderRadius: 14,
+                    borderWidth: 1.5, borderColor: "rgba(184,134,11,0.3)",
+                    alignItems: "center", justifyContent: "center",
+                    backgroundColor: pressed ? "rgba(184,134,11,0.06)" : "rgba(184,134,11,0.02)",
+                  })}
+                  onPress={() => { setEditingField(null); loadProfile(); }}
                 >
-                  <Text className="text-[#1C1208] font-semibold text-center">Cancel</Text>
+                  <Text style={{ color: "#B8860B", fontWeight: "700", fontSize: 15 }}>Cancel</Text>
                 </Pressable>
                 <Pressable
-                  className="flex-1 bg-[#B8860B] px-4 py-3 rounded-xl active:bg-[#B8860B]/90"
-                  onPress={async () => {
-                    await handleSave();
-                    setEditingField(null);
-                  }}
+                  style={({ pressed }) => ({
+                    flex: 1, borderRadius: 14, overflow: "hidden",
+                    shadowColor: "#B8860B", shadowOpacity: pressed ? 0.3 : 0.5,
+                    shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 6,
+                    transform: [{ scale: pressed ? 0.97 : 1 }],
+                  })}
+                  onPress={async () => { await handleSave(); setEditingField(null); }}
                   disabled={saving}
                 >
-                  {saving ? (
-                    <ActivityIndicator color="#1C1208" size="small" />
-                  ) : (
-                    <Text className="text-[#1C1208] font-semibold text-center">Save</Text>
-                  )}
+                  <LinearGradient
+                    colors={["#E8B820", "#C9980A", "#A87A08"]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    style={{ paddingVertical: 13, alignItems: "center", justifyContent: "center" }}
+                  >
+                    {saving ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>Save</Text>
+                    )}
+                  </LinearGradient>
                 </Pressable>
               </View>
             )}
           </View>
 
           {/* Ethnicity & Nationality Section */}
-          <View className="bg-white rounded-3xl p-6 mb-6 border border-[#EDE5D5] shadow-lg">
-            <View className="flex-row items-center mb-6">
-              <View className="w-1 h-6 bg-[#B8860B] rounded-full mr-3" />
-              <Text className="text-[#1C1208] text-xl font-bold">Ethnicity & Nationality</Text>
+          <View style={editStyles.card}>
+            <View style={editStyles.sectionHeader}>
+              <LinearGradient colors={["#D4A017", "#B8860B"]} style={editStyles.sectionAccent} />
+              <Text style={editStyles.sectionTitle}>Ethnicity & Nationality</Text>
             </View>
             
             {/* Ethnicity Row */}
@@ -1017,10 +1058,10 @@ export default function ProfileEditScreen() {
           </View>
 
           {/* Intent Questions Section */}
-          <View className="bg-white rounded-3xl p-6 mb-6 border border-[#EDE5D5] shadow-lg">
-            <View className="flex-row items-center mb-6">
-              <View className="w-1 h-6 bg-[#B8860B] rounded-full mr-3" />
-              <Text className="text-[#1C1208] text-xl font-bold">Intent Questions</Text>
+          <View style={editStyles.card}>
+            <View style={editStyles.sectionHeader}>
+              <LinearGradient colors={["#D4A017", "#B8860B"]} style={editStyles.sectionAccent} />
+              <Text style={editStyles.sectionTitle}>Intent Questions</Text>
             </View>
             <Text className="text-[#9E8E7E] text-sm mb-4">
               These are the questions others must answer to express interest in you.
@@ -1087,4 +1128,37 @@ export default function ProfileEditScreen() {
     </View>
   );
 }
+
+const editStyles = StyleSheet.create({
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(184,134,11,0.18)",
+    shadowColor: "#B8860B",
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  sectionAccent: {
+    width: 3,
+    height: 22,
+    borderRadius: 2,
+    marginRight: 10,
+  },
+  sectionTitle: {
+    color: "#1C1208",
+    fontSize: 17,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+  },
+});
 

@@ -316,8 +316,8 @@ serve(async (req) => {
     const certificationMap = new Map<string, { is_certified: boolean; show_badge: boolean }>();
     const expectationsMap = new Map<string, any>();
 
-    if (mycertification?.is_certified) {
-      // Fetch my expectations
+    // Only fetch expectations when we need compatibility scoring (not in 'all' mode)
+    if (feed_mode !== 'all' && mycertification?.is_certified) {
       const { data: meData } = await supabaseClient
         .from("marriage_expectations_obligations")
         .select("*")
@@ -326,7 +326,7 @@ serve(async (req) => {
       myExpectations = meData;
     }
 
-    // Batch-fetch certifications for filtered profiles
+    // Batch-fetch certifications for filtered profiles (always needed for badge display)
     if (filteredIds.length > 0) {
       const { data: certs } = await supabaseClient
         .from("marriage_course_certifications")
@@ -338,7 +338,7 @@ serve(async (req) => {
         });
       }
 
-      // Batch-fetch expectations for certified profiles (only if I'm certified)
+      // Batch-fetch expectations for certified profiles (only if I'm certified and not in 'all' mode)
       if (myExpectations) {
         const certifiedIds = certs?.filter((c: any) => c.is_certified).map((c: any) => c.user_id) || [];
         if (certifiedIds.length > 0) {
@@ -446,41 +446,51 @@ serve(async (req) => {
     // Sort: boosted first, then by compatibility score (highest first), then non-certified last
     const BOOST_BONUS = 1000; // Boosted profiles always appear first
 
-    const ranked = filteredProfiles
-      .map((p: any) => {
-        const boostExpiresAt = boostMap.get(p.id) ?? null;
-        const isBoosted = Boolean(boostExpiresAt);
-        const cert = certificationMap.get(p.id);
-        const theirExp = expectationsMap.get(p.id);
-        const compatScore = myExpectations && theirExp ? computeScore(myExpectations, theirExp) : null;
+    const mapped = filteredProfiles.map((p: any) => {
+      const boostExpiresAt = boostMap.get(p.id) ?? null;
+      const isBoosted = Boolean(boostExpiresAt);
+      const cert = certificationMap.get(p.id);
+      const theirExp = expectationsMap.get(p.id);
+      const compatScore = myExpectations && theirExp ? computeScore(myExpectations, theirExp) : null;
 
-        // Sort priority: boosted > certified with compatibility (by score desc) > certified without score > non-certified
-        let sortKey = 0;
-        if (isBoosted) {
-          sortKey = BOOST_BONUS + (compatScore ?? 0);
-        } else if (compatScore !== null) {
-          sortKey = compatScore; // 0-100, higher is better
-        } else if (cert?.is_certified) {
-          sortKey = -1; // Certified but no compatibility score (current user not certified)
-        } else {
-          sortKey = -2; // Not certified — show last
-        }
+      return {
+        ...p,
+        is_boosted: isBoosted,
+        boost_expires_at: boostExpiresAt,
+        is_certified: cert?.is_certified || false,
+        show_badge: cert?.show_badge || false,
+        compatibility_score: compatScore,
+        is_interested_in_me: receivedInterestIds.has(p.id),
+        prompts: promptMap.get(p.id) || [],
+        intent_questions: intentQuestionsMap.get(p.id) || [],
+      };
+    });
 
-        return {
-          ...p,
-          is_boosted: isBoosted,
-          boost_expires_at: boostExpiresAt,
-          is_certified: cert?.is_certified || false,
-          show_badge: cert?.show_badge || false,
-          compatibility_score: compatScore,
-          is_interested_in_me: receivedInterestIds.has(p.id),
-          prompts: promptMap.get(p.id) || [],
-          intent_questions: intentQuestionsMap.get(p.id) || [],
-          __sortKey: sortKey,
-        };
-      })
-      .sort((a: any, b: any) => b.__sortKey - a.__sortKey) // Descending — highest first
-      .map(({ __sortKey, ...rest }: any) => rest);
+    let ranked: any[];
+    if (feed_mode === 'all') {
+      // Random shuffle — boosted profiles still appear first
+      const boosted = mapped.filter((p: any) => p.is_boosted).sort(() => Math.random() - 0.5);
+      const rest = mapped.filter((p: any) => !p.is_boosted).sort(() => Math.random() - 0.5);
+      ranked = [...boosted, ...rest];
+    } else {
+      // Score-based sort: boosted > compat score > certified > non-certified
+      ranked = mapped
+        .map((p: any) => {
+          let sortKey = 0;
+          if (p.is_boosted) {
+            sortKey = BOOST_BONUS + (p.compatibility_score ?? 0);
+          } else if (p.compatibility_score !== null) {
+            sortKey = p.compatibility_score;
+          } else if (p.is_certified) {
+            sortKey = -1;
+          } else {
+            sortKey = -2;
+          }
+          return { ...p, __sortKey: sortKey };
+        })
+        .sort((a: any, b: any) => b.__sortKey - a.__sortKey)
+        .map(({ __sortKey, ...rest }: any) => rest);
+    }
 
     const paginatedProfiles = ranked.slice(0, limit);
     const hasMore = ranked.length > limit;

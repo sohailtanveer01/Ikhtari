@@ -40,11 +40,11 @@ interface DiscoverState {
   isMarkingAsSeen: boolean;
   hasMarkedSeen: boolean;
   sessionSeenIds: string[]; // all IDs seen this session — sent on every request as exclusion list
-  feedMode: 'compatible' | 'filters';
+  feedMode: 'all' | 'compatible' | 'filters';
 
-  loadInitial: (mode?: 'compatible' | 'filters') => Promise<void>;
+  loadInitial: (mode?: 'all' | 'compatible' | 'filters') => Promise<void>;
   markAsSeen: () => Promise<void>;
-  setFeedMode: (mode: 'compatible' | 'filters') => void;
+  setFeedMode: (mode: 'all' | 'compatible' | 'filters') => void;
   removeProfile: (profileId: string) => void;
   resetFeed: () => void;
 }
@@ -56,7 +56,7 @@ export const useDiscoverStore = create<DiscoverState>((set, get) => ({
   isMarkingAsSeen: false,
   hasMarkedSeen: false,
   sessionSeenIds: [],
-  feedMode: 'compatible',
+  feedMode: 'all',
 
   setFeedMode: (mode) => {
     set({ feedMode: mode, profiles: [], sessionSeenIds: [], hasMarkedSeen: false });

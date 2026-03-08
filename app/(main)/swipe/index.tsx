@@ -153,11 +153,24 @@ export default function DiscoverScreen() {
 
   const handleProfilePress = useCallback(
     (profile: any) => {
-      if (!isCertified) return;
       router.push(`/(main)/swipe/profile-view?userId=${profile.id}`);
     },
-    [router, isCertified]
+    [router]
   );
+
+  const handleLockedTabPress = useCallback(() => {
+    Alert.alert(
+      "Complete Marriage Foundations",
+      "The Compatible feed and compatibility scores are unlocked after completing the Marriage Foundations course.",
+      [
+        { text: "Not Now", style: "cancel" },
+        {
+          text: "Go to Course",
+          onPress: () => router.push("/(main)/profile/marriage-foundations"),
+        },
+      ]
+    );
+  }, [router]);
 
   // Loading state
   if (checkingQuestions || certLoading) {
@@ -168,8 +181,8 @@ export default function DiscoverScreen() {
     );
   }
 
-  const showCertGate = !isCertified;
-  const showIntentGate = isCertified && intentQuestionsSet === false;
+  // Only gate the intent-questions step when in a cert-required mode
+  const showIntentGate = feedMode !== 'all' && isCertified && intentQuestionsSet === false;
 
   return (
     <View style={{ flex: 1, backgroundColor: "#FDFAF5", paddingTop: insets.top }}>
@@ -182,13 +195,13 @@ export default function DiscoverScreen() {
       {/* Header */}
       <View style={{ paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8 }}>
         {/* Row 1: wordmark + filter */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: isCertified ? 12 : 0 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           {/* Ikhtiar wordmark */}
           <Text style={{ fontFamily: 'GreatVibes-Regular', fontSize: 42, color: '#1C1208', textShadowColor: '#1C1208', textShadowOffset: { width: 0.4, height: 0.4 }, textShadowRadius: 0.5 }}>
             Ikhtiar
           </Text>
 
-          {/* Filter button */}
+          {/* Filter button — only meaningful for cert-required modes */}
           {isCertified && (
             <Pressable
               onPress={() => router.push("/(main)/swipe/filters")}
@@ -207,97 +220,136 @@ export default function DiscoverScreen() {
           )}
         </View>
 
-        {/* Row 2: feed mode toggle */}
-        {isCertified && (
-          <LinearGradient
-            colors={["rgba(212,160,23,0.18)", "rgba(184,134,11,0.08)"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              flexDirection: 'row',
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: 'rgba(184,134,11,0.38)',
-              padding: 3,
-              alignSelf: 'flex-start',
-              shadowColor: '#B8860B',
-              shadowOpacity: 0.12,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 3 },
-              elevation: 3,
-            }}
+        {/* Row 2: feed mode toggle — always visible */}
+        <LinearGradient
+          colors={["rgba(212,160,23,0.18)", "rgba(184,134,11,0.08)"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            flexDirection: 'row',
+            borderRadius: 999,
+            borderWidth: 1,
+            borderColor: 'rgba(184,134,11,0.38)',
+            padding: 3,
+            alignSelf: 'flex-start',
+            shadowColor: '#B8860B',
+            shadowOpacity: 0.12,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 3 },
+            elevation: 3,
+          }}
+        >
+          {/* All pill — always accessible */}
+          <Pressable
+            onPress={() => feedMode !== 'all' && setFeedMode('all')}
+            style={{ borderRadius: 999, overflow: 'hidden' }}
           >
-            {/* Compatible pill */}
-            <Pressable
-              onPress={() => feedMode !== 'compatible' && setFeedMode('compatible')}
-              style={{ borderRadius: 999, overflow: 'hidden' }}
-            >
-              {feedMode === 'compatible' ? (
-                <LinearGradient
-                  colors={["#E8B820", "#C9980A", "#A87A08"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    flexDirection: 'row', alignItems: 'center',
-                    paddingHorizontal: 16, paddingVertical: 8,
-                    borderRadius: 999, gap: 5,
-                  }}
-                >
-                  <Ionicons name="heart" size={12} color="#fff" />
-                  <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#fff', letterSpacing: 0.2 }}>
-                    Compatible
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <View style={{
+            {feedMode === 'all' ? (
+              <LinearGradient
+                colors={["#E8B820", "#C9980A", "#A87A08"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
                   flexDirection: 'row', alignItems: 'center',
                   paddingHorizontal: 16, paddingVertical: 8,
                   borderRadius: 999, gap: 5,
-                }}>
-                  <Ionicons name="heart" size={12} color="rgba(184,134,11,0.5)" />
-                  <Text style={{ fontSize: 12.5, fontWeight: '500', color: 'rgba(184,134,11,0.6)' }}>
-                    Compatible
-                  </Text>
-                </View>
-              )}
-            </Pressable>
+                }}
+              >
+                <Ionicons name="globe-outline" size={12} color="#fff" />
+                <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#fff', letterSpacing: 0.2 }}>
+                  All
+                </Text>
+              </LinearGradient>
+            ) : (
+              <View style={{
+                flexDirection: 'row', alignItems: 'center',
+                paddingHorizontal: 16, paddingVertical: 8,
+                borderRadius: 999, gap: 5,
+              }}>
+                <Ionicons name="globe-outline" size={12} color="rgba(184,134,11,0.5)" />
+                <Text style={{ fontSize: 12.5, fontWeight: '500', color: 'rgba(184,134,11,0.6)' }}>
+                  All
+                </Text>
+              </View>
+            )}
+          </Pressable>
 
-            {/* Filter Fit pill */}
-            <Pressable
-              onPress={handleFilterFitPress}
-              style={{ borderRadius: 999, overflow: 'hidden' }}
-            >
-              {feedMode === 'filters' ? (
-                <LinearGradient
-                  colors={["#E8B820", "#C9980A", "#A87A08"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{
-                    flexDirection: 'row', alignItems: 'center',
-                    paddingHorizontal: 16, paddingVertical: 8,
-                    borderRadius: 999, gap: 5,
-                  }}
-                >
-                  <Ionicons name="options-outline" size={12} color="#fff" />
-                  <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#fff', letterSpacing: 0.2 }}>
-                    Filter Fit
-                  </Text>
-                </LinearGradient>
-              ) : (
-                <View style={{
+          {/* Compatible pill — requires cert */}
+          <Pressable
+            onPress={() => {
+              if (!isCertified) { handleLockedTabPress(); return; }
+              if (feedMode !== 'compatible') setFeedMode('compatible');
+            }}
+            style={{ borderRadius: 999, overflow: 'hidden' }}
+          >
+            {feedMode === 'compatible' ? (
+              <LinearGradient
+                colors={["#E8B820", "#C9980A", "#A87A08"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
                   flexDirection: 'row', alignItems: 'center',
                   paddingHorizontal: 16, paddingVertical: 8,
                   borderRadius: 999, gap: 5,
-                }}>
-                  <Ionicons name="options-outline" size={12} color="rgba(184,134,11,0.5)" />
-                  <Text style={{ fontSize: 12.5, fontWeight: '500', color: 'rgba(184,134,11,0.6)' }}>
-                    Filter Fit
-                  </Text>
-                </View>
-              )}
-            </Pressable>
-          </LinearGradient>
-        )}
+                }}
+              >
+                <Ionicons name="heart" size={12} color="#fff" />
+                <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#fff', letterSpacing: 0.2 }}>
+                  Compatible
+                </Text>
+              </LinearGradient>
+            ) : (
+              <View style={{
+                flexDirection: 'row', alignItems: 'center',
+                paddingHorizontal: 16, paddingVertical: 8,
+                borderRadius: 999, gap: 5,
+              }}>
+                <Ionicons name={isCertified ? "heart" : "lock-closed"} size={12} color="rgba(184,134,11,0.5)" />
+                <Text style={{ fontSize: 12.5, fontWeight: '500', color: 'rgba(184,134,11,0.6)' }}>
+                  Compatible
+                </Text>
+              </View>
+            )}
+          </Pressable>
+
+          {/* Filter Fit pill — requires cert */}
+          <Pressable
+            onPress={() => {
+              if (!isCertified) { handleLockedTabPress(); return; }
+              handleFilterFitPress();
+            }}
+            style={{ borderRadius: 999, overflow: 'hidden' }}
+          >
+            {feedMode === 'filters' ? (
+              <LinearGradient
+                colors={["#E8B820", "#C9980A", "#A87A08"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  flexDirection: 'row', alignItems: 'center',
+                  paddingHorizontal: 16, paddingVertical: 8,
+                  borderRadius: 999, gap: 5,
+                }}
+              >
+                <Ionicons name="options-outline" size={12} color="#fff" />
+                <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#fff', letterSpacing: 0.2 }}>
+                  Filter Fit
+                </Text>
+              </LinearGradient>
+            ) : (
+              <View style={{
+                flexDirection: 'row', alignItems: 'center',
+                paddingHorizontal: 16, paddingVertical: 8,
+                borderRadius: 999, gap: 5,
+              }}>
+                <Ionicons name={isCertified ? "options-outline" : "lock-closed"} size={12} color="rgba(184,134,11,0.5)" />
+                <Text style={{ fontSize: 12.5, fontWeight: '500', color: 'rgba(184,134,11,0.6)' }}>
+                  Filter Fit
+                </Text>
+              </View>
+            )}
+          </Pressable>
+        </LinearGradient>
       </View>
 
       {/* Profile Grid - always rendered */}
@@ -513,7 +565,7 @@ export default function DiscoverScreen() {
                 paddingBottom: 120,
               }}
               keyExtractor={(item) => item.id}
-              scrollEnabled={!showCertGate && !showIntentGate}
+              scrollEnabled={!showIntentGate}
               showsVerticalScrollIndicator={false}
               renderItem={({ item, index }) => (
                 <DiscoverCard
@@ -528,7 +580,7 @@ export default function DiscoverScreen() {
           </Animated.View>
 
           {/* Mark as Seen & Next — floating liquid glass */}
-          {!showCertGate && !showIntentGate && (
+          {!showIntentGate && (
             <View
               pointerEvents="box-none"
               style={{
@@ -601,148 +653,6 @@ export default function DiscoverScreen() {
               </Pressable>
             </View>
           )}
-        </View>
-      )}
-
-      {/* Certification Gate Overlay */}
-      {showCertGate && (
-        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-          <BlurView
-            intensity={60}
-            tint="dark"
-            style={StyleSheet.absoluteFill}
-          />
-          <LinearGradient
-            colors={[
-              "rgba(0,0,0,0.2)",
-              "rgba(0,0,0,0.6)",
-              "rgba(0,0,0,0.92)",
-            ]}
-            locations={[0, 0.45, 1]}
-            style={StyleSheet.absoluteFill}
-          />
-
-          <View style={styles.overlayContent}>
-            {/* Card */}
-            <View style={styles.cardOuter}>
-              {/* Gold border wrapper */}
-              <LinearGradient
-                colors={[
-                  "rgba(212,160,23,0.5)",
-                  "rgba(184,134,11,0.2)",
-                  "rgba(150,112,10,0.5)",
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.cardBorderGradient}
-              >
-                <View style={styles.cardInner}>
-                  {/* Top gold line */}
-                  <LinearGradient
-                    colors={["transparent", "#D4A017", "transparent"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.topLine}
-                  />
-
-                  {/* Icon */}
-                  <View style={styles.iconWrapper}>
-                    <View style={styles.iconGlow}>
-                      <LinearGradient
-                        colors={["#D4A017", "#B8860B"]}
-                        style={styles.iconCircle}
-                      >
-                        <Ionicons
-                          name="lock-open-outline"
-                          size={38}
-                          color="#fff"
-                        />
-                      </LinearGradient>
-                    </View>
-                  </View>
-
-                  {/* Title */}
-                  <Text style={styles.title}>Unlock Discover</Text>
-
-                  {/* Divider */}
-                  <View style={styles.dividerRow}>
-                    <View style={styles.dividerLine} />
-                    <Text style={styles.dividerText}>MARRIAGE FOUNDATIONS</Text>
-                    <View style={styles.dividerLine} />
-                  </View>
-
-                  {/* Description */}
-                  <Text style={styles.description}>
-                    Complete the Marriage Foundations modules to set your
-                    requirements and obligations before discovering profiles.
-                  </Text>
-
-                  {/* Feature list */}
-                  <View style={styles.featureList}>
-                    {[
-                      {
-                        icon: "checkmark-circle" as const,
-                        text: "Set your expectations for marriage",
-                      },
-                      {
-                        icon: "analytics-outline" as const,
-                        text: "See compatibility scores with each profile",
-                      },
-                      {
-                        icon: "heart-circle-outline" as const,
-                        text: "Find profiles aligned with your values",
-                      },
-                    ].map((feature, i) => (
-                      <View key={i} style={styles.featureRow}>
-                        <View style={styles.featureIconBg}>
-                          <Ionicons
-                            name={feature.icon}
-                            size={18}
-                            color="#D4A017"
-                          />
-                        </View>
-                        <Text style={styles.featureText}>{feature.text}</Text>
-                      </View>
-                    ))}
-                  </View>
-
-                  {/* CTA Button */}
-                  <Pressable
-                    onPress={() =>
-                      router.push("/(main)/profile/marriage-foundations")
-                    }
-                    style={({ pressed }) => [
-                      styles.ctaWrapper,
-                      pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
-                    ]}
-                  >
-                    <LinearGradient
-                      colors={["#D4A017", "#B8860B"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.ctaButton}
-                    >
-                      <Ionicons
-                        name="school-outline"
-                        size={20}
-                        color="#fff"
-                        style={{ marginRight: 8 }}
-                      />
-                      <Text style={styles.ctaText}>Complete Modules</Text>
-                    </LinearGradient>
-                  </Pressable>
-
-                  {/* Bottom gold line */}
-                  <LinearGradient
-                    colors={["transparent", "rgba(212,160,23,0.3)", "transparent"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.bottomLine}
-                  />
-                </View>
-              </LinearGradient>
-            </View>
-          </View>
         </View>
       )}
 
