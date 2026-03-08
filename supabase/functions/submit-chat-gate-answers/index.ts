@@ -108,6 +108,14 @@ serve(async (req) => {
       });
     }
 
+    // Stamp answers_submitted_at on the match so the acceptor's client
+    // can detect pending reviews via the matches table (avoids RLS issues
+    // that would prevent the acceptor from reading match_intent_answers directly)
+    await supabase
+      .from("matches")
+      .update({ answers_submitted_at: new Date().toISOString() })
+      .eq("id", matchId);
+
     // Get submitter's name to notify acceptor
     const { data: submitterProfile } = await supabase
       .from("users")

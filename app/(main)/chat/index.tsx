@@ -73,6 +73,28 @@ export default function ChatListScreen() {
 
   const matches = chatListData || [];
 
+  // Matches where current user is the acceptor and answers have been submitted for review.
+  // Uses matches.answers_submitted_at (set by submit-chat-gate-answers edge function)
+  // so this query only touches the matches table — no RLS issues with match_intent_answers.
+  const { data: gateReviewMatchIds } = useQuery({
+    queryKey: ["gate-review-pending"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [] as string[];
+
+      const { data: pendingMatches } = await supabase
+        .from("matches")
+        .select("id")
+        .or(`user1.eq.${user.id},user2.eq.${user.id}`)
+        .neq("initiated_by", user.id)
+        .is("gate_approved_at", null)
+        .not("answers_submitted_at", "is", null);
+
+      return (pendingMatches || []).map((m: any) => m.id) as string[];
+    },
+    staleTime: 1000 * 60 * 2,
+  });
+
   const { data: unmatchesCount } = useQuery({
     queryKey: ["unmatches-notification-count"],
     queryFn: async () => {
@@ -134,6 +156,18 @@ export default function ChatListScreen() {
         .on("postgres_changes", { event: "DELETE", schema: "public", table: "matches" }, () => {
           queryClient.invalidateQueries({ queryKey: ["chat-list"] });
         })
+        // matches UPDATE covers two signals:
+        // 1. answers_submitted_at set → acceptor's review-pending badge appears
+        // 2. gate_approved_at set → both users' chat lists unlock in real-time
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "matches" }, (payload) => {
+          if (payload.new?.answers_submitted_at && !payload.old?.answers_submitted_at) {
+            queryClient.invalidateQueries({ queryKey: ["gate-review-pending"] });
+          }
+          if (payload.new?.gate_approved_at && !payload.old?.gate_approved_at) {
+            queryClient.invalidateQueries({ queryKey: ["chat-list"] });
+            queryClient.invalidateQueries({ queryKey: ["gate-review-pending"] });
+          }
+        })
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "unmatches" }, (payload) => {
           if (payload.new.unmatched_by !== userId) {
             // Also update the unmatches screen and badge — the chat-list drop
@@ -192,6 +226,7 @@ export default function ChatListScreen() {
   useFocusEffect(
     useCallback(() => {
       queryClient.invalidateQueries({ queryKey: ["chat-list"] });
+      queryClient.invalidateQueries({ queryKey: ["gate-review-pending"] });
     }, [queryClient])
   );
 
@@ -325,7 +360,12 @@ export default function ChatListScreen() {
               />
             }
             renderItem={({ item }) => (
-              <ChatItem item={item} router={router} queryClient={queryClient} />
+              <ChatItem
+                item={item}
+                router={router}
+                queryClient={queryClient}
+                hasGateReview={!item.isCompliment && (gateReviewMatchIds?.includes(item.id) ?? false)}
+              />
             )}
           />
         )}
@@ -402,8 +442,13 @@ function EmptyState({ router }: { router: any }) {
   );
 }
 
-function ChatItem({ item, router, queryClient }: { item: any; router: any; queryClient: any }) {
+function ChatItem({ item, router, queryClient, hasGateReview }: { item: any; router: any; queryClient: any; hasGateReview?: boolean }) {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const rowHeightAnim = useRef(new Animated.Value(0)).current;
+  const rowOpacity = useRef(new Animated.Value(1)).current;
+  const rowTranslateX = useRef(new Animated.Value(0)).current;
+  const measuredHeight = useRef(0);
+  const [isCollapsing, setIsCollapsing] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -429,6 +474,29 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
 
   const swipeableRef = useRef<Swipeable>(null);
 
+  const animateOutAndInvalidate = () => {
+    // Pin height to measured value so collapse animation has a defined start
+    rowHeightAnim.setValue(measuredHeight.current);
+    setIsCollapsing(true);
+
+    // Step 1: slide left + fade out (native driver — smooth 60fps)
+    Animated.parallel([
+      Animated.timing(rowTranslateX, { toValue: -420, duration: 260, useNativeDriver: true }),
+      Animated.timing(rowOpacity, { toValue: 0, duration: 200, useNativeDriver: true }),
+    ]).start(() => {
+      // Step 2: collapse height to zero (JS driver required for layout props)
+      Animated.timing(rowHeightAnim, {
+        toValue: 0,
+        duration: 160,
+        useNativeDriver: false,
+      }).start(() => {
+        queryClient.invalidateQueries({ queryKey: ["chat-list"] });
+        queryClient.invalidateQueries({ queryKey: ["unmatches"] });
+        queryClient.invalidateQueries({ queryKey: ["unmatches-notification-count"] });
+      });
+    });
+  };
+
   const handleUnmatch = async () => {
     swipeableRef.current?.close();
     Alert.alert(
@@ -440,18 +508,14 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
           text: "Unmatch",
           style: "destructive",
           onPress: async () => {
+            // Fire animation immediately — don't wait for API
+            animateOutAndInvalidate();
             try {
               await supabase.functions.invoke("unmatch", {
                 body: { matchId: item.id },
               });
             } catch (err: any) {
-              // Log only — the DB operation may have succeeded even if the
-              // HTTP response errored. The chat list is always refreshed below.
               console.error("Unmatch invoke error:", err);
-            } finally {
-              // Always invalidate so the card disappears for User A immediately.
-              // The matches DELETE real-time event handles User B's side.
-              queryClient.invalidateQueries({ queryKey: ["chat-list"] });
             }
           },
         },
@@ -533,7 +597,13 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
   let subTextWeight: "400" | "500" | "600" = hasUnread ? "600" : "400";
   let subTextItalic = false;
 
-  if (item.isCompliment) {
+  if (hasGateReview) {
+    subText = (
+      <Text style={{ fontSize: 13, color: "#B8860B", fontWeight: "600" }} numberOfLines={1}>
+        Tap to review their answers
+      </Text>
+    );
+  } else if (item.isCompliment) {
     subTextItalic = false;
     subText = (
       <Text
@@ -668,9 +738,24 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
             </Text>
           </View>
 
-          {/* Row 2: Message preview + unread badge */}
+          {/* Row 2: Message preview + badges */}
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <View style={{ flex: 1 }}>{subText}</View>
+            {hasGateReview && !hasUnread && (
+              <View
+                style={{
+                  backgroundColor: "#B8860B",
+                  borderRadius: 999,
+                  width: 22,
+                  height: 22,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginLeft: 10,
+                }}
+              >
+                <Text style={{ color: "#fff", fontSize: 13, fontWeight: "800", lineHeight: 16 }}>!</Text>
+              </View>
+            )}
             {hasUnread && (
               <View
                 style={{
@@ -698,14 +783,28 @@ function ChatItem({ item, router, queryClient }: { item: any; router: any; query
   if (item.isCompliment) return chatItemContent;
 
   return (
-    <Swipeable
-      ref={swipeableRef}
-      renderRightActions={renderRightActions}
-      rightThreshold={40}
-      overshootRight={false}
-      friction={1.5}
+    // Outer view: JS-driven height collapse (useNativeDriver: false)
+    <Animated.View
+      style={isCollapsing ? { height: rowHeightAnim, overflow: "hidden" } : undefined}
     >
-      {chatItemContent}
-    </Swipeable>
+      {/* Inner view: native-driven slide + fade (useNativeDriver: true) */}
+      <Animated.View
+        onLayout={(e) => { measuredHeight.current = e.nativeEvent.layout.height; }}
+        style={{
+          opacity: rowOpacity,
+          transform: [{ translateX: rowTranslateX }],
+        }}
+      >
+        <Swipeable
+          ref={swipeableRef}
+          renderRightActions={renderRightActions}
+          rightThreshold={40}
+          overshootRight={false}
+          friction={1.5}
+        >
+          {chatItemContent}
+        </Swipeable>
+      </Animated.View>
+    </Animated.View>
   );
 }

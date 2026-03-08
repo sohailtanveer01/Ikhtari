@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Audio } from "expo-av";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image as ExpoImage } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -453,6 +453,32 @@ export default function ChatScreen() {
   const [reviewOtherName, setReviewOtherName] = useState("");
   const [reviewApproving, setReviewApproving] = useState(false);
 
+  // Stable callback to apply gate data from any fetch (mount, focus, real-time)
+  const applyGateData = useCallback((data: any) => {
+    if (data.gateRequired) {
+      setGateRequired(true);
+      setGateQuestions(data.questions || []);
+      setGateOtherName(data.otherUserName || "them");
+    } else if (data.awaitingApproval) {
+      setAwaitingApproval(true);
+      setAwaitingOtherName(data.otherUserName || "them");
+    } else if (data.reviewRequired) {
+      setReviewRequired(true);
+      setReviewAnswers(data.answers || []);
+      setReviewOtherName(data.otherUserName || "them");
+    } else if (data.waitingForOther) {
+      setWaitingForOther(true);
+      setWaitingOtherName(data.otherUserName || "them");
+      setWaitingInitiatedById(data.initiatedById || null);
+      setWaitingQuestions(data.myQuestions || []);
+    } else {
+      setGateRequired(false);
+      setWaitingForOther(false);
+      setAwaitingApproval(false);
+      setReviewRequired(false);
+    }
+  }, []);
+
   const flatListRef = useRef<FlatList>(null);
   const queryClient = useQueryClient();
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -544,36 +570,14 @@ export default function ChatScreen() {
   const gateQA = chatData?.gateQA || null;
 
   // Check intent questions gate on mount
+  // Check intent gate on mount (with loading spinner)
   useEffect(() => {
     if (!chatId) return;
     setGateLoading(true);
     supabase.functions
       .invoke("get-chat-gate", { body: { matchId: chatId } })
       .then(({ data, error }) => {
-        if (!error && data) {
-          if (data.gateRequired) {
-            setGateRequired(true);
-            setGateQuestions(data.questions || []);
-            setGateOtherName(data.otherUserName || "them");
-          } else if (data.awaitingApproval) {
-            setAwaitingApproval(true);
-            setAwaitingOtherName(data.otherUserName || "them");
-          } else if (data.reviewRequired) {
-            setReviewRequired(true);
-            setReviewAnswers(data.answers || []);
-            setReviewOtherName(data.otherUserName || "them");
-          } else if (data.waitingForOther) {
-            setWaitingForOther(true);
-            setWaitingOtherName(data.otherUserName || "them");
-            setWaitingInitiatedById(data.initiatedById || null);
-            setWaitingQuestions(data.myQuestions || []);
-          } else {
-            setGateRequired(false);
-            setWaitingForOther(false);
-            setAwaitingApproval(false);
-            setReviewRequired(false);
-          }
-        }
+        if (!error && data) applyGateData(data);
         setGateLoading(false);
       })
       .catch(() => setGateLoading(false));
@@ -710,13 +714,14 @@ export default function ChatScreen() {
 
   const dismissGateQA = async () => {
     if (!chatId) return;
+    const id = Array.isArray(chatId) ? chatId[0] : chatId;
     setGateQAVisible(false);
     try {
       const current = await readDismissed();
-      if (!current.includes(chatId)) {
+      if (!current.includes(id)) {
         await FileSystem.writeAsStringAsync(
           DISMISSED_FILE,
-          JSON.stringify([...current, chatId])
+          JSON.stringify([...current, id])
         );
       }
     } catch {
@@ -727,8 +732,9 @@ export default function ChatScreen() {
   // Load persisted dismissed state on mount
   useEffect(() => {
     if (!chatId) return;
+    const id = Array.isArray(chatId) ? chatId[0] : chatId;
     readDismissed().then((dismissed) => {
-      if (dismissed.includes(chatId)) setGateQAVisible(false);
+      if (dismissed.includes(id)) setGateQAVisible(false);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId]);
@@ -874,10 +880,20 @@ export default function ChatScreen() {
       // Also invalidate chat list to update unread counts
       queryClient.invalidateQueries({ queryKey: ["chat-list"] });
 
+      // Silently recheck gate status — fixes "had to restart" after approval
+      if (chatId) {
+        supabase.functions
+          .invoke("get-chat-gate", { body: { matchId: chatId } })
+          .then(({ data, error }) => {
+            if (!error && data) applyGateData(data);
+          })
+          .catch(() => {});
+      }
+
       return () => {
         isScreenFocusedRef.current = false;
       };
-    }, [chatId, queryClient])
+    }, [chatId, queryClient, applyGateData])
   );
 
   // Real-time subscription for new messages

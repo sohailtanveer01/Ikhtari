@@ -121,11 +121,11 @@ export default function MatchCelebrationScreen() {
         <Animated.View style={[badgeStyle, { marginHorizontal: -20, zIndex: 10 }]}>
           <View
             style={{
-              width: 76,
-              height: 76,
-              borderRadius: 38,
+              width: 64,
+              height: 64,
+              borderRadius: 32,
               backgroundColor: "#FDFAF5",
-              borderWidth: 2,
+              borderWidth: 1.5,
               borderColor: "#EDE5D5",
               alignItems: "center",
               justifyContent: "center",
@@ -138,7 +138,7 @@ export default function MatchCelebrationScreen() {
           >
             <Image
               source={require("../../assets/Logos/transparent-logo.png")}
-              style={{ width: 56, height: 56 }}
+              style={{ width: 58, height: 58 }}
               contentFit="contain"
             />
           </View>
