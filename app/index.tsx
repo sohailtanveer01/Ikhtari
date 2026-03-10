@@ -145,7 +145,7 @@ export default function Home() {
       const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
       if (!supabaseUrl) throw new Error("Supabase URL not configured");
 
-      const redirectUrl = "ikhtari://auth/callback";
+      const redirectUrl = "ikhtiar://auth/callback";
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo: redirectUrl, queryParams: { access_type: "offline" } },
@@ -156,6 +156,17 @@ export default function Home() {
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
         if (result.type === "success" && result.url) {
           const url = new URL(result.url);
+
+          // PKCE flow — exchange code for session
+          const code = url.searchParams.get("code");
+          if (code) {
+            const { data: { session }, error: sessionError } = await supabase.auth.exchangeCodeForSession(result.url);
+            if (sessionError) throw sessionError;
+            if (session?.user) await handlePostOAuthSignIn(session.user);
+            return;
+          }
+
+          // Implicit flow — tokens in hash or query params
           const hash = url.hash.substring(1);
           const hashParams = new URLSearchParams(hash);
           let accessToken = hashParams.get("access_token");
@@ -196,7 +207,7 @@ export default function Home() {
       const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
       if (!supabaseUrl) throw new Error("Supabase URL not configured");
 
-      const redirectUrl = "ikhtari://auth/callback";
+      const redirectUrl = "ikhtiar://auth/callback";
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "apple",
         options: { redirectTo: redirectUrl },
@@ -207,6 +218,17 @@ export default function Home() {
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
         if (result.type === "success" && result.url) {
           const url = new URL(result.url);
+
+          // PKCE flow — exchange code for session
+          const code = url.searchParams.get("code");
+          if (code) {
+            const { data: { session }, error: sessionError } = await supabase.auth.exchangeCodeForSession(result.url);
+            if (sessionError) throw sessionError;
+            if (session?.user) await handlePostOAuthSignIn(session.user);
+            return;
+          }
+
+          // Implicit flow — tokens in hash or query params
           const hash = url.hash.substring(1);
           const hashParams = new URLSearchParams(hash);
           let accessToken = hashParams.get("access_token");
@@ -255,8 +277,8 @@ export default function Home() {
       <View style={styles.logoContainer}>
         <Logo variant="transparent" width={220} height={220} style="" />
         <Text style={styles.tagline}>
-          <Text style={styles.taglineGold}>From a Swipe to </Text>
-          <Text style={styles.taglineDark}>Niqah</Text>
+          <Text style={styles.taglineGold}>Complete Your </Text>
+          <Text style={styles.taglineDark}>Half Deen</Text>
         </Text>
       </View>
 

@@ -24,6 +24,7 @@ export default function DiscoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+
   const profiles = useDiscoverStore((s) => s.profiles);
   const isLoading = useDiscoverStore((s) => s.isLoading);
   const hasMore = useDiscoverStore((s) => s.hasMore);

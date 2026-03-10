@@ -52,6 +52,7 @@ function formatTimestamp(dateStr: string): string {
 export default function ChatListScreen() {
   const [unmatchesNotificationCount, setUnmatchesNotificationCount] = useState(0);
   const router = useRouter();
+
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
 

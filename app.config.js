@@ -26,6 +26,7 @@ export default {
       ],
       ios: {
         bundleIdentifier: "com.habibiswipe.app",
+        buildNumber: "3",
         icon: "./assets/Logos/transparent-logo.png",
         usesIcloudStorage: true,
         infoPlist: {
@@ -48,6 +49,7 @@ export default {
       },
       android: {
         package: "com.habibiswipe.app",
+        versionCode: 2,
         screenOrientation: "portrait",
         permissions: [
           "READ_EXTERNAL_STORAGE",
@@ -55,9 +57,9 @@ export default {
           "CAMERA",
           "android.permission.ACCESS_FINE_LOCATION",
         ],
-        icon: "./assets/Logos/bigger-logo.png",
+        icon: "./assets/Logos/transparent-logo.png",
         adaptiveIcon: {
-          foregroundImage: "./assets/Logos/bigger-logo.png",
+          foregroundImage: "./assets/Logos/transparent-logo.png",
           backgroundColor: "#000000",
         },
       },

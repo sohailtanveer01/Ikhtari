@@ -412,8 +412,6 @@ async function getChatMediaUrl(mediaUrl: string): Promise<string> {
 }
 
 export default function ChatScreen() {
-  // Prevent screenshots to keep chats safe
-  // ScreenCapture.usePreventScreenCapture();
 
   const { chatId } = useLocalSearchParams();
   const router = useRouter();
