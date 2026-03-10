@@ -209,7 +209,7 @@ serve(async (req) => {
       );
     }
 
-    const { email } = await req.json();
+    const { email, wali_name, relationship } = await req.json();
     if (!email || typeof email !== "string") {
       return new Response(
         JSON.stringify({ error: "Missing email" }),
@@ -271,6 +271,8 @@ serve(async (req) => {
           chaperone_id: chaperoneId,
           status: "pending",
           expires_at: expiresAt,
+          wali_name: wali_name?.trim() || null,
+          relationship: relationship || null,
         },
         { onConflict: "user_id,invite_email" }
       );

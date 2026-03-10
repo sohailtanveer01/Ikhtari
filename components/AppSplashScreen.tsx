@@ -81,9 +81,6 @@ export default function AppSplashScreen() {
       />
 
       <View style={styles.center}>
-        {/* Language label */}
-        <Text style={styles.langLabel}>{isArabic ? "English" : "عربي"}</Text>
-
         {/* Animated name */}
         <Animated.Text
           style={[

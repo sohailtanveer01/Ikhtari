@@ -4,7 +4,7 @@ export default {
       slug: "habibi-swipe",
       scheme: "ikhtiar",
       orientation: "portrait",
-      icon: "./assets/Logos/bigger-logo.png",
+      icon: "./assets/Logos/transparent-logo.png",
       notification: {
         icon: "./assets/images/android-icon-monochrome.png",
         color: "#B8860B",
@@ -26,7 +26,7 @@ export default {
       ],
       ios: {
         bundleIdentifier: "com.habibiswipe.app",
-        icon: "./assets/Logos/bigger-logo.png",
+        icon: "./assets/Logos/transparent-logo.png",
         usesIcloudStorage: true,
         infoPlist: {
           NSPhotoLibraryUsageDescription:

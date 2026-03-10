@@ -94,9 +94,6 @@ export default function EmailOTP() {
       return;
     }
 
-    // Auto-link any pending chaperone invite for this email (fire-and-forget)
-    supabase.functions.invoke("accept-chaperone-invite").catch(() => {});
-
     // Handle account reactivation if needed
     if (shouldReactivate) {
       try {
@@ -106,33 +103,51 @@ export default function EmailOTP() {
             .from("users")
             .update({ account_active: true })
             .eq("id", currentUser.id);
-
-          if (activeError) {
-            console.error("Error setting account to active:", activeError);
-            // Non-blocking: continue to login
-          }
+          if (activeError) console.error("Error reactivating account:", activeError);
         }
       } catch (err) {
         console.error("Unexpected error reactivating account:", err);
       }
     }
 
-    // Check if user has completed onboarding
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from("users")
-        .select("id, name, photos")
-        .eq("id", user.id)
-        .maybeSingle();
+    if (!user) {
+      router.replace("/(auth)/onboarding/step1-basic");
+      return;
+    }
 
-      if (profile && profile.name && profile.photos?.length > 0) {
-        // User has completed onboarding - go to main app
-        router.replace("/(main)/swipe");
-      } else {
-        // User needs to complete onboarding (new signup)
-        router.replace("/(auth)/onboarding/step1-basic");
-      }
+    // Check profile completeness
+    const { data: profile } = await supabase
+      .from("users")
+      .select("id, first_name, last_name, name, photos")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const hasCompleteProfile =
+      profile &&
+      (profile.first_name || profile.name) &&
+      profile.photos?.length > 0;
+
+    if (hasCompleteProfile) {
+      // Existing user with complete profile → main app
+      router.replace("/(main)/swipe");
+      return;
+    }
+
+    // No complete profile — check chaperone status to decide routing
+    const { data: chaperoneStatus } = await supabase.functions
+      .invoke("get-chaperone-status")
+      .catch(() => ({ data: null }));
+
+    const wardships: any[] = chaperoneStatus?.wardships || [];
+    const hasPendingInvite = wardships.some((w: any) => w.status === "pending");
+    const hasActiveWardship = wardships.some((w: any) => w.status === "active");
+
+    if (hasPendingInvite) {
+      router.replace("/(auth)/wali-invitation");
+    } else if (hasActiveWardship) {
+      const hasName = profile?.first_name || profile?.name;
+      router.replace(hasName ? "/(main)/wali-home" : "/(auth)/wali-onboarding");
     } else {
       router.replace("/(auth)/onboarding/step1-basic");
     }

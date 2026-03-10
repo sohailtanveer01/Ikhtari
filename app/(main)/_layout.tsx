@@ -33,6 +33,8 @@ export default function MainLayout() {
   // Check if we're on a chat detail screen or filters screen or sub-screens
   const isChatDetail = pathname?.includes("/chat/") && pathname !== "/chat";
   const isFiltersScreen = pathname?.includes("/swipe/filters");
+  const isWaliHome = pathname === "/wali-home";
+
   const isSubScreen = pathname?.includes("/swipe/profile-view") ||
     pathname?.includes("/swipe/answer-questions") ||
     pathname?.includes("/swipe/setup-questions") ||
@@ -45,8 +47,8 @@ export default function MainLayout() {
   // Check if viewing from interests section
   const isViewingFromInterests = pathname?.includes("/likes/") && pathname !== "/likes";
 
-  // Hide tab bar on chat detail, filters, or sub-screens
-  const hideTabBar = isChatDetail || isFiltersScreen || isSubScreen;
+  // Hide tab bar on chat detail, filters, sub-screens, or wali home
+  const hideTabBar = isChatDetail || isFiltersScreen || isSubScreen || isWaliHome;
 
   // Load profile on mount (uses Zustand store)
   useEffect(() => {
@@ -399,6 +401,7 @@ export default function MainLayout() {
       {/* Hidden routes - events */}
       <Tabs.Screen name="events/[eventId]" options={{ href: null }} />
       {/* Hidden routes - misc */}
+      <Tabs.Screen name="wali-home" options={{ href: null }} />
       <Tabs.Screen name="matches" options={{ href: null }} />
       <Tabs.Screen name="paywall" options={{ href: null }} />
     </Tabs>

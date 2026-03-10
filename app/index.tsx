@@ -62,13 +62,32 @@ export default function Home() {
         .maybeSingle();
 
       setGoogleLoading(false);
+      setAppleLoading(false);
 
+      // Existing user with complete profile → main app
       if (updatedProfile &&
           updatedProfile.first_name &&
           updatedProfile.last_name &&
           updatedProfile.gender &&
           updatedProfile.photos?.length > 0) {
         router.replace("/(main)/swipe");
+        return;
+      }
+
+      // No complete profile — check wali/chaperone status before sending to onboarding
+      const { data: chaperoneStatus } = await supabase.functions
+        .invoke("get-chaperone-status")
+        .catch(() => ({ data: null }));
+
+      const wardships: any[] = chaperoneStatus?.wardships || [];
+      const hasPendingInvite = wardships.some((w: any) => w.status === "pending");
+      const hasActiveWardship = wardships.some((w: any) => w.status === "active");
+
+      if (hasPendingInvite) {
+        router.replace("/(auth)/wali-invitation");
+      } else if (hasActiveWardship) {
+        const hasName = updatedProfile?.first_name || updatedProfile?.name;
+        router.replace(hasName ? "/(main)/wali-home" : "/(auth)/wali-onboarding");
       } else {
         router.replace("/(auth)/onboarding/step1-basic");
       }
@@ -76,6 +95,7 @@ export default function Home() {
       console.error("Error in post-OAuth sign-in:", error);
       Alert.alert("Error", "An error occurred. Please try again.");
       setGoogleLoading(false);
+      setAppleLoading(false);
     }
   }, [router]);
 

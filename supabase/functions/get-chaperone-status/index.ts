@@ -75,7 +75,7 @@ serve(async (req) => {
     // Fetch wardships: links where caller is the chaperone (pending or active), excluding expired pending
     const { data: wardships } = await serviceClient
       .from("chaperone_links")
-      .select("id, user_id, invite_email, status, created_at, accepted_at, expires_at, last_accessed_at")
+      .select("id, user_id, invite_email, status, created_at, accepted_at, expires_at, last_accessed_at, wali_name, relationship")
       .eq("chaperone_id", user.id)
       .in("status", ["pending", "active"])
       .or(`status.eq.active,expires_at.is.null,expires_at.gt.${now}`)
@@ -87,7 +87,7 @@ serve(async (req) => {
     if (callerEmail) {
       const { data: emailLinks } = await serviceClient
         .from("chaperone_links")
-        .select("id, user_id, invite_email, status, created_at, accepted_at, expires_at, last_accessed_at")
+        .select("id, user_id, invite_email, status, created_at, accepted_at, expires_at, last_accessed_at, wali_name, relationship")
         .eq("invite_email", callerEmail)
         .eq("status", "pending")
         .or(`expires_at.is.null,expires_at.gt.${now}`);

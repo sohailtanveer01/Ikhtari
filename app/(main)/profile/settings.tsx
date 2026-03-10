@@ -66,11 +66,9 @@ export default function SettingsScreen() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-
       const { data } = await supabase.functions.invoke("get-chaperone-status", {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-
       if (data && !data.error) {
         setChaperoneStatus(data);
       }
@@ -83,15 +81,12 @@ export default function SettingsScreen() {
     if (!chaperoneStatus) return "No Wali linked";
     const { my_chaperone, wardships } = chaperoneStatus;
     const activeWardships = wardships?.filter((w) => w.status === "active") || [];
-
     if (my_chaperone?.status === "active") {
       const profile = my_chaperone.chaperone_profile;
       const name = profile?.first_name
         ? `${profile.first_name}${profile.last_name ? " " + profile.last_name : ""}`
         : profile?.name || "Wali";
-      const wardStr = activeWardships.length > 0
-        ? ` · Wali for ${activeWardships.length}`
-        : "";
+      const wardStr = activeWardships.length > 0 ? ` · Wali for ${activeWardships.length}` : "";
       return `Active: ${name}${wardStr}`;
     } else if (my_chaperone?.status === "pending") {
       return "Pending invite";
@@ -299,7 +294,7 @@ export default function SettingsScreen() {
           onPress={() => router.push("/(main)/profile/marriage-foundations")}
         />
 
-      
+
 
         <View className="flex-row items-center justify-between py-4 px-4 bg-white rounded-2xl mb-3 border border-[#EDE5D5]">
           <View className="flex-row items-center flex-1">
@@ -324,12 +319,6 @@ export default function SettingsScreen() {
         {/* Privacy Section */}
         <Text className="text-[#9E8E7E] text-sm font-medium mb-3 mt-6">PRIVACY</Text>
 
-        <SettingsItem
-          icon="shield-checkmark-outline"
-          title="Wali / Chaperone"
-          subtitle={getChaperoneSubtitle()}
-          onPress={() => router.push("/(main)/profile/wali-setup")}
-        />
 
         {/* Support Section */}
         <Text className="text-[#9E8E7E] text-sm font-medium mb-3 mt-6">SUPPORT</Text>
@@ -339,12 +328,12 @@ export default function SettingsScreen() {
           title="Help & Support"
           subtitle="FAQ, contact us"
           onPress={async () => {
-            const url = "https://ikhtari.com";
+            const url = "https://ikhtiar.app/help";
             const canOpen = await Linking.canOpenURL(url);
             if (canOpen) {
               await Linking.openURL(url);
             } else {
-              Alert.alert("Error", "Unable to open website. Please visit https://ikhtari.com");
+              Alert.alert("Error", "Unable to open website. Please visit https://ikhtiar.app/help");
             }
           }}
         />
@@ -353,12 +342,12 @@ export default function SettingsScreen() {
           icon="document-text-outline"
           title="Terms of Service"
           onPress={async () => {
-            const url = "https://ikhtari.com";
+            const url = "https://ikhtiar.app/terms";
             const canOpen = await Linking.canOpenURL(url);
             if (canOpen) {
               await Linking.openURL(url);
             } else {
-              Alert.alert("Error", "Unable to open Terms of Service. Please visit https://ikhtari.com");
+              Alert.alert("Error", "Unable to open Terms of Service. Please visit https://ikhtiar.app/terms");
             }
           }}
         />
@@ -367,12 +356,12 @@ export default function SettingsScreen() {
           icon="shield-outline"
           title="Privacy Policy"
           onPress={async () => {
-            const url = "https://ikhtari.com";
+            const url = "https://ikhtiar.app/privacy";
             const canOpen = await Linking.canOpenURL(url);
             if (canOpen) {
               await Linking.openURL(url);
             } else {
-              Alert.alert("Error", "Unable to open Privacy Policy. Please visit https://ikhtari.com");
+              Alert.alert("Error", "Unable to open Privacy Policy. Please visit https://ikhtiar.app/privacy");
             }
           }}
         />
@@ -421,4 +410,3 @@ export default function SettingsScreen() {
     </View>
   );
 }
-

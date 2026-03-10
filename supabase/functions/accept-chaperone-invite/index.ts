@@ -54,10 +54,25 @@ serve(async (req) => {
       );
     }
 
-    // Find all pending non-expired links where invite_email matches caller's email
+    // Ensure a public.users row exists BEFORE updating chaperone_links,
+    // because chaperone_id has a FK → public.users(id).
+    // gender/first_name/last_name all have DEFAULT '' so this insert is safe.
+    // The BEFORE INSERT trigger auto-fills email from auth.users.
+    const { error: upsertError } = await serviceClient
+      .from("users")
+      .upsert({ id: user.id }, { onConflict: "id", ignoreDuplicates: true });
+
+    if (upsertError) {
+      console.error("Upsert users error:", upsertError.message);
+      // Non-fatal if the row already exists under a different conflict path
+    }
+
+    // Find all pending links where invite_email matches caller's email.
+    // Select only "id" so the query works even if expires_at column hasn't
+    // been added yet by the migration.
     const { data: pendingLinks, error: fetchError } = await serviceClient
       .from("chaperone_links")
-      .select("id, expires_at")
+      .select("id")
       .eq("invite_email", callerEmail)
       .eq("status", "pending");
 
@@ -75,23 +90,9 @@ serve(async (req) => {
       );
     }
 
-    // Filter out expired links
-    const now = new Date();
-    const validLinks = pendingLinks.filter((l: any) => {
-      if (!l.expires_at) return true;
-      return new Date(l.expires_at) > now;
-    });
+    const linkIds = pendingLinks.map((l: any) => l.id);
 
-    if (validLinks.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "All pending invitations have expired", accepted_count: 0 }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const linkIds = validLinks.map((l: any) => l.id);
-
-    // Update all pending links
+    // Accept all pending links
     const { error: updateError } = await serviceClient
       .from("chaperone_links")
       .update({

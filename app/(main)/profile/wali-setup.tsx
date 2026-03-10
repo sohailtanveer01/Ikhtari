@@ -50,7 +50,11 @@ export default function WaliSetupScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [waliName, setWaliName] = useState("");
+  const [relationship, setRelationship] = useState("");
   const [inviting, setInviting] = useState(false);
+
+  const RELATIONSHIPS = ["Father", "Brother", "Uncle", "Guardian", "Imam", "Other"];
   const [myChaperone, setMyChaperone] = useState<ChaperoneLink | null>(null);
   const [wardships, setWardships] = useState<ChaperoneLink[]>([]);
 
@@ -91,7 +95,11 @@ export default function WaliSetupScreen() {
       if (!session) return;
 
       const { data, error } = await supabase.functions.invoke("invite-chaperone", {
-        body: { email: inviteEmail.trim().toLowerCase() },
+        body: {
+          email: inviteEmail.trim().toLowerCase(),
+          wali_name: waliName.trim() || null,
+          relationship: relationship || null,
+        },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
@@ -104,6 +112,8 @@ export default function WaliSetupScreen() {
 
       Alert.alert("Invite Sent", msg);
       setInviteEmail("");
+      setWaliName("");
+      setRelationship("");
       await loadStatus();
     } catch (error: any) {
       Alert.alert("Error", error.message || "Failed to send invite.");
@@ -274,31 +284,82 @@ export default function WaliSetupScreen() {
 
         {/* Invite form — only show if no active/pending invite */}
         {!myChaperone && (
-          <View className="bg-white rounded-2xl p-4 border border-[#EDE5D5]">
-            <Text className="text-[#1C1208] text-sm mb-3">
+          <View className="bg-white rounded-2xl p-4 border border-[#EDE5D5] gap-3">
+            <Text className="text-[#1C1208] text-sm">
               Invite a Wali by email. They'll have read-only access to your conversations.
             </Text>
-            <View className="flex-row items-center gap-2">
+
+            {/* Wali name */}
+            <View>
+              <Text className="text-xs text-gray-400 font-semibold mb-1.5 uppercase tracking-wide">
+                Wali's Name
+              </Text>
               <TextInput
-                className="flex-1 bg-white rounded-xl px-4 py-3 text-[#1C1208] text-sm border border-[#EDE5D5]"
-                placeholder="Enter email address"
-                placeholderTextColor="#6B7280"
-                value={inviteEmail}
-                onChangeText={setInviteEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
+                className="bg-[#FDFAF5] rounded-xl px-4 py-3 text-[#1C1208] text-sm border border-[#EDE5D5]"
+                placeholder="e.g. Ahmed Al-Rashid"
+                placeholderTextColor="#9CA3AF"
+                value={waliName}
+                onChangeText={setWaliName}
+                autoCapitalize="words"
               />
-              <Pressable
-                onPress={handleInvite}
-                disabled={inviting}
-                className="bg-[#B8860B] rounded-xl px-4 py-3"
-              >
-                {inviting
-                  ? <ActivityIndicator size="small" color="#fff" />
-                  : <Text className="text-white text-sm font-semibold">Send</Text>
-                }
-              </Pressable>
+            </View>
+
+            {/* Relationship */}
+            <View>
+              <Text className="text-xs text-gray-400 font-semibold mb-1.5 uppercase tracking-wide">
+                Relationship
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {RELATIONSHIPS.map((r) => (
+                  <Pressable
+                    key={r}
+                    onPress={() => setRelationship(r === relationship ? "" : r)}
+                    className={`px-3 py-1.5 rounded-full border ${
+                      relationship === r
+                        ? "bg-[#B8860B] border-[#B8860B]"
+                        : "bg-white border-[#EDE5D5]"
+                    }`}
+                  >
+                    <Text
+                      className={`text-xs font-semibold ${
+                        relationship === r ? "text-white" : "text-[#6B5D4F]"
+                      }`}
+                    >
+                      {r}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* Email + Send */}
+            <View>
+              <Text className="text-xs text-gray-400 font-semibold mb-1.5 uppercase tracking-wide">
+                Email Address
+              </Text>
+              <View className="flex-row items-center gap-2">
+                <TextInput
+                  className="flex-1 bg-[#FDFAF5] rounded-xl px-4 py-3 text-[#1C1208] text-sm border border-[#EDE5D5]"
+                  placeholder="wali@example.com"
+                  placeholderTextColor="#9CA3AF"
+                  value={inviteEmail}
+                  onChangeText={setInviteEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                <Pressable
+                  onPress={handleInvite}
+                  disabled={inviting || !inviteEmail.trim()}
+                  className="bg-[#B8860B] rounded-xl px-4 py-3"
+                  style={{ opacity: inviting || !inviteEmail.trim() ? 0.5 : 1 }}
+                >
+                  {inviting
+                    ? <ActivityIndicator size="small" color="#fff" />
+                    : <Text className="text-white text-sm font-semibold">Send</Text>
+                  }
+                </Pressable>
+              </View>
             </View>
           </View>
         )}
